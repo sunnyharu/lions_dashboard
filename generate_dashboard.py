@@ -51,6 +51,9 @@ def fetch_data():
         except: off = 0
         try: on  = int(float(str(on).replace(",", "")))
         except: on  = 0
+        # 날짜 중복 시 ON거래액이 있는 행 우선
+        if date in sales and on == 0:
+            continue
         sales[date] = {"off": off, "on": on}
 
     # ── 경기현황 ──────────────────────────────────────────
@@ -245,15 +248,15 @@ def build_html(data: list) -> str:
 <div class="charts">
   <div class="chart-card">
     <h3>날짜별 거래액 추이</h3>
-    <canvas id="trendChart" height="220"></canvas>
+    <canvas id="trendChart" height="120"></canvas>
   </div>
   <div class="chart-card">
     <h3>홈 / 어웨이 평균 거래액</h3>
-    <canvas id="haChart" height="220"></canvas>
+    <canvas id="haChart" height="120"></canvas>
   </div>
   <div class="chart-card">
     <h3>경기 결과별 평균 거래액</h3>
-    <canvas id="resultChart" height="220"></canvas>
+    <canvas id="resultChart" height="120"></canvas>
   </div>
 </div>
 
