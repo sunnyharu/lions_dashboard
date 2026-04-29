@@ -1,5 +1,5 @@
 """
-data/online_sales.xlsx 읽어서 일별매출 시트 ON매출 컬럼 업데이트
+data/online_sales.xlsx 읽어서 일별매출 시트 ON거래액 컬럼 업데이트
 컬럼: completed_dt (date), pay_amt (float)
 """
 import json
@@ -60,14 +60,14 @@ def update_sheet(sales: dict):
 
     header = all_values[0]
 
-    # ON매출 컬럼 없으면 추가
-    if "ON매출" not in header:
+    # ON거래액 컬럼 없으면 추가
+    if "ON거래액" not in header:
         on_col = len(header) + 1
-        ws.update_cell(1, on_col, "ON매출")
-        header.append("ON매출")
-        print(f"ON매출 헤더 추가 (열 {on_col})")
+        ws.update_cell(1, on_col, "ON거래액")
+        header.append("ON거래액")
+        print(f"ON거래액 헤더 추가 (열 {on_col})")
     else:
-        on_col = header.index("ON매출") + 1
+        on_col = header.index("ON거래액") + 1
 
     date_col_idx = header.index("날짜") if "날짜" in header else 0
 

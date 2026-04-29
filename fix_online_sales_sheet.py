@@ -1,7 +1,7 @@
 """
 일별매출 시트 정리:
-1. ON매출만 있고 날짜(일별거래액)가 없는 잘못 추가된 행 삭제
-2. 날짜 정규화 후 ON매출 재동기화
+1. ON거래액만 있고 날짜(OFF거래액)가 없는 잘못 추가된 행 삭제
+2. 날짜 정규화 후 ON거래액 재동기화
 """
 import json
 import os
@@ -48,7 +48,7 @@ def main():
     header     = all_values[0]
 
     date_col_idx = header.index("날짜")      if "날짜"      in header else 0
-    off_col_idx  = header.index("일별거래액") if "일별거래액" in header else 1
+    off_col_idx  = header.index("OFF거래액") if "OFF거래액" in header else 1
 
     # ── 1. CSV 로드 ──
     df = pd.read_csv(CSV_PATH)
@@ -59,14 +59,14 @@ def main():
         amt = int(row["pay_amt"]) if pd.notna(row["pay_amt"]) else 0
         sales[dt.strftime("%Y.%m.%d")] = amt
 
-    # ── 2. 유효한 행만 필터 + ON매출 병합 ──
-    new_rows = [["날짜", "일별거래액", "ON매출"]]
+    # ── 2. 유효한 행만 필터 + ON거래액 병합 ──
+    new_rows = [["날짜", "OFF거래액", "ON거래액"]]
     kept, removed = 0, 0
     for row in all_values[1:]:
         date_val = row[date_col_idx].strip() if date_col_idx < len(row) else ""
         off_val  = row[off_col_idx].strip()  if off_col_idx  < len(row) else ""
 
-        # 일별거래액이 없는 행은 제거
+        # OFF거래액이 없는 행은 제거
         if not off_val:
             removed += 1
             continue
@@ -81,7 +81,7 @@ def main():
     # ── 3. 시트 전체를 한 번에 교체 (API 호출 최소화) ──
     ws.clear()
     ws.update(new_rows, value_input_option="USER_ENTERED")
-    print(f"시트 재작성 완료: {kept}행, ON매출 {sum(1 for r in new_rows[1:] if r[2] != '')}일 채움")
+    print(f"시트 재작성 완료: {kept}행, ON거래액 {sum(1 for r in new_rows[1:] if r[2] != '')}일 채움")
 
 
 if __name__ == "__main__":

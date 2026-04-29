@@ -59,7 +59,7 @@ def upload_to_sheets(rows: list):
 
     existing = ws.get_all_values()
     if not existing:
-        ws.append_row(["날짜", "일별거래액"])
+        ws.append_row(["날짜", "OFF거래액"])
 
     for row in rows:
         ws.append_row(row)
