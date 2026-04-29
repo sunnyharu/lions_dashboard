@@ -118,17 +118,17 @@ async def run():
         await page.screenshot(path="debug_after_login.png", full_page=True)
 
         # 영업관리 클릭 → 서브메뉴 펼치기
-        await page.locator("text=영업관리").first.click()
+        await page.get_by_text("영업관리", exact=True).click()
         await page.wait_for_timeout(1000)
         await page.screenshot(path="debug_after_sales.png", full_page=True)
 
-        # 현황 클릭
-        await page.locator("text=현황").first.click()
+        # 현황 클릭 (정확히 "현황" 텍스트만)
+        await page.get_by_text("현황", exact=True).click()
         await page.wait_for_timeout(1000)
         await page.screenshot(path="debug_after_status.png", full_page=True)
 
         # 매장 일별판매집계표 클릭
-        await page.locator("text=매장 일별판매집계표").first.click()
+        await page.get_by_text("매장 일별판매집계표", exact=True).click()
         await page.wait_for_load_state("networkidle")
         print(f"페이지: {page.url}")
         await page.screenshot(path="debug_after_menu.png", full_page=True)
