@@ -40,7 +40,7 @@ CAFE_KEYWORDS = [
 ]
 
 MAX_DISPLAY  = 100   # 네이버 API 최대값
-TARGET_CAFE  = "사자사랑방"
+TARGET_CAFE  = "사자사랑방"   # 공백 포함 변형도 허용: "사자 사랑방"
 
 TRADE_KEYWORDS = ["판매", "팝니다", "팔아요", "삽니다", "구매", "거래", "양도", "나눔", "무료나눔", "중고", "원에"]
 
@@ -116,11 +116,17 @@ def process_news(items: list) -> list:
     return results
 
 
+def is_target_cafe(cafe_name: str) -> bool:
+    normalized = cafe_name.replace(" ", "")
+    return TARGET_CAFE.replace(" ", "") in normalized
+
+
 def process_cafe(items: list, keyword: str) -> list:
     results = []
     for item in items:
         cafe_name = strip_html(item.get("cafename", ""))
-        if TARGET_CAFE not in cafe_name:
+        if not is_target_cafe(cafe_name):
+            print(f"  [카페/{keyword}] 제외(카페명: {cafe_name!r})")
             continue
         raw_pub  = item.get("pubDate", "")
         pub_date = parse_pub_date(raw_pub)
