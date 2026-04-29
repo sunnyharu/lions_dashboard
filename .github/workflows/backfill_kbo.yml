@@ -1,0 +1,36 @@
+name: KBO 경기 결과 백필 (수동 실행)
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: '백필 시작일 (YYYY-MM-DD)'
+        required: true
+        default: '2026-04-01'
+      end_date:
+        description: '백필 종료일 (YYYY-MM-DD)'
+        required: true
+        default: '2026-04-27'
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: 백필 실행
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          BACKFILL_START: ${{ inputs.start_date }}
+          BACKFILL_END: ${{ inputs.end_date }}
+        run: python backfill_kbo_games.py
