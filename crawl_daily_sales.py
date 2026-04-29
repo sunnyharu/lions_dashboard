@@ -112,24 +112,23 @@ async def run():
         await page.wait_for_load_state("networkidle")
         print(f"로그인 후 URL: {page.url}")
 
-        # 2) 메뉴 탐색
+        # 2) 메뉴 탐색 (사이드바 클릭 방식)
         print("메뉴 이동 중...")
+        await page.wait_for_timeout(2000)  # 대시보드 완전 로드 대기
         await page.screenshot(path="debug_after_login.png", full_page=True)
 
-        # 영업관리 hover → 서브메뉴 펼치기
-        sales_menu = page.locator("text=영업관리").first
-        await sales_menu.hover()
-        await page.wait_for_timeout(800)
-        await page.screenshot(path="debug_after_hover.png", full_page=True)
+        # 영업관리 클릭 → 서브메뉴 펼치기
+        await page.locator("text=영업관리").first.click()
+        await page.wait_for_timeout(1000)
+        await page.screenshot(path="debug_after_sales.png", full_page=True)
 
-        # 현황 클릭 (영업관리 하위 메뉴 중 visible한 것)
-        status_menu = page.locator("text=현황").locator("visible=true").first
-        await status_menu.click()
-        await page.wait_for_timeout(800)
+        # 현황 클릭
+        await page.locator("text=현황").first.click()
+        await page.wait_for_timeout(1000)
         await page.screenshot(path="debug_after_status.png", full_page=True)
 
         # 매장 일별판매집계표 클릭
-        await page.locator("text=매장 일별판매집계표").locator("visible=true").first.click()
+        await page.locator("text=매장 일별판매집계표").first.click()
         await page.wait_for_load_state("networkidle")
         print(f"페이지: {page.url}")
         await page.screenshot(path="debug_after_menu.png", full_page=True)
