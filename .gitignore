@@ -1,0 +1,4 @@
+.env
+google_credentials.json
+debug_*.png
+__pycache__/
