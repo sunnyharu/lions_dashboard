@@ -72,11 +72,22 @@ def fetch_data():
                 "date":    date,
                 "source":  row.get("출처", ""),
                 "title":   row.get("제목", ""),
-                "summary": row.get("요약", ""),
+                "summary": row.get("AI요약", "") or row.get("요약", ""),
+                "views":   row.get("조회수", 0) or 0,
                 "link":    row.get("링크", ""),
             })
     except Exception:
-        pass  # 시트 없으면 빈 리스트
+        pass
+
+    # ── 카페트렌드 다이제스트 ─────────────────────────────
+    digest = ""
+    try:
+        ws_digest  = sh.worksheet("카페트렌드")
+        digest_raw = ws_digest.get_all_values()
+        if len(digest_raw) > 1:
+            digest = digest_raw[-1][1] if len(digest_raw[-1]) > 1 else ""
+    except Exception:
+        pass
 
     # ── 경기현황 ──────────────────────────────────────────
     ws_game  = sh.worksheet("경기현황")
@@ -111,10 +122,10 @@ def fetch_data():
             "result":    g["result"],
         })
 
-    return merged, news
+    return merged, news, digest
 
 
-def build_html(data: list, news: list) -> str:
+def build_html(data: list, news: list, digest: str) -> str:
     game_days = [r for r in data if r["result"]]
 
     def avg(lst): return int(sum(lst) / len(lst)) if lst else 0
@@ -203,9 +214,10 @@ def build_html(data: list, news: list) -> str:
             src_cls    = "badge-news" if n["source"] == "뉴스" else "badge-cafe"
             link_open  = f'<a href="{n["link"]}" target="_blank" rel="noopener">' if n["link"] else ""
             link_close = "</a>" if n["link"] else ""
-            news_blocks += f"""
+            views_html = f'<span class="news-views">조회 {int(n.get("views",0)):,}</span>' if n.get("views") else ""
+        news_blocks += f"""
             <div class="news-item">
-              <span class="news-src {src_cls}">{n["source"]}</span>
+              <span class="news-src {src_cls}">{n["source"]}</span>{views_html}
               {link_open}<span class="news-title">{n["title"]}</span>{link_close}
               {'<div class="news-desc">' + n["summary"] + '</div>' if n["summary"] else ""}
             </div>"""
@@ -215,7 +227,14 @@ def build_html(data: list, news: list) -> str:
         news_blocks = '<div class="news-empty">수집된 이슈 없음</div>'
         filter_buttons = ""
 
-    news_html = f'<div class="news-filter">{filter_buttons}</div>{news_blocks}'
+    digest_html = ""
+    if digest:
+        digest_html = f'''<div class="digest-box">
+          <div class="digest-label">최근 7일 카페 트렌드 다이제스트</div>
+          <div class="digest-text">{digest}</div>
+        </div>'''
+
+    news_html = f'{digest_html}<div class="news-filter">{filter_buttons}</div>{news_blocks}'
 
     # 테이블 행
     table_rows = ""
@@ -323,6 +342,13 @@ def build_html(data: list, news: list) -> str:
   .news-title:hover, a.news-title:hover {{ color: #002D72; text-decoration: underline; }}
   .news-desc {{ font-size: 11px; color: #888; margin-top: 2px; line-height: 1.4; }}
   .news-empty {{ font-size: 12px; color: #aaa; text-align: center; padding: 20px 0; }}
+  .digest-box {{
+    background: #f0f4ff; border-left: 3px solid #002D72;
+    border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;
+  }}
+  .digest-box .digest-label {{ font-size: 10px; font-weight: 700; color: #002D72; margin-bottom: 5px; }}
+  .digest-box .digest-text  {{ font-size: 12px; color: #333; line-height: 1.6; white-space: pre-line; }}
+  .news-views {{ font-size: 10px; color: #aaa; margin-left: 4px; }}
 
   .badge {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }}
   .badge.win    {{ background: #e8f5e9; color: #2e7d32; }}
@@ -525,11 +551,11 @@ function filterNews(date, btn) {{
 
 def main():
     print("데이터 조회 중...")
-    data, news = fetch_data()
+    data, news, digest = fetch_data()
     print(f"병합된 데이터: {len(data)}일 / 뉴스이슈: {len(news)}건")
 
     os.makedirs("dashboard", exist_ok=True)
-    html = build_html(data, news)
+    html = build_html(data, news, digest)
     with open("dashboard/index.html", "w", encoding="utf-8") as f:
         f.write(html)
     print("dashboard/index.html 생성 완료")
