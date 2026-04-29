@@ -167,28 +167,21 @@ def process_news(items: list) -> list:
     return results
 
 
-def is_target_cafe(cafe_name: str) -> bool:
-    normalized = cafe_name.replace(" ", "")
-    return TARGET_CAFE.replace(" ", "") in normalized
-
-
 def process_cafe(items: list, keyword: str) -> list:
     results = []
     for item in items:
-        cafe_name = strip_html(item.get("cafename", ""))
-        if not is_target_cafe(cafe_name):
-            print(f"  [카페/{keyword}] 제외(카페명: {cafe_name!r})")
+        link = item.get("link", "") or item.get("url", "")
+        if "lionsball" not in link:
             continue
         raw_pub  = item.get("pubDate", "")
         pub_date = parse_pub_date(raw_pub)
         date_str = yyyymmdd_to_str(pub_date) if pub_date in VALID_DATES else DATE_STR
         title    = strip_html(item.get("title", ""))
-        print(f"  [카페/{keyword}] {pub_date or '?'} | {title[:30]}")
         if is_trade_post(title):
-            print(f"    → 거래글 제외")
+            print(f"  [카페/{keyword}] 거래글 제외: {title[:30]}")
             continue
+        print(f"  [카페/{keyword}] {pub_date or '?'} | {title[:30]}")
         desc = strip_html(item.get("description", ""))[:100]
-        link = item.get("link", "") or item.get("url", "")
         results.append([date_str, "카페(사자사랑방)", title, desc, link])
     return results
 
