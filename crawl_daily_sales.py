@@ -1,15 +1,16 @@
 """
-플레이엠디 - 영업관리 > 현황 > 매장 일별판매집계표
-엑셀 다운로드 → 일별 거래액 파싱 → Google Sheets 적재
+플레이엠디 - 매장 일별판매집계표
+1. Playwright로 로그인 → 쿠키 추출
+2. requests로 API 직접 호출
+3. 어제 일별 거래액 → Google Sheets 적재
 """
 import asyncio
 import json
 import os
 import getpass
-import tempfile
+import requests
 from datetime import datetime, timedelta
 
-import pandas as pd
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 import gspread
@@ -24,18 +25,18 @@ USERNAME      = os.environ.get("PLAYMD_USER", "")
 PASSWORD      = os.environ.get("PLAYMD_PASS", "")
 
 # ── Google Sheets 설정 ────────────────────────────────
-SPREADSHEET_ID    = "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU"
-SHEET_NAME        = "일별매출"
-GOOGLE_CREDS_ENV  = os.environ.get("GOOGLE_CREDENTIALS", "")
+SPREADSHEET_ID   = "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU"
+SHEET_NAME       = "일별매출"
+GOOGLE_CREDS_ENV = os.environ.get("GOOGLE_CREDENTIALS", "")
 GOOGLE_CREDS_FILE = "google_credentials.json"
 
 # ── 조회 기준: 어제 ───────────────────────────────────
-yesterday  = datetime.today() - timedelta(days=1)
-YEAR       = str(yesterday.year)
-MONTH      = f"{yesterday.month:02d}"
-DAY        = f"{yesterday.day:02d}"
+yesterday = datetime.today() - timedelta(days=1)
+YYMM      = yesterday.strftime("%Y%m")   # 예: "202604"
+DAY_KEY   = f"D{yesterday.day}"          # 예: "D28"
 
-LOGIN_URL = "https://playmd.xmd.co.kr/"
+LOGIN_URL  = "https://playmd.xmd.co.kr/"
+API_URL    = "https://playmd.xmd.co.kr/api/xsal/xsal6020q_s03_peace"
 
 
 def get_gspread_client():
@@ -51,94 +52,29 @@ def get_gspread_client():
     return gspread.authorize(creds)
 
 
-def parse_excel_and_upload(filepath: str):
-    df = pd.read_excel(filepath, header=None)
-    print(f"엑셀 로드 완료: {df.shape}")
-    print(df.head(10).to_string())
-
-    # 헤더 행 찾기 (매장명 또는 날짜 숫자가 있는 행)
-    header_row = None
-    for i, row in df.iterrows():
-        row_str = " ".join(str(v) for v in row.values)
-        if "매장명" in row_str or "매장코드" in row_str:
-            header_row = i
-            break
-
-    if header_row is None:
-        print("헤더 행을 찾지 못했습니다. 엑셀 구조 확인 필요.")
-        return
-
-    df.columns = df.iloc[header_row]
-    df = df.iloc[header_row + 1:].reset_index(drop=True)
-    print(f"컬럼: {list(df.columns)}")
-
-    # 어제 날짜 컬럼 찾기 (예: "04", "4", "04(토)" 등)
-    day_col = None
-    for col in df.columns:
-        col_str = str(col).strip()
-        if col_str == DAY or col_str == str(int(DAY)) or col_str.startswith(DAY):
-            day_col = col
-            break
-
-    if day_col is None:
-        print(f"날짜 컬럼 '{DAY}' 를 찾지 못했습니다. 컬럼 목록: {list(df.columns)}")
-        return
-
-    print(f"어제({DAY}일) 컬럼: '{day_col}'")
-
-    # 소계/합계 행 또는 전체 데이터 추출
-    result_rows = []
-    date_str = f"{YEAR}-{MONTH}-{DAY}"
-
-    for _, row in df.iterrows():
-        store_name = str(row.get("매장명", "")).strip()
-        day_value  = row.get(day_col, "")
-        if store_name and store_name not in ["nan", ""]:
-            result_rows.append([date_str, store_name, day_value])
-
-    print(f"추출된 행: {len(result_rows)}")
-
-    # Google Sheets 적재
+def upload_to_sheets(rows: list):
     client = get_gspread_client()
-    sh     = client.open_by_key(SPREADSHEET_ID)
-    ws     = sh.worksheet(SHEET_NAME)
+    sh = client.open_by_key(SPREADSHEET_ID)
+    ws = sh.worksheet(SHEET_NAME)
 
     existing = ws.get_all_values()
     if not existing:
-        ws.append_row(["날짜", "매장명", "일별거래액"])
+        ws.append_row(["날짜", "매장코드", "매장명", "일별거래액"])
 
-    for row in result_rows:
+    for row in rows:
         ws.append_row(row)
 
-    print(f"Google Sheets 적재 완료: {len(result_rows)}행")
+    print(f"Google Sheets 적재 완료: {len(rows)}행")
 
 
-def js_click(text):
-    return f"""() => {{
-        const links = Array.from(document.querySelectorAll('a'));
-        const target = links.find(a => a.textContent.trim() === '{text}' && a.offsetParent !== null);
-        if (target) {{ target.click(); return true; }}
-        return false;
-    }}"""
-
-
-async def run():
+async def login_and_get_cookies() -> dict:
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page    = await browser.new_page()
 
-        # 1) 로그인
         print("로그인 중...")
         await page.goto(LOGIN_URL)
         await page.wait_for_load_state("networkidle")
-
-        inputs_info = await page.evaluate("""() => {
-            return Array.from(document.querySelectorAll('input')).map(el => ({
-                type: el.type, name: el.name, id: el.id,
-                placeholder: el.placeholder, visible: el.offsetParent !== null
-            }));
-        }""")
-        print(f"입력 필드 목록: {inputs_info}")
 
         await page.fill("#txt-tenantLoginId", COMPANY_USER)
         await page.fill("#pw-tenantPassword", COMPANY_PASS)
@@ -148,86 +84,69 @@ async def run():
         await page.locator("button:has-text('플레이엠디 로그인')").click()
         await page.wait_for_timeout(3000)
         await page.wait_for_load_state("networkidle")
-        print(f"로그인 후 URL: {page.url}")
+        print(f"로그인 완료: {page.url}")
 
-        # 2) 메뉴 클릭으로 iframe 로드
-        print("메뉴 이동 중...")
-        await page.wait_for_timeout(2000)
-
-        # 영업관리 클릭
-        await page.locator("a", has_text="영업관리").first.click()
-        await page.wait_for_timeout(800)
-
-        # 현황 클릭 - 영업관리 하위에서 visible한 것
-        await page.locator("a", has_text="현황").filter(visible=True).first.click()
-        await page.wait_for_timeout(800)
-
-        # 매장일별판매집계표 클릭
-        await page.locator("a", has_text="매장일별판매집계표").filter(visible=True).first.click()
-        await page.wait_for_timeout(3000)
-        await page.screenshot(path="debug_after_menu.png", full_page=True)
-
-        # iframe 찾기 (보고서가 iframe 안에 로드됨)
-        frames = page.frames
-        print(f"전체 frame 수: {len(frames)}")
-        for f in frames:
-            print(f"  frame url: {f.url}")
-
-        # xsal6020q iframe 찾기
-        report_frame = None
-        for f in frames:
-            if "xsal6020q" in f.url:
-                report_frame = f
-                break
-        if not report_frame:
-            # iframe이 아직 안 로드됐으면 대기 후 재시도
-            await page.wait_for_timeout(3000)
-            frames = page.frames
-            for f in frames:
-                if "xsal6020q" in f.url:
-                    report_frame = f
-                    break
-
-        if not report_frame:
-            print("보고서 frame을 찾지 못함. 사용 가능한 frames:")
-            for f in page.frames:
-                print(f"  {f.url}")
-            raise Exception("보고서 iframe 없음")
-
-        print(f"보고서 frame 확인: {report_frame.url}")
-        fl = page.frame_locator(f"iframe[src*='xsal6020q']")
-
-        # 3) 조회 클릭
-        print(f"조회 기준: {YEAR}년 {MONTH}월")
-        await fl.locator("button:has-text('조회'), a:has-text('조회')").first.click()
-        await page.wait_for_timeout(3000)
-        await page.screenshot(path="debug_after_search.png", full_page=True)
-
-        # 4) 엑셀 다운로드
-        print("엑셀 다운로드 중...")
-        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
-            tmp_path = tmp.name
-
-        async with page.expect_download(timeout=60000) as download_info:
-            await fl.locator("button:has-text('엑셀'), a:has-text('엑셀')").first.click()
-            # 확인 팝업 "예" 버튼 (메인 페이지 또는 iframe 내)
-            try:
-                await page.wait_for_selector("button:has-text('예'), a:has-text('예')", timeout=5000)
-                await page.locator("button:has-text('예'), a:has-text('예')").first.click()
-            except:
-                try:
-                    await fl.locator("button:has-text('예'), a:has-text('예')").first.click(timeout=3000)
-                except:
-                    pass
-
-        download = await download_info.value
-        await download.save_as(tmp_path)
-        print(f"다운로드 완료: {tmp_path}")
-
+        # 쿠키 추출
+        cookies = await page.context.cookies()
         await browser.close()
 
-        # 5) 파싱 & 적재
-        parse_excel_and_upload(tmp_path)
+        cookie_dict = {c["name"]: c["value"] for c in cookies}
+        print(f"추출된 쿠키: {list(cookie_dict.keys())}")
+        return cookie_dict
+
+
+def fetch_sales_data(cookies: dict) -> list:
+    payload = {
+        "AGT_DESC":     {},
+        "I_AGTSUB":     "",
+        "I_CAGTAREA":   "",
+        "I_CAGTCD":     "",
+        "I_CAGTCST":    "",
+        "I_COUPONYN":   "Y",
+        "I_DISCOUNTYN": "Y",
+        "I_GROUP":      "1",
+        "I_MILEYN":     "Y",
+        "I_PRIME":      "",
+        "I_SELNM":      "",
+        "I_TAG":        "1",
+        "I_USEYN":      "Y",
+        "I_VZ21":       "",
+        "I_YYMM":       YYMM,
+        "WHERE_DESC":   {}
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "Referer": "https://playmd.xmd.co.kr/xsal/xsal6020q/xsal6020q.html",
+        "Origin":  "https://playmd.xmd.co.kr",
+    }
+
+    resp = requests.post(API_URL, json=payload, headers=headers, cookies=cookies, timeout=30)
+    print(f"API 응답: {resp.status_code}")
+    data = resp.json()
+    print(f"데이터 행 수: {len(data)}")
+
+    # 어제 날짜 컬럼(DAY_KEY) 추출
+    date_str = yesterday.strftime("%Y-%m-%d")
+    rows = []
+    for item in data:
+        store_cd   = item.get("AGTCD", "")
+        store_nm   = item.get("AGTNM", "")
+        day_amount = item.get(DAY_KEY, "")
+        if store_cd:
+            rows.append([date_str, store_cd, store_nm, day_amount])
+
+    print(f"어제({DAY_KEY}) 데이터: {len(rows)}행")
+    return rows
+
+
+async def main():
+    cookies = await login_and_get_cookies()
+    rows    = fetch_sales_data(cookies)
+    if rows:
+        upload_to_sheets(rows)
+    else:
+        print("데이터 없음")
 
 
 if __name__ == "__main__":
@@ -239,4 +158,4 @@ if __name__ == "__main__":
         USERNAME = input("하위 ID: ")
     if not PASSWORD:
         PASSWORD = getpass.getpass("하위 PW: ")
-    asyncio.run(run())
+    asyncio.run(main())
