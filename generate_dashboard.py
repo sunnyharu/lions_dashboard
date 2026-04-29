@@ -116,15 +116,38 @@ def build_html(data: list) -> str:
     chart_on     = [r["on"]    for r in data]
     chart_total  = [r["total"] for r in data]
 
-    home_avg_off  = avg([r["off"]   for r in home_rows])
-    away_avg_off  = avg([r["off"]   for r in away_rows])
-    home_avg_on   = avg([r["on"]    for r in home_rows])
-    away_avg_on   = avg([r["on"]    for r in away_rows])
+    # 월별 홈/어웨이 평균
+    from collections import defaultdict
+    def month_label(d): return d[:4] + "." + d[5:7]  # "2026.04"
 
-    win_avg_off   = avg([r["off"]   for r in win_rows])
-    lose_avg_off  = avg([r["off"]   for r in lose_rows])
-    win_avg_on    = avg([r["on"]    for r in win_rows])
-    lose_avg_on   = avg([r["on"]    for r in lose_rows])
+    monthly_ha  = defaultdict(lambda: defaultdict(list))
+    monthly_res = defaultdict(lambda: defaultdict(list))
+    for r in game_days:
+        m = month_label(r["date"])
+        ha = r["home_away"]
+        rs = r["result"]
+        if ha:
+            if r["off"]: monthly_ha[m][ha + "_off"].append(r["off"])
+            if r["on"]:  monthly_ha[m][ha + "_on"].append(r["on"])
+        if rs in ["승", "패"]:
+            if r["off"]: monthly_res[m][rs + "_off"].append(r["off"])
+            if r["on"]:  monthly_res[m][rs + "_on"].append(r["on"])
+
+    ha_labels, ha_off_data, ha_on_data = [], [], []
+    for m in sorted(monthly_ha):
+        ml = m[5:].lstrip("0") + "월"
+        for ha in ["홈", "어웨이"]:
+            ha_labels.append(f"{ml} {ha}")
+            ha_off_data.append(avg(monthly_ha[m].get(ha + "_off", [])))
+            ha_on_data.append(avg(monthly_ha[m].get(ha + "_on",  [])))
+
+    res_labels, res_off_data, res_on_data = [], [], []
+    for m in sorted(monthly_res):
+        ml = m[5:].lstrip("0") + "월"
+        for rs in ["승", "패"]:
+            res_labels.append(f"{ml} {rs}")
+            res_off_data.append(avg(monthly_res[m].get(rs + "_off", [])))
+            res_on_data.append(avg(monthly_res[m].get(rs + "_on",  [])))
 
     # 테이블 행
     table_rows = ""
@@ -313,7 +336,7 @@ new Chart(document.getElementById('trendChart'), {{
   }}
 }});
 
-// 바 상단 수치 표시 인라인 플러그인
+// 바 상단 수치 (백만 단위 반올림) 인라인 플러그인
 const topLabelPlugin = {{
   id: 'topLabel',
   afterDatasetsDraw(chart) {{
@@ -326,52 +349,54 @@ const topLabelPlugin = {{
         ctx.font = 'bold 11px sans-serif';
         ctx.fillStyle = '#444';
         ctx.textAlign = 'center';
-        ctx.fillText((v / 1e4).toFixed(0) + '만', bar.x, bar.y - 5);
+        ctx.fillText(Math.round(v / 1e6) + '백만', bar.x, bar.y - 5);
         ctx.restore();
       }});
     }});
   }}
 }};
 
-const sideOpts = (vals) => ({{
+const sideOpts = () => ({{
   responsive: true,
   maintainAspectRatio: false,
   plugins: {{ legend: {{ position: 'top' }} }},
   scales: {{
     y: {{
-      min: Math.floor(Math.min(...vals) * 0.85 / 1e5) * 1e5,
-      ticks: {{ callback: v => (v/1e4).toFixed(0)+'만' }}
+      min: 0,
+      ticks: {{ display: false }},
+      grid: {{ display: false }},
+      border: {{ display: false }},
     }}
   }},
-  layout: {{ padding: {{ top: 20 }} }}
+  layout: {{ padding: {{ top: 24, bottom: 0 }} }}
 }});
 
-// ── 홈/어웨이 ──
+// ── 홈/어웨이 월별 ──
 new Chart(document.getElementById('haChart'), {{
   type: 'bar',
   plugins: [topLabelPlugin],
   data: {{
-    labels: ['홈', '어웨이'],
+    labels: {json.dumps(ha_labels)},
     datasets: [
-      {{ label: 'OFF거래액', data: [{home_avg_off}, {away_avg_off}], backgroundColor: alpha(OFF, .8) }},
-      {{ label: 'ON거래액',  data: [{home_avg_on},  {away_avg_on}],  backgroundColor: alpha(ON,  .8) }},
+      {{ label: 'OFF거래액', data: {json.dumps(ha_off_data)}, backgroundColor: alpha(OFF, .8) }},
+      {{ label: 'ON거래액',  data: {json.dumps(ha_on_data)},  backgroundColor: alpha(ON,  .8) }},
     ]
   }},
-  options: sideOpts([{home_avg_off}, {away_avg_off}, {home_avg_on}, {away_avg_on}]),
+  options: sideOpts(),
 }});
 
-// ── 결과별 ──
+// ── 결과별 월별 ──
 new Chart(document.getElementById('resultChart'), {{
   type: 'bar',
   plugins: [topLabelPlugin],
   data: {{
-    labels: ['승', '패'],
+    labels: {json.dumps(res_labels)},
     datasets: [
-      {{ label: 'OFF거래액', data: [{win_avg_off}, {lose_avg_off}], backgroundColor: alpha(OFF, .8) }},
-      {{ label: 'ON거래액',  data: [{win_avg_on},  {lose_avg_on}],  backgroundColor: alpha(ON,  .8) }},
+      {{ label: 'OFF거래액', data: {json.dumps(res_off_data)}, backgroundColor: alpha(OFF, .8) }},
+      {{ label: 'ON거래액',  data: {json.dumps(res_on_data)},  backgroundColor: alpha(ON,  .8) }},
     ]
   }},
-  options: sideOpts([{win_avg_off}, {lose_avg_off}, {win_avg_on}, {lose_avg_on}]),
+  options: sideOpts(),
 }});
 </script>
 </body>
