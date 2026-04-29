@@ -280,19 +280,28 @@ const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
 
 // ── 추이 차트 ──
 new Chart(document.getElementById('trendChart'), {{
-  type: 'bar',
+  type: 'line',
   data: {{
     labels: {json.dumps(chart_dates)},
     datasets: [
-      {{ label: 'OFF거래액', data: {json.dumps(chart_off)},  backgroundColor: alpha(OFF, .75), stack: 'a' }},
-      {{ label: 'ON거래액',  data: {json.dumps(chart_on)},   backgroundColor: alpha(ON,  .75), stack: 'a' }},
+      {{
+        label: 'OFF거래액', data: {json.dumps(chart_off)},
+        borderColor: OFF, backgroundColor: alpha(OFF, .15),
+        borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
+      }},
+      {{
+        label: 'ON거래액', data: {json.dumps(chart_on)},
+        borderColor: ON, backgroundColor: alpha(ON, .1),
+        borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
+      }},
     ]
   }},
   options: {{
-    responsive: true, plugins: {{ legend: {{ position: 'top' }} }},
+    responsive: true,
+    plugins: {{ legend: {{ position: 'top' }} }},
     scales: {{
-      x: {{ stacked: true, ticks: {{ maxTicksLimit: 10 }} }},
-      y: {{ stacked: true, ticks: {{ callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() }} }}
+      x: {{ ticks: {{ maxTicksLimit: 12 }} }},
+      y: {{ ticks: {{ callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() }} }}
     }}
   }}
 }});
