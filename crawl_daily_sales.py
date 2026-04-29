@@ -1,13 +1,15 @@
 """
 플레이엠디 - 영업관리 > 현황 > 매장 일별판매집계표
-→ Google Sheets 일별매출 탭에 자동 적재
+엑셀 다운로드 → 일별 거래액 파싱 → Google Sheets 적재
 """
 import asyncio
 import json
 import os
 import getpass
+import tempfile
 from datetime import datetime, timedelta
 
+import pandas as pd
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 import gspread
@@ -22,20 +24,18 @@ USERNAME      = os.environ.get("PLAYMD_USER", "")
 PASSWORD      = os.environ.get("PLAYMD_PASS", "")
 
 # ── Google Sheets 설정 ────────────────────────────────
-SPREADSHEET_ID = "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU"
-SHEET_NAME     = "일별매출"
-# GitHub Actions: 환경변수 GOOGLE_CREDENTIALS (JSON 문자열)
-# 로컬: google_credentials.json 파일
+SPREADSHEET_ID    = "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU"
+SHEET_NAME        = "일별매출"
 GOOGLE_CREDS_ENV  = os.environ.get("GOOGLE_CREDENTIALS", "")
 GOOGLE_CREDS_FILE = "google_credentials.json"
 
-# ── 조회 날짜 (기본: 어제) ────────────────────────────
+# ── 조회 기준: 어제 ───────────────────────────────────
 yesterday  = datetime.today() - timedelta(days=1)
-START_DATE = yesterday.strftime("%Y-%m-%d")
-END_DATE   = yesterday.strftime("%Y-%m-%d")
+YEAR       = str(yesterday.year)
+MONTH      = f"{yesterday.month:02d}"
+DAY        = f"{yesterday.day:02d}"
 
 LOGIN_URL = "https://playmd.xmd.co.kr/"
-# ──────────────────────────────────────────────────────
 
 
 def get_gspread_client():
@@ -51,21 +51,75 @@ def get_gspread_client():
     return gspread.authorize(creds)
 
 
-def append_to_sheet(headers, rows):
+def parse_excel_and_upload(filepath: str):
+    df = pd.read_excel(filepath, header=None)
+    print(f"엑셀 로드 완료: {df.shape}")
+    print(df.head(10).to_string())
+
+    # 헤더 행 찾기 (매장명 또는 날짜 숫자가 있는 행)
+    header_row = None
+    for i, row in df.iterrows():
+        row_str = " ".join(str(v) for v in row.values)
+        if "매장명" in row_str or "매장코드" in row_str:
+            header_row = i
+            break
+
+    if header_row is None:
+        print("헤더 행을 찾지 못했습니다. 엑셀 구조 확인 필요.")
+        return
+
+    df.columns = df.iloc[header_row]
+    df = df.iloc[header_row + 1:].reset_index(drop=True)
+    print(f"컬럼: {list(df.columns)}")
+
+    # 어제 날짜 컬럼 찾기 (예: "04", "4", "04(토)" 등)
+    day_col = None
+    for col in df.columns:
+        col_str = str(col).strip()
+        if col_str == DAY or col_str == str(int(DAY)) or col_str.startswith(DAY):
+            day_col = col
+            break
+
+    if day_col is None:
+        print(f"날짜 컬럼 '{DAY}' 를 찾지 못했습니다. 컬럼 목록: {list(df.columns)}")
+        return
+
+    print(f"어제({DAY}일) 컬럼: '{day_col}'")
+
+    # 소계/합계 행 또는 전체 데이터 추출
+    result_rows = []
+    date_str = f"{YEAR}-{MONTH}-{DAY}"
+
+    for _, row in df.iterrows():
+        store_name = str(row.get("매장명", "")).strip()
+        day_value  = row.get(day_col, "")
+        if store_name and store_name not in ["nan", ""]:
+            result_rows.append([date_str, store_name, day_value])
+
+    print(f"추출된 행: {len(result_rows)}")
+
+    # Google Sheets 적재
     client = get_gspread_client()
     sh     = client.open_by_key(SPREADSHEET_ID)
     ws     = sh.worksheet(SHEET_NAME)
 
     existing = ws.get_all_values()
-
-    # 헤더가 없으면 첫 행에 추가
     if not existing:
-        ws.append_row(["수집일자"] + headers)
+        ws.append_row(["날짜", "매장명", "일별거래액"])
 
-    for row in rows:
-        ws.append_row([START_DATE] + row)
+    for row in result_rows:
+        ws.append_row(row)
 
-    print(f"Google Sheets 적재 완료: {len(rows)}행")
+    print(f"Google Sheets 적재 완료: {len(result_rows)}행")
+
+
+def js_click(text):
+    return f"""() => {{
+        const links = Array.from(document.querySelectorAll('a'));
+        const target = links.find(a => a.textContent.trim() === '{text}' && a.offsetParent !== null);
+        if (target) {{ target.click(); return true; }}
+        return false;
+    }}"""
 
 
 async def run():
@@ -77,9 +131,7 @@ async def run():
         print("로그인 중...")
         await page.goto(LOGIN_URL)
         await page.wait_for_load_state("networkidle")
-        await page.screenshot(path="debug_before_login.png")
 
-        # 폼 구조 출력 (디버그용)
         inputs_info = await page.evaluate("""() => {
             return Array.from(document.querySelectorAll('input')).map(el => ({
                 type: el.type, name: el.name, id: el.id,
@@ -88,106 +140,65 @@ async def run():
         }""")
         print(f"입력 필드 목록: {inputs_info}")
 
-        # 정확한 필드 ID로 입력
         await page.fill("#txt-tenantLoginId", COMPANY_USER)
         await page.fill("#pw-tenantPassword", COMPANY_PASS)
         await page.fill("#txt-userLoginId",   USERNAME)
         await page.fill("#txt-userPassword",  PASSWORD)
 
-        await page.screenshot(path="debug_filled.png")
-
-        # 로그인 버튼 클릭 (텍스트 정확히 매칭)
         await page.locator("button:has-text('플레이엠디 로그인')").click()
         await page.wait_for_timeout(3000)
-        await page.screenshot(path="debug_after_login.png")
-
-        # 에러 메시지 확인
-        error_msg = await page.evaluate("""() => {
-            const el = document.querySelector('.error, .alert, [class*="error"], [class*="alert"], [class*="msg"]');
-            return el ? el.innerText : '';
-        }""")
-        if error_msg:
-            print(f"로그인 에러 메시지: {error_msg}")
-
         await page.wait_for_load_state("networkidle")
         print(f"로그인 후 URL: {page.url}")
 
-        # 2) 메뉴 탐색 (사이드바 클릭 방식)
+        # 2) 메뉴 탐색
         print("메뉴 이동 중...")
-        await page.wait_for_timeout(2000)  # 대시보드 완전 로드 대기
-        await page.screenshot(path="debug_after_login.png", full_page=True)
+        await page.wait_for_timeout(2000)
 
-        def js_click(text):
-            return f"""() => {{
-                const links = Array.from(document.querySelectorAll('a'));
-                const target = links.find(a => a.textContent.trim() === '{text}' && a.offsetParent !== null);
-                if (target) {{ target.click(); return true; }}
-                return false;
-            }}"""
-
-        # 영업관리 클릭 → 서브메뉴 펼치기
         await page.evaluate(js_click("영업관리"))
         await page.wait_for_timeout(1000)
-        await page.screenshot(path="debug_after_sales.png", full_page=True)
 
-        # 현황 클릭
         await page.evaluate(js_click("현황"))
         await page.wait_for_timeout(1000)
-        await page.screenshot(path="debug_after_status.png", full_page=True)
 
-        # 매장 일별판매집계표 클릭
-        await page.evaluate(js_click("매장 일별판매집계표"))
+        await page.evaluate(js_click("매장일별판매집계표"))
         await page.wait_for_load_state("networkidle")
+        await page.wait_for_timeout(2000)
         print(f"페이지: {page.url}")
         await page.screenshot(path="debug_after_menu.png", full_page=True)
 
-        # 3) 날짜 필터
-        print(f"기간: {START_DATE} ~ {END_DATE}")
+        # 3) 년월 설정
+        print(f"기간 설정: {YEAR}년 {MONTH}월")
         try:
-            start_inputs = page.locator("input[type='date'], input[placeholder*='시작'], input[id*='start'], input[name*='start']")
-            end_inputs   = page.locator("input[type='date'], input[placeholder*='종료'], input[id*='end'], input[name*='end']")
+            await page.select_option("select", value=YEAR, index=0)
+        except:
+            pass
+        try:
+            await page.select_option("select >> nth=1", value=MONTH)
+        except:
+            pass
 
-            if await start_inputs.count() > 0:
-                await start_inputs.first.fill(START_DATE)
-            if await end_inputs.count() > 1:
-                await end_inputs.nth(1).fill(END_DATE)
-            elif await end_inputs.count() > 0:
-                await end_inputs.first.fill(END_DATE)
+        # 조회 클릭
+        await page.get_by_text("조회", exact=True).click()
+        await page.wait_for_load_state("networkidle")
+        await page.wait_for_timeout(2000)
+        await page.screenshot(path="debug_after_search.png", full_page=True)
 
-            await page.click("button:has-text('조회'), button:has-text('검색'), input[value='조회']")
-            await page.wait_for_load_state("networkidle")
-        except Exception as e:
-            print(f"날짜 필터 오류: {e}")
-            await page.screenshot(path="debug_filter.png", full_page=True)
+        # 4) 엑셀 다운로드
+        print("엑셀 다운로드 중...")
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+            tmp_path = tmp.name
 
-        await page.screenshot(path="debug_table.png", full_page=True)
+        async with page.expect_download() as download_info:
+            await page.get_by_text("엑셀", exact=True).click()
 
-        # 4) 테이블 추출
-        print("데이터 추출 중...")
-        headers = await page.locator("table thead th, table thead td").all_text_contents()
-        if not headers:
-            headers = await page.locator("table tr:first-child th").all_text_contents()
-        headers = [h.strip() for h in headers if h.strip()]
-        print(f"헤더: {headers}")
-
-        tr_elements = page.locator("table tbody tr")
-        count = await tr_elements.count()
-        print(f"행 수: {count}")
-
-        rows = []
-        for i in range(count):
-            cells = await tr_elements.nth(i).locator("td").all_text_contents()
-            cells = [c.strip() for c in cells]
-            if any(cells):
-                rows.append(cells)
+        download = await download_info.value
+        await download.save_as(tmp_path)
+        print(f"다운로드 완료: {tmp_path}")
 
         await browser.close()
 
-        # 5) Google Sheets 적재
-        if rows:
-            append_to_sheet(headers, rows)
-        else:
-            print("데이터 없음. debug_table.png 확인 필요.")
+        # 5) 파싱 & 적재
+        parse_excel_and_upload(tmp_path)
 
 
 if __name__ == "__main__":
