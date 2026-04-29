@@ -90,26 +90,41 @@ def is_trade_post(title: str, cafe_name: str = "") -> bool:
     return any(kw in title for kw in TRADE_KEYWORDS)
 
 
+VALID_DATES = {DATE_YYYYMMDD, now_kst.strftime("%Y%m%d")}  # 어제 + 오늘 허용
+
+
+def yyyymmdd_to_str(d: str) -> str:
+    """'20260428' → '2026.04.28'"""
+    try:
+        return f"{d[:4]}.{d[4:6]}.{d[6:8]}"
+    except Exception:
+        return DATE_STR
+
+
 def process_news(items: list) -> list:
-    """뉴스 아이템 → [날짜, 출처, 제목, 요약, 링크] 리스트 (어제 날짜만)"""
+    """뉴스 아이템 → [날짜, 출처, 제목, 요약, 링크] 리스트 (어제/오늘)"""
     results = []
     for item in items:
-        pub_date = parse_pub_date(item.get("pubDate", ""))
-        if pub_date != DATE_YYYYMMDD:
+        raw_pub  = item.get("pubDate", "")
+        pub_date = parse_pub_date(raw_pub)
+        print(f"  [뉴스] pubDate={raw_pub!r} → {pub_date}")
+        if pub_date not in VALID_DATES:
             continue
         title = strip_html(item.get("title", ""))
         desc  = strip_html(item.get("description", ""))[:100]
         link  = item.get("link", "") or item.get("originallink", "")
-        results.append([DATE_STR, "뉴스", title, desc, link])
+        results.append([yyyymmdd_to_str(pub_date), "뉴스", title, desc, link])
     return results
 
 
 def process_cafe(items: list) -> list:
-    """카페 아이템 → [날짜, 출처, 제목, 요약, 링크] 리스트 (어제 날짜 + 거래글 제외)"""
+    """카페 아이템 → [날짜, 출처, 제목, 요약, 링크] 리스트 (어제/오늘 + 거래글 제외)"""
     results = []
     for item in items:
-        pub_date  = parse_pub_date(item.get("pubDate", ""))
-        if pub_date != DATE_YYYYMMDD:
+        raw_pub   = item.get("pubDate", "")
+        pub_date  = parse_pub_date(raw_pub)
+        print(f"  [카페] pubDate={raw_pub!r} → {pub_date}")
+        if pub_date not in VALID_DATES:
             continue
         title     = strip_html(item.get("title", ""))
         cafe_name = strip_html(item.get("cafename", ""))
@@ -118,7 +133,7 @@ def process_cafe(items: list) -> list:
             continue
         desc = strip_html(item.get("description", ""))[:100]
         link = item.get("link", "") or item.get("url", "")
-        results.append([DATE_STR, f"카페({cafe_name})" if cafe_name else "카페", title, desc, link])
+        results.append([yyyymmdd_to_str(pub_date), f"카페({cafe_name})" if cafe_name else "카페", title, desc, link])
     return results
 
 
