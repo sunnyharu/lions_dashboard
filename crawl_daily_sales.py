@@ -197,6 +197,12 @@ async def run():
 
         async with page.expect_download(timeout=60000) as download_info:
             await page.locator("button:has-text('엑셀'), a:has-text('엑셀')").first.click()
+            # 확인 팝업 "예" 버튼 처리
+            try:
+                await page.wait_for_selector("button:has-text('예'), a:has-text('예')", timeout=5000)
+                await page.locator("button:has-text('예'), a:has-text('예')").first.click()
+            except:
+                pass
 
         download = await download_info.value
         await download.save_as(tmp_path)
