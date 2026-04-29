@@ -116,13 +116,20 @@ def fetch_sales_data(cookies: dict) -> list:
     }
 
     headers = {
-        "Content-Type": "application/json",
-        "Referer": "https://playmd.xmd.co.kr/xsal/xsal6020q/xsal6020q.html",
-        "Origin":  "https://playmd.xmd.co.kr",
+        "Accept":          "application/json, text/plain, */*",
+        "Content-Type":    "application/json;charset=UTF-8",
+        "Origin":          "https://playmd.xmd.co.kr",
+        "Referer":         "https://playmd.xmd.co.kr/xsal/xsal6020q/xsal6020q.html",
+        "X-Current-Url":   "https://playmd.xmd.co.kr/xsal/xsal6020q/xsal6020q.html",
+        "Xmd-Session":     cookies.get("xmd_session", ""),
+        "User-Agent":      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
     }
 
     resp = requests.post(API_URL, json=payload, headers=headers, cookies=cookies, timeout=30)
     print(f"API 응답: {resp.status_code}")
+    if resp.status_code != 200:
+        print(f"오류 내용: {resp.text[:500]}")
+        raise Exception(f"API 호출 실패: {resp.status_code}")
     data = resp.json()
     print(f"데이터 행 수: {len(data)}")
 
