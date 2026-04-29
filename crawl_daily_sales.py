@@ -162,67 +162,30 @@ async def run():
                 return false;
             }}"""
 
-        await page.evaluate(js_click("영업관리"))
-        await page.wait_for_timeout(1000)
-
-        await page.evaluate(js_click("현황"))
-        await page.wait_for_timeout(1000)
-
-        # 메뉴 링크 목록 추출 → 매장일별판매집계표 href 찾기
-        menu_links = await page.evaluate("""() => {
-            return Array.from(document.querySelectorAll('a[href]'))
-                .filter(a => a.href && !a.href.endsWith('#'))
-                .map(a => ({text: a.textContent.trim(), href: a.href}));
-        }""")
-        print(f"메뉴 링크 목록: {menu_links}")
-
-        target_url = None
-        for link in menu_links:
-            if "매장일별판매집계표" in link["text"] and "즐겨찾기" not in link.get("text", ""):
-                target_url = link["href"]
-                break
-        if not target_url:
-            for link in menu_links:
-                if "매장일별판매집계표" in link["text"]:
-                    target_url = link["href"]
-                    break
-
-        print(f"이동 URL: {target_url}")
-        if target_url:
-            await page.goto(target_url)
-        else:
-            # href 없으면 Playwright 네이티브 클릭 시도
-            await page.locator("a", has_text="매장일별판매집계표").first.click(force=True)
-
+        # 2) 직접 URL 이동 (URL 확인 완료)
+        TARGET_URL = "https://playmd.xmd.co.kr/xsal/xsal6020q/xsal6020q.html"
+        print(f"페이지 이동: {TARGET_URL}")
+        await page.goto(TARGET_URL)
         try:
             await page.wait_for_selector("text=판매년월", timeout=15000)
         except:
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(5000)
         await page.screenshot(path="debug_after_menu.png", full_page=True)
-        print("매장일별판매집계표 페이지 로드 완료")
+        print("매장일별판매집계표 로드 완료")
 
-        # 3) 년월 설정
-        print(f"기간 설정: {YEAR}년 {MONTH}월")
-        selects = page.locator("select")
-        count = await selects.count()
-        print(f"select 요소 수: {count}")
-        if count >= 2:
-            await selects.nth(0).select_option(YEAR)
-            await selects.nth(1).select_option(MONTH)
-        await page.wait_for_timeout(500)
-
-        # 조회 클릭 (버튼 또는 링크)
-        await page.evaluate(js_click_contains("조회"))
+        # 3) 조회 버튼 네이티브 클릭 (당월 기본값 사용)
+        print(f"조회 기준: {YEAR}년 {MONTH}월")
+        await page.locator("button:has-text('조회'), a:has-text('조회')").first.click()
         await page.wait_for_timeout(3000)
         await page.screenshot(path="debug_after_search.png", full_page=True)
 
-        # 4) 엑셀 다운로드
+        # 4) 엑셀 다운로드 (네이티브 클릭)
         print("엑셀 다운로드 중...")
         with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
             tmp_path = tmp.name
 
-        async with page.expect_download() as download_info:
-            await page.evaluate(js_click_contains("엑셀"))
+        async with page.expect_download(timeout=60000) as download_info:
+            await page.locator("button:has-text('엑셀'), a:has-text('엑셀')").first.click()
 
         download = await download_info.value
         await download.save_as(tmp_path)
