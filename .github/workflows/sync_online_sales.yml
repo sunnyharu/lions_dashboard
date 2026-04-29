@@ -3,7 +3,7 @@ name: 온라인 매출 동기화
 on:
   push:
     paths:
-      - 'data/online_sales.xlsx'   # 파일 push 시 자동 실행
+      - 'data/online_sales.csv'   # 파일 push 시 자동 실행
 
 jobs:
   sync:

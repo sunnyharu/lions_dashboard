@@ -16,12 +16,12 @@ SPREADSHEET_ID    = "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU"
 SHEET_NAME        = "일별매출"
 GOOGLE_CREDS_ENV  = os.environ.get("GOOGLE_CREDENTIALS", "")
 GOOGLE_CREDS_FILE = "google_credentials.json"
-EXCEL_PATH        = "data/online_sales.xlsx"
+CSV_PATH          = "data/online_sales.csv"
 
 
 def load_excel() -> dict:
-    """Excel → {날짜문자열: 금액} 딕셔너리 반환"""
-    df = pd.read_excel(EXCEL_PATH)
+    """CSV → {날짜문자열: 금액} 딕셔너리 반환"""
+    df = pd.read_csv(CSV_PATH)
     df.columns = df.columns.str.strip()
 
     result = {}
