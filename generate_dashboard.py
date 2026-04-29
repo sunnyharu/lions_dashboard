@@ -133,19 +133,22 @@ def build_html(data: list) -> str:
             if r["off"]: monthly_res[m][rs + "_off"].append(r["off"])
             if r["on"]:  monthly_res[m][rs + "_on"].append(r["on"])
 
+    ha_months  = sorted(monthly_ha.keys())
+    res_months = sorted(monthly_res.keys())
+
     ha_labels, ha_off_data, ha_on_data = [], [], []
-    for m in sorted(monthly_ha):
-        ml = m[5:].lstrip("0") + "월"
-        for ha in ["홈", "어웨이"]:
-            ha_labels.append(f"{ml} {ha}")
+    for ha in ["홈", "어웨이"]:
+        for m in ha_months:
+            ml = m[5:].lstrip("0") + "월"
+            ha_labels.append(f"{ha} {ml}")
             ha_off_data.append(avg(monthly_ha[m].get(ha + "_off", [])))
             ha_on_data.append(avg(monthly_ha[m].get(ha + "_on",  [])))
 
     res_labels, res_off_data, res_on_data = [], [], []
-    for m in sorted(monthly_res):
-        ml = m[5:].lstrip("0") + "월"
-        for rs in ["승", "패"]:
-            res_labels.append(f"{ml} {rs}")
+    for rs in ["승", "패"]:
+        for m in res_months:
+            ml = m[5:].lstrip("0") + "월"
+            res_labels.append(f"{rs} {ml}")
             res_off_data.append(avg(monthly_res[m].get(rs + "_off", [])))
             res_on_data.append(avg(monthly_res[m].get(rs + "_on",  [])))
 
@@ -359,7 +362,7 @@ const topLabelPlugin = {{
 const sideOpts = () => ({{
   responsive: true,
   maintainAspectRatio: false,
-  plugins: {{ legend: {{ position: 'top' }} }},
+  plugins: {{ legend: {{ position: 'bottom' }} }},
   scales: {{
     y: {{
       min: 0,
