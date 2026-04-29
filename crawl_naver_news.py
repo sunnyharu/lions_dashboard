@@ -118,14 +118,16 @@ def process_news(items: list) -> list:
 
 
 def process_cafe(items: list) -> list:
-    """카페 아이템 → [날짜, 출처, 제목, 요약, 링크] 리스트 (어제/오늘 + 거래글 제외)"""
+    """카페 아이템 → [날짜, 출처, 제목, 요약, 링크] 리스트 (거래글 제외)"""
+    if items:
+        print(f"  [카페 raw 첫 항목] {items[0]}")
     results = []
     for item in items:
-        raw_pub   = item.get("pubDate", "")
-        pub_date  = parse_pub_date(raw_pub)
-        print(f"  [카페] pubDate={raw_pub!r} → {pub_date}")
-        if pub_date not in VALID_DATES:
-            continue
+        raw_pub  = item.get("pubDate", "")
+        pub_date = parse_pub_date(raw_pub)
+        print(f"  [카페] pubDate={raw_pub!r} → {pub_date or '파싱실패'}")
+        # pubDate 파싱 실패 시 어제 날짜로 처리
+        date_str = yyyymmdd_to_str(pub_date) if pub_date in VALID_DATES else DATE_STR
         title     = strip_html(item.get("title", ""))
         cafe_name = strip_html(item.get("cafename", ""))
         if is_trade_post(title, cafe_name):
@@ -133,7 +135,7 @@ def process_cafe(items: list) -> list:
             continue
         desc = strip_html(item.get("description", ""))[:100]
         link = item.get("link", "") or item.get("url", "")
-        results.append([yyyymmdd_to_str(pub_date), f"카페({cafe_name})" if cafe_name else "카페", title, desc, link])
+        results.append([date_str, f"카페({cafe_name})" if cafe_name else "카페", title, desc, link])
     return results
 
 
