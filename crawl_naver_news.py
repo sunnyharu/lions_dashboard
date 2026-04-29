@@ -178,16 +178,18 @@ def upload(ws, rows: list):
         if len(r) > 2
     }
 
-    inserted = 0
+    new_rows = []
     for row in rows:
         key = (row[0], row[2])
         if key in existing_keys:
             continue
-        ws.append_row(row)
+        new_rows.append(row)
         existing_keys.add(key)
-        inserted += 1
 
-    print(f"뉴스이슈 적재: {inserted}건 삽입 (중복 {len(rows)-inserted}건 스킵)")
+    if new_rows:
+        ws.append_rows(new_rows, value_input_option="USER_ENTERED")
+
+    print(f"뉴스이슈 적재: {len(new_rows)}건 삽입 (중복 {len(rows)-len(new_rows)}건 스킵)")
 
 
 def main():
