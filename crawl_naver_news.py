@@ -38,10 +38,10 @@ CAFE_KEYWORDS = [
     "볼캡", "자켓", "키링", "타월", "머플러", "어린이회원",
 ]
 
-MAX_DISPLAY = 10
+MAX_DISPLAY  = 100   # 네이버 API 최대값
+TARGET_CAFE  = "사자사랑방"
 
 TRADE_KEYWORDS = ["판매", "팝니다", "팔아요", "삽니다", "구매", "거래", "양도", "나눔", "무료나눔", "중고", "원에"]
-TRADE_CAFES    = ["중고나라", "번개장터", "당근마켓", "클리앙중고장터", "중고장터"]
 
 
 def get_gspread_client():
@@ -93,9 +93,7 @@ def naver_search(endpoint: str, query: str, display: int = MAX_DISPLAY) -> list:
     return resp.json().get("items", [])
 
 
-def is_trade_post(title: str, cafe_name: str = "") -> bool:
-    if any(tc in cafe_name for tc in TRADE_CAFES):
-        return True
+def is_trade_post(title: str) -> bool:
     return any(kw in title for kw in TRADE_KEYWORDS)
 
 
@@ -117,19 +115,20 @@ def process_news(items: list) -> list:
 def process_cafe(items: list, keyword: str) -> list:
     results = []
     for item in items:
+        cafe_name = strip_html(item.get("cafename", ""))
+        if TARGET_CAFE not in cafe_name:
+            continue
         raw_pub  = item.get("pubDate", "")
         pub_date = parse_pub_date(raw_pub)
-        # pubDate 파싱 실패 시 어제 날짜로 fallback
-        date_str  = yyyymmdd_to_str(pub_date) if pub_date in VALID_DATES else DATE_STR
-        title     = strip_html(item.get("title", ""))
-        cafe_name = strip_html(item.get("cafename", ""))
-        print(f"  [카페/{keyword}] {pub_date or '?'} | [{cafe_name}] {title[:25]}")
-        if is_trade_post(title, cafe_name):
+        date_str = yyyymmdd_to_str(pub_date) if pub_date in VALID_DATES else DATE_STR
+        title    = strip_html(item.get("title", ""))
+        print(f"  [카페/{keyword}] {pub_date or '?'} | {title[:30]}")
+        if is_trade_post(title):
             print(f"    → 거래글 제외")
             continue
         desc = strip_html(item.get("description", ""))[:100]
         link = item.get("link", "") or item.get("url", "")
-        results.append([date_str, f"카페({cafe_name})" if cafe_name else "카페", title, desc, link])
+        results.append([date_str, "카페(사자사랑방)", title, desc, link])
     return results
 
 
