@@ -26,6 +26,8 @@ jobs:
 
       - name: 크롤링 실행
         env:
+          PLAYMD_COMPANY_USER: ${{ secrets.PLAYMD_COMPANY_USER }}
+          PLAYMD_COMPANY_PASS: ${{ secrets.PLAYMD_COMPANY_PASS }}
           PLAYMD_USER: ${{ secrets.PLAYMD_USER }}
           PLAYMD_PASS: ${{ secrets.PLAYMD_PASS }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
