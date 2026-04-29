@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>삼성 라이온즈 매출 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; color: #1a1a2e; }
@@ -68,7 +69,7 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.04.29 05:38</span>
+  <span class="updated">최종 업데이트: 2026.04.29 05:42</span>
 </div>
 
 <div class="kpi-row">
@@ -559,7 +560,29 @@ new Chart(document.getElementById('trendChart'), {
   }
 });
 
+const sideOpts = (minVal) => ({
+  responsive: true,
+  plugins: {
+    legend: { position: 'top' },
+    datalabels: {
+      anchor: 'end', align: 'end',
+      formatter: v => v > 0 ? (v/1e4).toFixed(0)+'만' : '',
+      font: { size: 11, weight: 'bold' },
+      color: '#333',
+    }
+  },
+  scales: {
+    y: {
+      min: Math.floor(minVal * 0.85 / 1e6) * 1e6,
+      ticks: { callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() }
+    }
+  },
+  layout: { padding: { top: 24 } }
+});
+
 // ── 홈/어웨이 ──
+Chart.register(ChartDataLabels);
+const haMin = Math.min(128812287, 14748226, 31068285, 13039692);
 new Chart(document.getElementById('haChart'), {
   type: 'bar',
   data: {
@@ -569,13 +592,11 @@ new Chart(document.getElementById('haChart'), {
       { label: 'ON거래액',  data: [31068285,  13039692],  backgroundColor: alpha(ON,  .8) },
     ]
   },
-  options: {
-    responsive: true, plugins: { legend: { position: 'top' } },
-    scales: { y: { ticks: { callback: v => v.toLocaleString() } } }
-  }
+  options: sideOpts(haMin),
 });
 
 // ── 결과별 ──
+const resMin = Math.min(70499120, 83112129, 29261769, 16630227);
 new Chart(document.getElementById('resultChart'), {
   type: 'bar',
   data: {
@@ -585,10 +606,7 @@ new Chart(document.getElementById('resultChart'), {
       { label: 'ON거래액',  data: [29261769,  16630227],  backgroundColor: alpha(ON,  .8) },
     ]
   },
-  options: {
-    responsive: true, plugins: { legend: { position: 'top' } },
-    scales: { y: { ticks: { callback: v => v.toLocaleString() } } }
-  }
+  options: sideOpts(resMin),
 });
 </script>
 </body>
