@@ -134,7 +134,7 @@ def fetch_sales_data(cookies: dict) -> list:
     print(f"데이터 행 수: {len(data)}")
 
     # 합계 행에서 어제 일별 거래액 추출
-    date_str = f"{yesterday.year}.{yesterday.month}.{yesterday.day}"
+    date_str = yesterday.strftime("%Y.%m.%d")
     total_amount = ""
 
     for item in data:

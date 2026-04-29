@@ -71,9 +71,17 @@ def update_sheet(sales: dict):
 
     date_col_idx = header.index("날짜") if "날짜" in header else 0
 
-    # 날짜 → 행번호 매핑
+    def normalize_date(s):
+        """'2026.4.1' → '2026.04.01' 정규화"""
+        try:
+            parts = s.split(".")
+            return f"{parts[0]}.{int(parts[1]):02d}.{int(parts[2]):02d}"
+        except Exception:
+            return s
+
+    # 날짜 → 행번호 매핑 (정규화된 날짜 기준)
     date_to_row = {
-        row[date_col_idx]: i + 2
+        normalize_date(row[date_col_idx]): i + 2
         for i, row in enumerate(all_values[1:])
         if row and row[date_col_idx]
     }
