@@ -6,11 +6,11 @@ on:
       start_date:
         description: '백필 시작일 (YYYY-MM-DD)'
         required: true
-        default: '2026-04-01'
+        default: '2026-03-28'
       end_date:
         description: '백필 종료일 (YYYY-MM-DD)'
         required: true
-        default: '2026-04-27'
+        default: '2026-04-28'
 
 jobs:
   backfill:

@@ -24,8 +24,8 @@ GOOGLE_CREDS_FILE = "google_credentials.json"
 KBO_API = "https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList"
 
 # ── 백필 기간 (환경변수 우선, 없으면 기본값) ─────────────────
-_start_env = os.environ.get("BACKFILL_START", "2026-04-01")
-_end_env   = os.environ.get("BACKFILL_END",   "2026-04-27")
+_start_env = os.environ.get("BACKFILL_START", "2026-03-28")
+_end_env   = os.environ.get("BACKFILL_END",   "2026-04-28")
 BACKFILL_START = date.fromisoformat(_start_env)
 BACKFILL_END   = date.fromisoformat(_end_env)
 
@@ -155,16 +155,30 @@ def upload_all(games: list):
     if new_rows:
         ws.append_rows(new_rows)
         print(f"적재 완료: {len(new_rows)}경기")
+        for r in new_rows:
+            print(f"  {r[0]} | {r[1]:5} | {r[2]:4} | {r[3]}")
     else:
         print("추가할 신규 데이터 없음 (이미 모두 적재됨)")
-    for r in rows:
-        print(f"  {r[0]} | {r[1]:5} | {r[2]:4} | {r[3]}")
+
+
+def months_in_range(start: date, end: date) -> list:
+    """시작~종료 사이의 (year, month) 목록"""
+    result, cur = [], date(start.year, start.month, 1)
+    while cur <= end:
+        result.append((cur.year, cur.month))
+        # 다음 달
+        if cur.month == 12:
+            cur = date(cur.year + 1, 1, 1)
+        else:
+            cur = date(cur.year, cur.month + 1, 1)
+    return result
 
 
 def main():
     print(f"백필 기간: {BACKFILL_START} ~ {BACKFILL_END}")
-    # 4월만 조회 (기간이 한 달 내)
-    games = fetch_month_games(BACKFILL_START.year, BACKFILL_START.month)
+    games = []
+    for year, month in months_in_range(BACKFILL_START, BACKFILL_END):
+        games.extend(fetch_month_games(year, month))
     games.sort(key=lambda g: g["날짜"])
     print(f"조회된 경기 수: {len(games)}")
 
