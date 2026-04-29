@@ -95,7 +95,20 @@ async def run():
         await page.fill("#txt-userPassword",  PASSWORD)
 
         await page.screenshot(path="debug_filled.png")
-        await page.click("button[type='submit'], input[type='submit'], .btn-login, button:has-text('로그인')")
+
+        # 로그인 버튼 클릭 (텍스트 정확히 매칭)
+        await page.locator("button:has-text('플레이엠디 로그인')").click()
+        await page.wait_for_timeout(3000)
+        await page.screenshot(path="debug_after_login.png")
+
+        # 에러 메시지 확인
+        error_msg = await page.evaluate("""() => {
+            const el = document.querySelector('.error, .alert, [class*="error"], [class*="alert"], [class*="msg"]');
+            return el ? el.innerText : '';
+        }""")
+        if error_msg:
+            print(f"로그인 에러 메시지: {error_msg}")
+
         await page.wait_for_load_state("networkidle")
         print(f"로그인 후 URL: {page.url}")
 
