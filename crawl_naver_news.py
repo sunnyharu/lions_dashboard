@@ -222,30 +222,33 @@ def collect_cafe_posts() -> list:
     print(f"\n[카페] 키워드별 수집 (최근 7일, lionsball)")
     seen   = set()
     posts  = []
-    first_item_logged = False
     for kw in CAFE_KEYWORDS:
-        items = naver_search("cafearticle", f"삼성 라이온즈 {kw}", display=30, sort="sim")
-        if items and not first_item_logged:
-            print(f"  [디버그] 첫 카페 항목 키: {list(items[0].keys())}")
-            print(f"  [디버그] link={items[0].get('link','')[:60]}")
-            print(f"  [디버그] cafeurl={items[0].get('cafeurl','')[:60]}")
-            print(f"  [디버그] cafename={items[0].get('cafename','')}")
-            first_item_logged = True
+        items = naver_search("cafearticle", f"삼성 라이온즈 {kw}", display=30, sort="date")
         for item in items:
             link     = item.get("link", "") or item.get("url", "")
             cafeurl  = item.get("cafeurl", "")
             cafename = item.get("cafename", "")
+            # lionsball URL, cafeurl, 카페명 중 하나라도 매칭되면 허용
             is_lionsball = (
                 "lionsball" in link or
                 "lionsball" in cafeurl or
                 "사자사랑방" in cafename.replace(" ", "")
             )
-            if not is_lionsball or link in seen:
+            if not is_lionsball:
+                print(f"  스킵(카페 불일치): cafename={cafename!r} link={link[:40]}")
+                continue
+            if link in seen:
                 continue
             pub_date = parse_pub_date(item.get("pubDate", ""))
-            # 파싱 실패 시 수집 허용 (sort=sim이므로 최근 글일 가능성 높음)
-            if pub_date and pub_date not in VALID_DATES:
-                continue
+            # sort=date 사용하므로 날짜 필터는 관대하게: 30일 이내
+            if pub_date:
+                from datetime import date as _date
+                try:
+                    item_date = datetime.strptime(pub_date, "%Y%m%d").date()
+                    if (_date.today() - item_date).days > 30:
+                        continue
+                except Exception:
+                    pass
             title = strip_html(item.get("title", ""))
             if is_trade_post(title):
                 continue
@@ -258,6 +261,7 @@ def collect_cafe_posts() -> list:
                 "keyword": kw,
                 "views":   0,
             })
+            print(f"  수집: [{kw}] {title[:30]}")
 
     print(f"  중복제거 후 {len(posts)}건")
 
