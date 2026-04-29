@@ -150,59 +150,75 @@ async def run():
         await page.wait_for_load_state("networkidle")
         print(f"로그인 후 URL: {page.url}")
 
-        # 2) 메뉴 탐색
+        # 2) 메뉴 클릭으로 iframe 로드
         print("메뉴 이동 중...")
         await page.wait_for_timeout(2000)
 
-        def js_click_contains(text):
-            return f"""() => {{
-                const all = Array.from(document.querySelectorAll('a, button, span, li'));
-                const target = all.find(el => el.textContent.trim().includes('{text}') && el.offsetParent !== null);
-                if (target) {{ target.click(); return true; }}
-                return false;
-            }}"""
+        # 영업관리 클릭
+        await page.locator("a", has_text="영업관리").first.click()
+        await page.wait_for_timeout(800)
 
-        # 2) 직접 URL 이동 (URL 확인 완료)
-        TARGET_URL = "https://playmd.xmd.co.kr/xsal/xsal6020q/xsal6020q.html"
-        print(f"페이지 이동: {TARGET_URL}")
-        await page.goto(TARGET_URL)
-        try:
-            await page.wait_for_selector("text=판매년월", timeout=15000)
-        except:
-            await page.wait_for_timeout(5000)
+        # 현황 클릭 - 영업관리 하위에서 visible한 것
+        await page.locator("a", has_text="현황").filter(visible=True).first.click()
+        await page.wait_for_timeout(800)
+
+        # 매장일별판매집계표 클릭
+        await page.locator("a", has_text="매장일별판매집계표").filter(visible=True).first.click()
+        await page.wait_for_timeout(3000)
         await page.screenshot(path="debug_after_menu.png", full_page=True)
-        print("매장일별판매집계표 로드 완료")
 
-        # 3) 조회 버튼 클릭 시도 (실패해도 계속 진행)
-        print(f"조회 기준: {YEAR}년 {MONTH}월")
-        try:
-            # 버튼 구조 확인
-            btns = await page.evaluate("""() => {
-                return Array.from(document.querySelectorAll('button, a, span, div'))
-                    .filter(el => el.textContent.trim().includes('조회') && el.offsetParent !== null)
-                    .map(el => ({tag: el.tagName, text: el.textContent.trim(), class: el.className}))
-                    .slice(0, 5);
-            }""")
-            print(f"조회 버튼 후보: {btns}")
-            await page.locator(":visible").filter(has_text="조회").first.click(timeout=5000)
+        # iframe 찾기 (보고서가 iframe 안에 로드됨)
+        frames = page.frames
+        print(f"전체 frame 수: {len(frames)}")
+        for f in frames:
+            print(f"  frame url: {f.url}")
+
+        # xsal6020q iframe 찾기
+        report_frame = None
+        for f in frames:
+            if "xsal6020q" in f.url:
+                report_frame = f
+                break
+        if not report_frame:
+            # iframe이 아직 안 로드됐으면 대기 후 재시도
             await page.wait_for_timeout(3000)
-        except Exception as e:
-            print(f"조회 클릭 실패(계속 진행): {e}")
+            frames = page.frames
+            for f in frames:
+                if "xsal6020q" in f.url:
+                    report_frame = f
+                    break
+
+        if not report_frame:
+            print("보고서 frame을 찾지 못함. 사용 가능한 frames:")
+            for f in page.frames:
+                print(f"  {f.url}")
+            raise Exception("보고서 iframe 없음")
+
+        print(f"보고서 frame 확인: {report_frame.url}")
+        fl = page.frame_locator(f"iframe[src*='xsal6020q']")
+
+        # 3) 조회 클릭
+        print(f"조회 기준: {YEAR}년 {MONTH}월")
+        await fl.locator("button:has-text('조회'), a:has-text('조회')").first.click()
+        await page.wait_for_timeout(3000)
         await page.screenshot(path="debug_after_search.png", full_page=True)
 
-        # 4) 엑셀 다운로드 (네이티브 클릭)
+        # 4) 엑셀 다운로드
         print("엑셀 다운로드 중...")
         with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
             tmp_path = tmp.name
 
         async with page.expect_download(timeout=60000) as download_info:
-            await page.locator("button:has-text('엑셀'), a:has-text('엑셀')").first.click()
-            # 확인 팝업 "예" 버튼 처리
+            await fl.locator("button:has-text('엑셀'), a:has-text('엑셀')").first.click()
+            # 확인 팝업 "예" 버튼 (메인 페이지 또는 iframe 내)
             try:
                 await page.wait_for_selector("button:has-text('예'), a:has-text('예')", timeout=5000)
                 await page.locator("button:has-text('예'), a:has-text('예')").first.click()
             except:
-                pass
+                try:
+                    await fl.locator("button:has-text('예'), a:has-text('예')").first.click(timeout=3000)
+                except:
+                    pass
 
         download = await download_info.value
         await download.save_as(tmp_path)
