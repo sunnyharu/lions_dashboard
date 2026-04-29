@@ -27,7 +27,7 @@ def load_excel() -> dict:
     result = {}
     for _, row in df.iterrows():
         dt  = pd.to_datetime(row["completed_dt"])
-        amt = int(row["pay_amt"]) if pd.notna(row["pay_amt"]) else 0
+        amt = int(float(row["pay_amt"])) if pd.notna(row["pay_amt"]) else 0
         key = dt.strftime("%Y.%m.%d")   # 시트 포맷: "2026.02.24"
         result[key] = amt
 

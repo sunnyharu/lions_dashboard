@@ -47,9 +47,9 @@ def fetch_data():
             date = f"{parts[0]}.{int(parts[1]):02d}.{int(parts[2]):02d}"
         off = row.get("OFF거래액", "") or 0
         on  = row.get("ON거래액",  "") or 0
-        try: off = int(str(off).replace(",", ""))
+        try: off = int(float(str(off).replace(",", "")))
         except: off = 0
-        try: on  = int(str(on).replace(",", ""))
+        try: on  = int(float(str(on).replace(",", "")))
         except: on  = 0
         sales[date] = {"off": off, "on": on}
 
