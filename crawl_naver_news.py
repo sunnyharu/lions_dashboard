@@ -68,6 +68,11 @@ def ensure_sheet(client, name: str, header: list):
     sh = client.open_by_key(SPREADSHEET_ID)
     try:
         ws = sh.worksheet(name)
+        # 헤더가 구버전이면 업데이트
+        existing_header = ws.row_values(1)
+        if existing_header != header:
+            ws.update([header], "1:1")
+            print(f"시트 '{name}' 헤더 업데이트: {existing_header} → {header}")
     except gspread.exceptions.WorksheetNotFound:
         ws = sh.add_worksheet(title=name, rows=2000, cols=len(header))
         ws.append_row(header)

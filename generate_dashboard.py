@@ -190,51 +190,28 @@ def build_html(data: list, news: list, digest: str) -> str:
             res_off_data.append(avg(monthly_res[m].get(rs + "_off", [])))
             res_on_data.append(avg(monthly_res[m].get(rs + "_on",  [])))
 
-    # 뉴스 패널 HTML
-    from collections import defaultdict as _dd
-    news_by_date = _dd(list)
-    for n in news:
-        news_by_date[n["date"]].append(n)
+    # 뉴스 / 카페 분리
+    news_items = [n for n in news if n["source"] == "뉴스"]
+    cafe_items = [n for n in news if "카페" in n["source"]]
 
-    sorted_dates = sorted(news_by_date.keys(), reverse=True)
+    def issue_item_html(n):
+        link_open  = f'<a href="{n["link"]}" target="_blank" rel="noopener">' if n["link"] else ""
+        link_close = "</a>" if n["link"] else ""
+        views_html = f'<span class="issue-views">조회 {int(n.get("views",0)):,}</span>' if n.get("views") else ""
+        return f"""<div class="issue-item">
+          <div class="issue-meta">{views_html}</div>
+          {link_open}<div class="issue-title">{n["title"]}</div>{link_close}
+          {'<div class="issue-desc">' + n["summary"] + '</div>' if n["summary"] else ""}
+        </div>"""
 
-    # 날짜 필터 버튼
-    filter_buttons = '<button class="active" onclick="filterNews(\'all\', this)">전체</button>'
-    for d in sorted_dates:
-        label = d[5:]  # "04.28"
-        filter_buttons += f'<button onclick="filterNews(\'{d}\', this)">{label}</button>'
+    # 왼쪽: 뉴스
+    news_col_html = "".join(issue_item_html(n) for n in news_items) or '<div class="issue-empty">수집된 뉴스 없음</div>'
 
-    # 날짜별 뉴스 블록
-    news_blocks = ""
-    for date in sorted_dates:
-        items = news_by_date[date]
-        news_blocks += f'<div class="news-group" data-date="{date}">'
-        news_blocks += f'<div class="news-date">{date}</div>'
-        for n in items:
-            src_cls    = "badge-news" if n["source"] == "뉴스" else "badge-cafe"
-            link_open  = f'<a href="{n["link"]}" target="_blank" rel="noopener">' if n["link"] else ""
-            link_close = "</a>" if n["link"] else ""
-            views_html = f'<span class="news-views">조회 {int(n.get("views",0)):,}</span>' if n.get("views") else ""
-        news_blocks += f"""
-            <div class="news-item">
-              <span class="news-src {src_cls}">{n["source"]}</span>{views_html}
-              {link_open}<span class="news-title">{n["title"]}</span>{link_close}
-              {'<div class="news-desc">' + n["summary"] + '</div>' if n["summary"] else ""}
-            </div>"""
-        news_blocks += '</div>'
+    # 오른쪽: 카페 다이제스트
+    digest_col_html = f'<div class="digest-text">{digest}</div>' if digest else '<div class="issue-empty">카페 다이제스트 없음</div>'
 
-    if not news_blocks:
-        news_blocks = '<div class="news-empty">수집된 이슈 없음</div>'
-        filter_buttons = ""
-
-    digest_html = ""
-    if digest:
-        digest_html = f'''<div class="digest-box">
-          <div class="digest-label">최근 7일 카페 트렌드 다이제스트</div>
-          <div class="digest-text">{digest}</div>
-        </div>'''
-
-    news_html = f'{digest_html}<div class="news-filter">{filter_buttons}</div>{news_blocks}'
+    # 하단: 카페 상세글
+    cafe_col_html = "".join(issue_item_html(n) for n in cafe_items) or '<div class="issue-empty">수집된 카페글 없음</div>'
 
     # 테이블 행
     table_rows = ""
@@ -302,10 +279,8 @@ def build_html(data: list, news: list, digest: str) -> str:
   }}
 
   /* 테이블 */
-  .table-section {{ padding: 0 32px 32px; }}
-  .table-layout {{ display: flex; gap: 16px; align-items: flex-start; }}
+  .table-section {{ padding: 0 32px 20px; }}
   .table-card {{
-    flex: 1; min-width: 0;
     background: white; border-radius: 12px; padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07); overflow-x: auto;
   }}
@@ -317,38 +292,45 @@ def build_html(data: list, news: list, digest: str) -> str:
   td.bold {{ font-weight: 700; color: #002D72; }}
   tr:hover {{ background: #fafbff; }}
 
-  /* 뉴스 패널 */
-  .news-panel {{
-    width: 300px; flex-shrink: 0;
+  /* 이슈 섹션 */
+  .issue-section {{ padding: 0 32px 32px; }}
+  .issue-section-title {{
+    font-size: 14px; font-weight: 700; color: #333;
+    margin-bottom: 12px; padding-left: 4px;
+  }}
+  .issue-top {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }}
+  .issue-box {{
     background: white; border-radius: 12px; padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
-    max-height: 600px; overflow-y: auto;
+    max-height: 380px; overflow-y: auto;
   }}
-  .news-panel h3 {{ font-size: 13px; color: #555; margin-bottom: 10px; font-weight: 600; }}
-  .news-filter {{ display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }}
-  .news-filter button {{
-    font-size: 11px; padding: 3px 9px; border-radius: 10px; border: 1px solid #ddd;
-    background: #f8f9fa; color: #555; cursor: pointer; transition: all .15s;
+  .issue-box h4 {{
+    font-size: 12px; font-weight: 700; color: #002D72;
+    margin-bottom: 12px; padding-bottom: 6px;
+    border-bottom: 2px solid #002D72;
   }}
-  .news-filter button.active {{ background: #002D72; color: white; border-color: #002D72; }}
-  .news-date {{ font-size: 11px; font-weight: 700; color: #002D72; margin: 12px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #eef; }}
-  .news-date:first-child {{ margin-top: 0; }}
-  .news-item {{ margin-bottom: 10px; }}
-  .news-src {{ display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; margin-bottom: 3px; }}
-  .badge-news {{ background: #e3f2fd; color: #1565c0; }}
-  .badge-cafe {{ background: #e8f5e9; color: #2e7d32; }}
-  .news-title {{ font-size: 12px; color: #333; line-height: 1.4; }}
-  .news-title a, a.news-title {{ color: #333; text-decoration: none; }}
-  .news-title:hover, a.news-title:hover {{ color: #002D72; text-decoration: underline; }}
-  .news-desc {{ font-size: 11px; color: #888; margin-top: 2px; line-height: 1.4; }}
-  .news-empty {{ font-size: 12px; color: #aaa; text-align: center; padding: 20px 0; }}
-  .digest-box {{
-    background: #f0f4ff; border-left: 3px solid #002D72;
-    border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;
+  .issue-box.cafe-digest h4 {{ color: #2e7d32; border-color: #2e7d32; }}
+  .issue-item {{ margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f0f0f0; }}
+  .issue-item:last-child {{ margin-bottom: 0; padding-bottom: 0; border-bottom: none; }}
+  .issue-meta {{ font-size: 10px; color: #aaa; margin-bottom: 3px; }}
+  .issue-views {{ font-size: 10px; color: #888; }}
+  .issue-title {{ font-size: 13px; color: #222; line-height: 1.5; font-weight: 500; }}
+  .issue-title a {{ color: #222; text-decoration: none; }}
+  .issue-title a:hover {{ color: #002D72; text-decoration: underline; }}
+  .issue-desc {{ font-size: 11px; color: #777; margin-top: 4px; line-height: 1.5; }}
+  .issue-empty {{ font-size: 12px; color: #bbb; text-align: center; padding: 20px 0; }}
+  .digest-text {{ font-size: 12px; color: #333; line-height: 1.8; white-space: pre-line; }}
+
+  /* 카페 상세글 (하단 전체폭) */
+  .cafe-detail-box {{
+    background: white; border-radius: 12px; padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
   }}
-  .digest-box .digest-label {{ font-size: 10px; font-weight: 700; color: #002D72; margin-bottom: 5px; }}
-  .digest-box .digest-text  {{ font-size: 12px; color: #333; line-height: 1.6; white-space: pre-line; }}
-  .news-views {{ font-size: 10px; color: #aaa; margin-left: 4px; }}
+  .cafe-detail-box h4 {{
+    font-size: 12px; font-weight: 700; color: #2e7d32;
+    margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #2e7d32;
+  }}
+  .cafe-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }}
 
   .badge {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }}
   .badge.win    {{ background: #e8f5e9; color: #2e7d32; }}
@@ -358,9 +340,9 @@ def build_html(data: list, news: list, digest: str) -> str:
 
   @media (max-width: 900px) {{
     .charts {{ grid-template-columns: 1fr; }}
-    .kpi-row, .charts, .table-section {{ padding-left: 16px; padding-right: 16px; }}
-    .table-layout {{ flex-direction: column; }}
-    .news-panel {{ width: 100%; max-height: 400px; }}
+    .kpi-row, .charts, .table-section, .issue-section {{ padding-left: 16px; padding-right: 16px; }}
+    .issue-top {{ grid-template-columns: 1fr; }}
+    .cafe-grid {{ grid-template-columns: 1fr; }}
   }}
 </style>
 </head>
@@ -419,24 +401,38 @@ def build_html(data: list, news: list, digest: str) -> str:
 </div>
 
 <div class="table-section">
-  <div class="table-layout">
-    <div class="table-card">
-      <h3>전체 데이터</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>날짜</th><th>홈/어웨이</th><th>상대팀</th><th>결과</th>
-            <th style="text-align:right">OFF거래액</th>
-            <th style="text-align:right">ON거래액</th>
-            <th style="text-align:right">합계</th>
-          </tr>
-        </thead>
-        <tbody>{table_rows}</tbody>
-      </table>
+  <div class="table-card">
+    <h3>전체 데이터</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>날짜</th><th>홈/어웨이</th><th>상대팀</th><th>결과</th>
+          <th style="text-align:right">OFF거래액</th>
+          <th style="text-align:right">ON거래액</th>
+          <th style="text-align:right">합계</th>
+        </tr>
+      </thead>
+      <tbody>{table_rows}</tbody>
+    </table>
+  </div>
+</div>
+
+<div class="issue-section">
+  <div class="issue-section-title">최근 7일간 주요이슈</div>
+  <div class="issue-top">
+    <div class="issue-box">
+      <h4>뉴스</h4>
+      {news_col_html}
     </div>
-    <div class="news-panel">
-      <h3>날짜별 주요 이슈</h3>
-      {news_html}
+    <div class="issue-box cafe-digest">
+      <h4>카페 트렌드 다이제스트</h4>
+      {digest_col_html}
+    </div>
+  </div>
+  <div class="cafe-detail-box">
+    <h4>카페 인기글 TOP 10 (사자사랑방)</h4>
+    <div class="cafe-grid">
+      {cafe_col_html}
     </div>
   </div>
 </div>
@@ -536,14 +532,6 @@ new Chart(document.getElementById('resultChart'), {{
   options: sideOpts(),
 }});
 
-// 뉴스 날짜 필터
-function filterNews(date, btn) {{
-  document.querySelectorAll('.news-filter button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.news-group').forEach(g => {{
-    g.style.display = (date === 'all' || g.dataset.date === date) ? '' : 'none';
-  }});
-}}
 </script>
 </body>
 </html>"""
