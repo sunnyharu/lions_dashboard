@@ -151,6 +151,7 @@ def build_html(data: list) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>삼성 라이온즈 매출 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; color: #1a1a2e; }}
@@ -309,7 +310,29 @@ new Chart(document.getElementById('trendChart'), {{
   }}
 }});
 
+const sideOpts = (minVal) => ({{
+  responsive: true,
+  plugins: {{
+    legend: {{ position: 'top' }},
+    datalabels: {{
+      anchor: 'end', align: 'end',
+      formatter: v => v > 0 ? (v/1e4).toFixed(0)+'만' : '',
+      font: {{ size: 11, weight: 'bold' }},
+      color: '#333',
+    }}
+  }},
+  scales: {{
+    y: {{
+      min: Math.floor(minVal * 0.85 / 1e6) * 1e6,
+      ticks: {{ callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() }}
+    }}
+  }},
+  layout: {{ padding: {{ top: 24 }} }}
+}});
+
 // ── 홈/어웨이 ──
+Chart.register(ChartDataLabels);
+const haMin = Math.min({home_avg_off}, {away_avg_off}, {home_avg_on}, {away_avg_on});
 new Chart(document.getElementById('haChart'), {{
   type: 'bar',
   data: {{
@@ -319,13 +342,11 @@ new Chart(document.getElementById('haChart'), {{
       {{ label: 'ON거래액',  data: [{home_avg_on},  {away_avg_on}],  backgroundColor: alpha(ON,  .8) }},
     ]
   }},
-  options: {{
-    responsive: true, plugins: {{ legend: {{ position: 'top' }} }},
-    scales: {{ y: {{ ticks: {{ callback: v => v.toLocaleString() }} }} }}
-  }}
+  options: sideOpts(haMin),
 }});
 
 // ── 결과별 ──
+const resMin = Math.min({win_avg_off}, {lose_avg_off}, {win_avg_on}, {lose_avg_on});
 new Chart(document.getElementById('resultChart'), {{
   type: 'bar',
   data: {{
@@ -335,10 +356,7 @@ new Chart(document.getElementById('resultChart'), {{
       {{ label: 'ON거래액',  data: [{win_avg_on},  {lose_avg_on}],  backgroundColor: alpha(ON,  .8) }},
     ]
   }},
-  options: {{
-    responsive: true, plugins: {{ legend: {{ position: 'top' }} }},
-    scales: {{ y: {{ ticks: {{ callback: v => v.toLocaleString() }} }} }}
-  }}
+  options: sideOpts(resMin),
 }});
 </script>
 </body>
