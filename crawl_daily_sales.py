@@ -88,23 +88,11 @@ async def run():
         }""")
         print(f"입력 필드 목록: {inputs_info}")
 
-        # 모든 input 중 visible한 것만
-        all_inputs = page.locator("input:visible")
-        count = await all_inputs.count()
-        print(f"visible input 수: {count}")
-
-        # 순서대로: 회원사ID, 회원사PW, 하위ID, 하위PW 시도
-        if count >= 4:
-            await all_inputs.nth(0).fill(COMPANY_USER)
-            await all_inputs.nth(1).fill(COMPANY_PASS)
-            await all_inputs.nth(2).fill(USERNAME)
-            await all_inputs.nth(3).fill(PASSWORD)
-        elif count == 2:
-            # 텍스트+패스워드 2개씩인 경우
-            text_inputs = page.locator("input[type='text']:visible, input:not([type='password']):not([type='hidden']):not([type='checkbox']):visible")
-            pw_inputs   = page.locator("input[type='password']:visible")
-            await text_inputs.nth(0).fill(COMPANY_USER)
-            await pw_inputs.nth(0).fill(COMPANY_PASS)
+        # 정확한 필드 ID로 입력
+        await page.fill("#txt-tenantLoginId", COMPANY_USER)
+        await page.fill("#pw-tenantPassword", COMPANY_PASS)
+        await page.fill("#txt-userLoginId",   USERNAME)
+        await page.fill("#txt-userPassword",  PASSWORD)
 
         await page.screenshot(path="debug_filled.png")
         await page.click("button[type='submit'], input[type='submit'], .btn-login, button:has-text('로그인')")
