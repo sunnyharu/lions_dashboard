@@ -98,21 +98,31 @@ def is_trade_post(title: str) -> bool:
     return any(kw in title for kw in TRADE_KEYWORDS)
 
 
+NEWS_REQUIRED = ["삼성라이온즈", "베리즈"]  # 제목+설명에 둘 다 있어야 통과
+
+
+def has_all_keywords(title: str, desc: str) -> bool:
+    text = (title + desc).replace(" ", "")
+    return all(kw.replace(" ", "") in text for kw in NEWS_REQUIRED)
+
+
 def process_news(items: list) -> list:
-    # 관련도순으로 이미 정렬되어 있으므로 날짜 필터 후 상위 NEWS_MAX_DAY개만 사용
     results = []
     for item in items:
         if len(results) >= NEWS_MAX_DAY:
             break
         raw_pub  = item.get("pubDate", "")
         pub_date = parse_pub_date(raw_pub)
-        print(f"  [뉴스] {pub_date or '?'} | {strip_html(item.get('title',''))[:30]}")
+        title = strip_html(item.get("title", ""))
+        desc  = strip_html(item.get("description", ""))
         if pub_date not in VALID_DATES:
             continue
-        title = strip_html(item.get("title", ""))
-        desc  = strip_html(item.get("description", ""))[:100]
-        link  = item.get("link", "") or item.get("originallink", "")
-        results.append([yyyymmdd_to_str(pub_date), "뉴스", title, desc, link])
+        if not has_all_keywords(title, desc):
+            print(f"  [뉴스] 키워드 미충족 스킵: {title[:30]}")
+            continue
+        print(f"  [뉴스] {pub_date} | {title[:30]}")
+        link = item.get("link", "") or item.get("originallink", "")
+        results.append([yyyymmdd_to_str(pub_date), "뉴스", title, desc[:100], link])
     return results
 
 
