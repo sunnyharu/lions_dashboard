@@ -298,18 +298,19 @@ def build_html(data: list, news: list, digest: str) -> str:
     font-size: 14px; font-weight: 700; color: #333;
     margin-bottom: 12px; padding-left: 4px;
   }}
-  .issue-top {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }}
+  .issue-layout {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }}
+  .issue-col-left {{ display: flex; flex-direction: column; }}
+  .issue-col-right {{ display: flex; flex-direction: column; gap: 16px; }}
   .issue-box {{
     background: white; border-radius: 12px; padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.07);
-    max-height: 380px; overflow-y: auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07); overflow-y: auto;
   }}
   .issue-box h4 {{
     font-size: 12px; font-weight: 700; color: #002D72;
-    margin-bottom: 12px; padding-bottom: 6px;
-    border-bottom: 2px solid #002D72;
+    margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #002D72;
   }}
   .issue-box.cafe-digest h4 {{ color: #2e7d32; border-color: #2e7d32; }}
+  .issue-box.cafe-posts  h4 {{ color: #2e7d32; border-color: #2e7d32; }}
   .issue-item {{ margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f0f0f0; }}
   .issue-item:last-child {{ margin-bottom: 0; padding-bottom: 0; border-bottom: none; }}
   .issue-meta {{ font-size: 10px; color: #aaa; margin-bottom: 3px; }}
@@ -321,17 +322,6 @@ def build_html(data: list, news: list, digest: str) -> str:
   .issue-empty {{ font-size: 12px; color: #bbb; text-align: center; padding: 20px 0; }}
   .digest-text {{ font-size: 12px; color: #333; line-height: 1.8; white-space: pre-line; }}
 
-  /* 카페 상세글 (하단 전체폭) */
-  .cafe-detail-box {{
-    background: white; border-radius: 12px; padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.07);
-  }}
-  .cafe-detail-box h4 {{
-    font-size: 12px; font-weight: 700; color: #2e7d32;
-    margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #2e7d32;
-  }}
-  .cafe-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }}
-
   .badge {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }}
   .badge.win    {{ background: #e8f5e9; color: #2e7d32; }}
   .badge.lose   {{ background: #ffebee; color: #c62828; }}
@@ -341,8 +331,7 @@ def build_html(data: list, news: list, digest: str) -> str:
   @media (max-width: 900px) {{
     .charts {{ grid-template-columns: 1fr; }}
     .kpi-row, .charts, .table-section, .issue-section {{ padding-left: 16px; padding-right: 16px; }}
-    .issue-top {{ grid-template-columns: 1fr; }}
-    .cafe-grid {{ grid-template-columns: 1fr; }}
+    .issue-layout {{ grid-template-columns: 1fr; }}
   }}
 </style>
 </head>
@@ -419,20 +408,22 @@ def build_html(data: list, news: list, digest: str) -> str:
 
 <div class="issue-section">
   <div class="issue-section-title">최근 7일간 주요이슈</div>
-  <div class="issue-top">
-    <div class="issue-box">
-      <h4>뉴스</h4>
-      {news_col_html}
+  <div class="issue-layout">
+    <div class="issue-col-left">
+      <div class="issue-box">
+        <h4>뉴스</h4>
+        {news_col_html}
+      </div>
     </div>
-    <div class="issue-box cafe-digest">
-      <h4>카페 트렌드 다이제스트</h4>
-      {digest_col_html}
-    </div>
-  </div>
-  <div class="cafe-detail-box">
-    <h4>카페 인기글 TOP 10 (사자사랑방)</h4>
-    <div class="cafe-grid">
-      {cafe_col_html}
+    <div class="issue-col-right">
+      <div class="issue-box cafe-digest">
+        <h4>카페 트렌드 다이제스트</h4>
+        {digest_col_html}
+      </div>
+      <div class="issue-box cafe-posts">
+        <h4>카페 인기글 TOP 10 (사자사랑방)</h4>
+        {cafe_col_html}
+      </div>
     </div>
   </div>
 </div>
