@@ -1,7 +1,7 @@
 """
 네이버 뉴스/카페 검색 → Google Sheets '뉴스이슈' 탭 적재
-어제 날짜 기준으로 '삼성 라이온즈' 관련 기사/카페글 수집
-카페글은 중고거래성 글(중고나라, 판매/구매 등) 제외
+- 뉴스: '삼성 라이온즈 베리즈' 키워드
+- 카페: '삼성 라이온즈 + 상품 키워드' 다중 검색, 거래글 제외
 """
 import json
 import os
@@ -22,21 +22,26 @@ SHEET_NAME          = "뉴스이슈"
 GOOGLE_CREDS_ENV    = os.environ.get("GOOGLE_CREDENTIALS", "")
 GOOGLE_CREDS_FILE   = "google_credentials.json"
 
-KST = timezone(timedelta(hours=9))
+KST       = timezone(timedelta(hours=9))
 now_kst   = datetime.now(KST)
 yesterday = now_kst - timedelta(days=1)
 
 DATE_STR      = yesterday.strftime("%Y.%m.%d")
 DATE_YYYYMMDD = yesterday.strftime("%Y%m%d")
+VALID_DATES   = {DATE_YYYYMMDD, now_kst.strftime("%Y%m%d")}  # 어제 + 오늘
 
-QUERY       = "삼성 라이온즈"
-MAX_DISPLAY = 20
+NEWS_QUERY = "삼성 라이온즈 베리즈"
 
-# 거래글 제외 키워드 (제목 포함 시 스킵)
+CAFE_KEYWORDS = [
+    "유니폼", "베리즈", "응원봉", "마킹키트", "로고볼",
+    "짐색", "티셔츠", "백팩", "셔츠", "보스턴백",
+    "볼캡", "자켓", "키링", "타월", "머플러", "어린이회원",
+]
+
+MAX_DISPLAY = 10
+
 TRADE_KEYWORDS = ["판매", "팝니다", "팔아요", "삽니다", "구매", "거래", "양도", "나눔", "무료나눔", "중고", "원에"]
-
-# 거래성 카페명
-TRADE_CAFES = ["중고나라", "번개장터", "당근마켓", "클리앙중고장터", "중고장터"]
+TRADE_CAFES    = ["중고나라", "번개장터", "당근마켓", "클리앙중고장터", "중고장터"]
 
 
 def get_gspread_client():
@@ -57,14 +62,19 @@ def strip_html(text: str) -> str:
 
 
 def parse_pub_date(pub: str) -> str:
-    """pubDate → 'YYYYMMDD' (KST 기준). 실패 시 빈 문자열."""
     for fmt in ("%a, %d %b %Y %H:%M:%S %z", "%Y-%m-%dT%H:%M:%S%z"):
         try:
-            dt = datetime.strptime(pub, fmt).astimezone(KST)
-            return dt.strftime("%Y%m%d")
+            return datetime.strptime(pub, fmt).astimezone(KST).strftime("%Y%m%d")
         except Exception:
             pass
     return ""
+
+
+def yyyymmdd_to_str(d: str) -> str:
+    try:
+        return f"{d[:4]}.{d[4:6]}.{d[6:8]}"
+    except Exception:
+        return DATE_STR
 
 
 def naver_search(endpoint: str, query: str, display: int = MAX_DISPLAY) -> list:
@@ -78,36 +88,23 @@ def naver_search(endpoint: str, query: str, display: int = MAX_DISPLAY) -> list:
         headers=headers, params=params, timeout=10,
     )
     if resp.status_code != 200:
-        print(f"[{endpoint}] 오류: {resp.status_code} {resp.text[:200]}")
+        print(f"  [{endpoint}] 오류: {resp.status_code} {resp.text[:200]}")
         return []
     return resp.json().get("items", [])
 
 
 def is_trade_post(title: str, cafe_name: str = "") -> bool:
-    """거래글 여부 판별"""
     if any(tc in cafe_name for tc in TRADE_CAFES):
         return True
     return any(kw in title for kw in TRADE_KEYWORDS)
 
 
-VALID_DATES = {DATE_YYYYMMDD, now_kst.strftime("%Y%m%d")}  # 어제 + 오늘 허용
-
-
-def yyyymmdd_to_str(d: str) -> str:
-    """'20260428' → '2026.04.28'"""
-    try:
-        return f"{d[:4]}.{d[4:6]}.{d[6:8]}"
-    except Exception:
-        return DATE_STR
-
-
 def process_news(items: list) -> list:
-    """뉴스 아이템 → [날짜, 출처, 제목, 요약, 링크] 리스트 (어제/오늘)"""
     results = []
     for item in items:
         raw_pub  = item.get("pubDate", "")
         pub_date = parse_pub_date(raw_pub)
-        print(f"  [뉴스] pubDate={raw_pub!r} → {pub_date}")
+        print(f"  [뉴스] {pub_date or '?'} | {strip_html(item.get('title',''))[:30]}")
         if pub_date not in VALID_DATES:
             continue
         title = strip_html(item.get("title", ""))
@@ -117,21 +114,18 @@ def process_news(items: list) -> list:
     return results
 
 
-def process_cafe(items: list) -> list:
-    """카페 아이템 → [날짜, 출처, 제목, 요약, 링크] 리스트 (거래글 제외)"""
-    if items:
-        print(f"  [카페 raw 첫 항목] {items[0]}")
+def process_cafe(items: list, keyword: str) -> list:
     results = []
     for item in items:
         raw_pub  = item.get("pubDate", "")
         pub_date = parse_pub_date(raw_pub)
-        print(f"  [카페] pubDate={raw_pub!r} → {pub_date or '파싱실패'}")
-        # pubDate 파싱 실패 시 어제 날짜로 처리
-        date_str = yyyymmdd_to_str(pub_date) if pub_date in VALID_DATES else DATE_STR
+        # pubDate 파싱 실패 시 어제 날짜로 fallback
+        date_str  = yyyymmdd_to_str(pub_date) if pub_date in VALID_DATES else DATE_STR
         title     = strip_html(item.get("title", ""))
         cafe_name = strip_html(item.get("cafename", ""))
+        print(f"  [카페/{keyword}] {pub_date or '?'} | [{cafe_name}] {title[:25]}")
         if is_trade_post(title, cafe_name):
-            print(f"  거래글 제외: [{cafe_name}] {title[:30]}")
+            print(f"    → 거래글 제외")
             continue
         desc = strip_html(item.get("description", ""))[:100]
         link = item.get("link", "") or item.get("url", "")
@@ -182,14 +176,27 @@ def main():
         print("NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 환경변수가 없습니다. 스킵.")
         return
 
-    print(f"네이버 검색 ({DATE_STR}, KST)...")
-    news_items = naver_search("news",        QUERY)
-    cafe_items = naver_search("cafearticle", QUERY)
-    print(f"  뉴스 원본 {len(news_items)}건 / 카페 원본 {len(cafe_items)}건")
+    print(f"=== 네이버 검색 ({DATE_STR} KST) ===")
 
-    rows  = process_news(news_items)
-    rows += process_cafe(cafe_items)
-    print(f"  날짜 필터 후: 뉴스 {len([r for r in rows if r[1]=='뉴스'])}건 / 카페 {sum(1 for r in rows if '카페' in r[1])}건")
+    # 뉴스: 삼성 라이온즈 베리즈
+    print(f"\n[뉴스] 쿼리: {NEWS_QUERY!r}")
+    news_items = naver_search("news", NEWS_QUERY, display=20)
+    rows = process_news(news_items)
+    print(f"  → {len(rows)}건 수집")
+
+    # 카페: 삼성 라이온즈 + 각 키워드
+    cafe_rows = []
+    seen_titles = set()
+    for kw in CAFE_KEYWORDS:
+        query = f"삼성 라이온즈 {kw}"
+        print(f"\n[카페] 쿼리: {query!r}")
+        items  = naver_search("cafearticle", query, display=MAX_DISPLAY)
+        for r in process_cafe(items, kw):
+            if r[2] not in seen_titles:  # 제목 기준 중복 제거
+                cafe_rows.append(r)
+                seen_titles.add(r[2])
+    print(f"\n카페 총 {len(cafe_rows)}건 수집")
+    rows += cafe_rows
 
     client = get_gspread_client()
     ws     = ensure_sheet(client)
