@@ -151,7 +151,6 @@ def build_html(data: list) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>삼성 라이온즈 매출 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; color: #1a1a2e; }}
@@ -253,11 +252,15 @@ def build_html(data: list) -> str:
   </div>
   <div class="chart-card">
     <h3>홈 / 어웨이 평균 거래액</h3>
-    <canvas id="haChart" height="120"></canvas>
+    <div style="position:relative; height:200px;">
+      <canvas id="haChart"></canvas>
+    </div>
   </div>
   <div class="chart-card">
     <h3>경기 결과별 평균 거래액</h3>
-    <canvas id="resultChart" height="120"></canvas>
+    <div style="position:relative; height:200px;">
+      <canvas id="resultChart"></canvas>
+    </div>
   </div>
 </div>
 
@@ -310,31 +313,43 @@ new Chart(document.getElementById('trendChart'), {{
   }}
 }});
 
-const sideOpts = (minVal) => ({{
+// 바 상단 수치 표시 인라인 플러그인
+const topLabelPlugin = {{
+  id: 'topLabel',
+  afterDatasetsDraw(chart) {{
+    const ctx = chart.ctx;
+    chart.data.datasets.forEach((ds, di) => {{
+      chart.getDatasetMeta(di).data.forEach((bar, i) => {{
+        const v = ds.data[i];
+        if (!v) return;
+        ctx.save();
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillStyle = '#444';
+        ctx.textAlign = 'center';
+        ctx.fillText((v / 1e4).toFixed(0) + '만', bar.x, bar.y - 5);
+        ctx.restore();
+      }});
+    }});
+  }}
+}};
+
+const sideOpts = (vals) => ({{
   responsive: true,
-  plugins: {{
-    legend: {{ position: 'top' }},
-    datalabels: {{
-      anchor: 'end', align: 'end',
-      formatter: v => v > 0 ? (v/1e4).toFixed(0)+'만' : '',
-      font: {{ size: 11, weight: 'bold' }},
-      color: '#333',
-    }}
-  }},
+  maintainAspectRatio: false,
+  plugins: {{ legend: {{ position: 'top' }} }},
   scales: {{
     y: {{
-      min: Math.floor(minVal * 0.85 / 1e6) * 1e6,
-      ticks: {{ callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() }}
+      min: Math.floor(Math.min(...vals) * 0.85 / 1e5) * 1e5,
+      ticks: {{ callback: v => (v/1e4).toFixed(0)+'만' }}
     }}
   }},
-  layout: {{ padding: {{ top: 24 }} }}
+  layout: {{ padding: {{ top: 20 }} }}
 }});
 
 // ── 홈/어웨이 ──
-Chart.register(ChartDataLabels);
-const haMin = Math.min({home_avg_off}, {away_avg_off}, {home_avg_on}, {away_avg_on});
 new Chart(document.getElementById('haChart'), {{
   type: 'bar',
+  plugins: [topLabelPlugin],
   data: {{
     labels: ['홈', '어웨이'],
     datasets: [
@@ -342,13 +357,13 @@ new Chart(document.getElementById('haChart'), {{
       {{ label: 'ON거래액',  data: [{home_avg_on},  {away_avg_on}],  backgroundColor: alpha(ON,  .8) }},
     ]
   }},
-  options: sideOpts(haMin),
+  options: sideOpts([{home_avg_off}, {away_avg_off}, {home_avg_on}, {away_avg_on}]),
 }});
 
 // ── 결과별 ──
-const resMin = Math.min({win_avg_off}, {lose_avg_off}, {win_avg_on}, {lose_avg_on});
 new Chart(document.getElementById('resultChart'), {{
   type: 'bar',
+  plugins: [topLabelPlugin],
   data: {{
     labels: ['승', '패'],
     datasets: [
@@ -356,7 +371,7 @@ new Chart(document.getElementById('resultChart'), {{
       {{ label: 'ON거래액',  data: [{win_avg_on},  {lose_avg_on}],  backgroundColor: alpha(ON,  .8) }},
     ]
   }},
-  options: sideOpts(resMin),
+  options: sideOpts([{win_avg_off}, {lose_avg_off}, {win_avg_on}, {lose_avg_on}]),
 }});
 </script>
 </body>
