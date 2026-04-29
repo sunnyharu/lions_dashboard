@@ -47,37 +47,10 @@ def main():
     all_values = ws.get_all_values()
     header     = all_values[0]
 
-    date_col_idx    = header.index("날짜")      if "날짜"   in header else 0
-    off_col_idx     = header.index("일별거래액") if "일별거래액" in header else 1
-    on_col          = header.index("ON매출") + 1 if "ON매출" in header else None
+    date_col_idx = header.index("날짜")      if "날짜"      in header else 0
+    off_col_idx  = header.index("일별거래액") if "일별거래액" in header else 1
 
-    # ── 1. 잘못 추가된 행 삭제 (날짜는 있는데 일별거래액이 없는 행) ──
-    rows_to_delete = []
-    for i, row in enumerate(all_values[1:], start=2):
-        has_date     = row[date_col_idx].strip() if date_col_idx < len(row) else ""
-        has_off      = row[off_col_idx].strip()  if off_col_idx  < len(row) else ""
-        if has_date and not has_off:
-            rows_to_delete.append(i)
-
-    # 뒤에서부터 삭제해야 행 번호가 안 밀림
-    for row_num in reversed(rows_to_delete):
-        ws.delete_rows(row_num)
-        print(f"삭제: 행 {row_num}")
-
-    print(f"잘못된 행 {len(rows_to_delete)}개 삭제 완료")
-
-    # ── 2. ON매출 컬럼 확보 ──
-    all_values = ws.get_all_values()
-    header     = all_values[0]
-
-    if "ON매출" not in header:
-        on_col = len(header) + 1
-        ws.update_cell(1, on_col, "ON매출")
-        header.append("ON매출")
-    else:
-        on_col = header.index("ON매출") + 1
-
-    # ── 3. CSV 로드 ──
+    # ── 1. CSV 로드 ──
     df = pd.read_csv(CSV_PATH)
     df.columns = df.columns.str.strip()
     sales = {}
@@ -86,22 +59,29 @@ def main():
         amt = int(row["pay_amt"]) if pd.notna(row["pay_amt"]) else 0
         sales[dt.strftime("%Y.%m.%d")] = amt
 
-    # ── 4. 날짜 매핑 (정규화) ──
-    date_to_row = {
-        normalize_date(row[date_col_idx]): i + 2
-        for i, row in enumerate(all_values[1:])
-        if row and row[date_col_idx]
-    }
+    # ── 2. 유효한 행만 필터 + ON매출 병합 ──
+    new_rows = [["날짜", "일별거래액", "ON매출"]]
+    kept, removed = 0, 0
+    for row in all_values[1:]:
+        date_val = row[date_col_idx].strip() if date_col_idx < len(row) else ""
+        off_val  = row[off_col_idx].strip()  if off_col_idx  < len(row) else ""
 
-    updates = []
-    for date_str, amount in sorted(sales.items()):
-        if date_str in date_to_row:
-            cell = gspread.utils.rowcol_to_a1(date_to_row[date_str], on_col)
-            updates.append({"range": cell, "values": [[amount]]})
+        # 일별거래액이 없는 행은 제거
+        if not off_val:
+            removed += 1
+            continue
 
-    if updates:
-        ws.batch_update(updates)
-        print(f"ON매출 업데이트 완료: {len(updates)}일")
+        norm_date = normalize_date(date_val)
+        on_amt    = sales.get(norm_date, "")
+        new_rows.append([date_val, off_val, on_amt])
+        kept += 1
+
+    print(f"제거할 행: {removed}개 / 유지할 행: {kept}개")
+
+    # ── 3. 시트 전체를 한 번에 교체 (API 호출 최소화) ──
+    ws.clear()
+    ws.update(new_rows, value_input_option="USER_ENTERED")
+    print(f"시트 재작성 완료: {kept}행, ON매출 {sum(1 for r in new_rows[1:] if r[2] != '')}일 채움")
 
 
 if __name__ == "__main__":
