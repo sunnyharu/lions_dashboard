@@ -59,7 +59,7 @@ def upload_to_sheets(rows: list):
 
     existing = ws.get_all_values()
     if not existing:
-        ws.append_row(["날짜", "매장코드", "매장명", "일별거래액"])
+        ws.append_row(["날짜", "일별거래액"])
 
     for row in rows:
         ws.append_row(row)
@@ -133,18 +133,36 @@ def fetch_sales_data(cookies: dict) -> list:
     data = resp.json()
     print(f"데이터 행 수: {len(data)}")
 
-    # 어제 날짜 컬럼(DAY_KEY) 추출
-    date_str = yesterday.strftime("%Y-%m-%d")
-    rows = []
-    for item in data:
-        store_cd   = item.get("AGTCD", "")
-        store_nm   = item.get("AGTNM", "")
-        day_amount = item.get(DAY_KEY, "")
-        if store_cd:
-            rows.append([date_str, store_cd, store_nm, day_amount])
+    # 합계 행에서 어제 일별 거래액 추출
+    date_str = f"{yesterday.year}.{yesterday.month}.{yesterday.day}"
+    total_amount = ""
 
-    print(f"어제({DAY_KEY}) 데이터: {len(rows)}행")
-    return rows
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        nm = item.get("AGTNM", "") or ""
+        if "합계" in nm:
+            total_amount = item.get(DAY_KEY, "")
+            break
+
+    # 합계 행이 없으면 전체 합산
+    if total_amount == "":
+        total = 0
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            nm = item.get("AGTNM", "") or ""
+            if "합계" in nm or "소계" in nm:
+                continue
+            val = item.get(DAY_KEY, 0) or 0
+            try:
+                total += int(str(val).replace(",", ""))
+            except:
+                pass
+        total_amount = total
+
+    print(f"어제({DAY_KEY}) 합계: {total_amount}")
+    return [[date_str, total_amount]]
 
 
 async def main():
