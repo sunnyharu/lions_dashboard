@@ -185,23 +185,37 @@ def build_html(data: list, news: list) -> str:
     for n in news:
         news_by_date[n["date"]].append(n)
 
-    news_html = ""
-    for date in sorted(news_by_date.keys(), reverse=True):
+    sorted_dates = sorted(news_by_date.keys(), reverse=True)
+
+    # 날짜 필터 버튼
+    filter_buttons = '<button class="active" onclick="filterNews(\'all\', this)">전체</button>'
+    for d in sorted_dates:
+        label = d[5:]  # "04.28"
+        filter_buttons += f'<button onclick="filterNews(\'{d}\', this)">{label}</button>'
+
+    # 날짜별 뉴스 블록
+    news_blocks = ""
+    for date in sorted_dates:
         items = news_by_date[date]
-        news_html += f'<div class="news-date">{date}</div>'
+        news_blocks += f'<div class="news-group" data-date="{date}">'
+        news_blocks += f'<div class="news-date">{date}</div>'
         for n in items:
-            src_cls = "badge-news" if n["source"] == "뉴스" else "badge-cafe"
+            src_cls    = "badge-news" if n["source"] == "뉴스" else "badge-cafe"
             link_open  = f'<a href="{n["link"]}" target="_blank" rel="noopener">' if n["link"] else ""
             link_close = "</a>" if n["link"] else ""
-            news_html += f"""
+            news_blocks += f"""
             <div class="news-item">
               <span class="news-src {src_cls}">{n["source"]}</span>
               {link_open}<span class="news-title">{n["title"]}</span>{link_close}
               {'<div class="news-desc">' + n["summary"] + '</div>' if n["summary"] else ""}
             </div>"""
+        news_blocks += '</div>'
 
-    if not news_html:
-        news_html = '<div class="news-empty">수집된 이슈 없음</div>'
+    if not news_blocks:
+        news_blocks = '<div class="news-empty">수집된 이슈 없음</div>'
+        filter_buttons = ""
+
+    news_html = f'<div class="news-filter">{filter_buttons}</div>{news_blocks}'
 
     # 테이블 행
     table_rows = ""
@@ -291,7 +305,13 @@ def build_html(data: list, news: list) -> str:
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
     max-height: 600px; overflow-y: auto;
   }}
-  .news-panel h3 {{ font-size: 13px; color: #555; margin-bottom: 14px; font-weight: 600; }}
+  .news-panel h3 {{ font-size: 13px; color: #555; margin-bottom: 10px; font-weight: 600; }}
+  .news-filter {{ display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }}
+  .news-filter button {{
+    font-size: 11px; padding: 3px 9px; border-radius: 10px; border: 1px solid #ddd;
+    background: #f8f9fa; color: #555; cursor: pointer; transition: all .15s;
+  }}
+  .news-filter button.active {{ background: #002D72; color: white; border-color: #002D72; }}
   .news-date {{ font-size: 11px; font-weight: 700; color: #002D72; margin: 12px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #eef; }}
   .news-date:first-child {{ margin-top: 0; }}
   .news-item {{ margin-bottom: 10px; }}
@@ -489,6 +509,15 @@ new Chart(document.getElementById('resultChart'), {{
   }},
   options: sideOpts(),
 }});
+
+// 뉴스 날짜 필터
+function filterNews(date, btn) {{
+  document.querySelectorAll('.news-filter button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.news-group').forEach(g => {{
+    g.style.display = (date === 'all' || g.dataset.date === date) ? '' : 'none';
+  }});
+}}
 </script>
 </body>
 </html>"""

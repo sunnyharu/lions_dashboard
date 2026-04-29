@@ -68,7 +68,13 @@
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
     max-height: 600px; overflow-y: auto;
   }
-  .news-panel h3 { font-size: 13px; color: #555; margin-bottom: 14px; font-weight: 600; }
+  .news-panel h3 { font-size: 13px; color: #555; margin-bottom: 10px; font-weight: 600; }
+  .news-filter { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+  .news-filter button {
+    font-size: 11px; padding: 3px 9px; border-radius: 10px; border: 1px solid #ddd;
+    background: #f8f9fa; color: #555; cursor: pointer; transition: all .15s;
+  }
+  .news-filter button.active { background: #002D72; color: white; border-color: #002D72; }
   .news-date { font-size: 11px; font-weight: 700; color: #002D72; margin: 12px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #eef; }
   .news-date:first-child { margin-top: 0; }
   .news-item { margin-bottom: 10px; }
@@ -99,7 +105,7 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.04.29 07:34</span>
+  <span class="updated">최종 업데이트: 2026.04.29 16:58</span>
 </div>
 
 <div class="kpi-row">
@@ -563,7 +569,7 @@
     </div>
     <div class="news-panel">
       <h3>날짜별 주요 이슈</h3>
-      <div class="news-date">2026.04.29</div>
+      <div class="news-filter"><button class="active" onclick="filterNews('all', this)">전체</button><button onclick="filterNews('2026.04.29', this)">04.29</button><button onclick="filterNews('2026.04.28', this)">04.28</button></div><div class="news-group" data-date="2026.04.29"><div class="news-date">2026.04.29</div>
             <div class="news-item">
               <span class="news-src badge-news">뉴스</span>
               <a href="https://m.sports.naver.com/kbaseball/article/241/0003507892" target="_blank" rel="noopener"><span class="news-title">[IS 잠실] '타율 0.111' 손아섭, 두산 이적 후 첫 말소 "심리적으로 많이...</span></a>
@@ -663,7 +669,362 @@
               <span class="news-src badge-news">뉴스</span>
               <a href="https://m.sports.naver.com/kbaseball/article/382/0001271084" target="_blank" rel="noopener"><span class="news-title">‘2년전의 3배라니’ 7회 이후 역전승부만 15회…KBO리그 불펜 혼란의 시...</span></a>
               <div class="news-desc">박영현(23)이 뒷문을 지키는 KT, 조병현(24)이 건재한 SSG 랜더스, 김재윤(36)이 구위를 유지하고 있는 삼성 라이온즈가 그나마 사정이 나은 편이다. 지금의 흐름이 계속되</div>
+            </div></div><div class="news-group" data-date="2026.04.28"><div class="news-date">2026.04.28</div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4763545" target="_blank" rel="noopener"><span class="news-title">마킹 유니폼 받기가 이렇게 힘든가요? 베리즈샵, 삼성라이온즈 너무합니다....</span></a>
+              <div class="news-desc">그러려면 협업을 하지말던가, 아님 판매를 하지말던가 유니폼이나 굿즈 판매하면 삼성라이온즈는 수익금 안가져갑니까? 삼성라이온즈가 무책임한 구단인지 아니면 담당자가 무책임한건지 참 황</div>
             </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(SM[유스스]에셈.스팽.smer.본디지.bds...)</span>
+              <a href="http://cafe.naver.com/jalsalaa3/418525" target="_blank" rel="noopener"><span class="news-title">취미생활이라..</span></a>
+              <div class="news-desc">좋아하는 국내야구팀은 삼성라이온즈에요! 원년부터 응원중이신 아부지따라 우연히 2008년에 경기를 보기... 해외축구팀 유니폼 모으기에요 성인되고 아르바이트를 하든 군대에서 월급을 </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(히로매니아)</span>
+              <a href="http://cafe.naver.com/hiromania/389555" target="_blank" rel="noopener"><span class="news-title">삼성라이온즈 팬 여러분들 실망입니다</span></a>
+              <div class="news-desc">가장 먼저 품절시킬거라 생각한 떠거운 퍼런심장... ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ 퍼런거 아직도 남아있습니다!!! 우예된 일입니까 이게!!!!!!!</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4763550" target="_blank" rel="noopener"><span class="news-title">방금 베리즈 들어가봤는데</span></a>
+              <div class="news-desc">드디어 배송준비중으로 바꼈어요 참고로 저는 2월27일 새벽에 주문했어요! 문의 두 번이나 남겼는데 드디어 오네요 ㅠㅠ</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4748455" target="_blank" rel="noopener"><span class="news-title">야구유니폼어려워요</span></a>
+              <div class="news-desc">26시즌유니폼 레플리카는 왜 온라인에선 벌써 구매가 안되는걸까요?(베리즈샵에서 봤어요) 어센틱은 언더아머 어센틱샵이라고 있던데..여기에서만 파는걸까요?.. 라팍가서 유니폼 살 생각</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4747435" target="_blank" rel="noopener"><span class="news-title">이번주 화수목 잠실야구장에서 어센틱 샵 연다고 하는데요~</span></a>
+              <div class="news-desc">화,수,목 3일동안 잠실야구장 3루쪽에서 삼성라이온즈 어센틱 샵을 연다고 하던데요,~ 목요일에 가면... ㅠ 진짜 베리즈가 마킹키트를 늦게줘서 매번 노마킹 레플리카를 입고다니는 사</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4747221" target="_blank" rel="noopener"><span class="news-title">팀스토어와 베리즈 운영주체가 다른가요?</span></a>
+              <div class="news-desc">팀스토어 오프라인몰이 있고 팀스토어 온라인몰이 있고 또 베리즈라는 곳이 있는데 운영주체가 다른거에요?? 배송이 늦고 일처리가 늦다는 글이 많이 보이는데 작년이랑 뭐가 달라졌는지 궁</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(마마웨딩달콤한결혼(일상.결혼준비.부...)</span>
+              <a href="http://cafe.naver.com/marverlove/353181" target="_blank" rel="noopener"><span class="news-title">카카오엔터 베리즈, 삼성 라이온즈 한정판 MD</span></a>
+              <div class="news-desc">카카오엔터테인먼트는 글로벌 K컬처 팬 플랫폼 ‘베리즈’의 팬스토어 ‘베리즈샵’에서 프로야구 삼성 라이온즈의 ‘스프링 유니폼’ 한정판을 출시했어요 구단의 전통적인 아이덴티티에 화사한</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4694212" target="_blank" rel="noopener"><span class="news-title">유니폼 어디서 사는지와 어떤게 나은지 추천좀</span></a>
+              <div class="news-desc">유니폼을 처음 사보려합니다 어디가서 사는게 나은지 어떤시리즈가 나은지 추천좀 부탁드려요</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4677067" target="_blank" rel="noopener"><span class="news-title">삼성 프로페셔널 유니폼은 이제 안 파나요?</span></a>
+              <div class="news-desc">베리즈에 레플리카 유니폼밖에 없는데 프페는 이제 안 퍄는건가요??</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(릴카 팬카페)</span>
+              <a href="http://cafe.naver.com/lilka/597949" target="_blank" rel="noopener"><span class="news-title">스프링 유니폼 출시!!</span></a>
+              <div class="news-desc">책임질 삼성라이온즈 스프링 유니폼 출시 ❗ 그리고 하나 더, 스프링 짐색을 구매하시면 라팍을 분홍빛으로 물들일 '핑크 팔각봉'을 무료로 증정해 드립니다 다가오는 토요일 베리즈에서 </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(위아라 : We Are The LIONS [ 삼성라이...)</span>
+              <a href="http://cafe.naver.com/watl/65341" target="_blank" rel="noopener"><span class="news-title">4/25(토) 키움 직관 ⚾️=3</span></a>
+              <div class="news-desc">공식 응원봉보다 가볍고 그립감 좋은 찡버님 응원봉✨ 최 강! 삼 성! 뚝뚝 내려가는 내 승률..ㅎㅎ +삼성라이온즈새싹님+브희님 반가웠습니다!⚾️✨ 고척 그냥 요정들✨ 다음에 또 만</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4704163" target="_blank" rel="noopener"><span class="news-title">21일 삼성 VS SSG전 직관후기(사진많음)</span></a>
+              <div class="news-desc">남편 응원봉이 얼마나 두들겼는지 금갔더라구요 그래서 팀스가서 응원봉하나사고 가챠이벤트에서... 승요되셨음 좋겠네요 이상 매번 사진과 뻘글이 많은 후기였음돠^^ 마지막으로 이재현 선</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4699562" target="_blank" rel="noopener"><span class="news-title">안녕하세요. 가입인사드립니다.</span></a>
+              <div class="news-desc">삼성라이온즈를 응원하게 된 계기가 무엇인가요? 뼛속까지 대구사람입니다. 야구하면 삼성아인교 2. 가장... 지난 주말 야구장 처음 가보고 오늘은 팀스토어에가서 옷과 응원봉 타올사서</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(맘이베베 (핫딜, 육아, 놀이))</span>
+              <a href="http://cafe.naver.com/skybluezw4rh/14518037" target="_blank" rel="noopener"><span class="news-title">야구ㅡ삼성팬인데요</span></a>
+              <div class="news-desc">저희집 삼린이가 삼성라이온즈팬입니다 다름이 아니라 혹시 라이온즈 원단판매하는곳 있을까요??솜씨는 없지만 집에서 뭐라도 만들어 주고싶어서요ㅠ 응원봉도 다들 만드시던데 아무리 찾아도 </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4676406" target="_blank" rel="noopener"><span class="news-title">저도 삼성카드 굿즈 받았어용</span></a>
+              <div class="news-desc">분명 재작년 네식구 모두 야구에 입문할때는 유니폼 하나, 응원봉 하나 없이 미약(?)한 출발이였는데 ㅋㅋㅋ 자꾸 아이템들이 늘어나고 있어요 그럼 이제 가방 꾸려 라팍으로 가야겠죠?</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4667463" target="_blank" rel="noopener"><span class="news-title">*삼성짱아*님 덕분에 승요^^</span></a>
+              <div class="news-desc">삼성 라이온즈 팬으로서 정말 기분 좋은 경기였네요.^^ 1회초부터 9회말까지 잠시도 한눈 팔 새 없이 목청껏 소리지르고 응원봉도 힘차게 흔들며 열심히 응원했더니 온몸이...ㅋ 이정</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(창원 진해댁들 사랑방 [진해 남문 용원...)</span>
+              <a href="http://cafe.naver.com/jinhaemam/2374434" target="_blank" rel="noopener"><span class="news-title">야구 삼성응원봉</span></a>
+              <div class="news-desc">정보는 진해이야기(사랑방 장터)를 이용해주세요. - https://cafe.naver.com/happyjinhaemam =================================</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4713726" target="_blank" rel="noopener"><span class="news-title">삼성라이온즈몰 잘 아시는분 도움 부탁드려요 (백정현 선수 마킹키트)</span></a>
+              <div class="news-desc">안녕하세요 타지사는 삼성 팬이라, 온라인 몰에서 마킹지만 구매해서 부착해주려고 하는데 삼성라이온즈몰에서는 품절인지 선택란에 없고 카카오 몰에서는 판매중지 처리 되어있네요.. 이런 </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4712930" target="_blank" rel="noopener"><span class="news-title">마킹키트 질문!</span></a>
+              <div class="news-desc">구 삼성라이온즈 몰에서 올드 홈 유니폼 구매후 마킹키트는 팀스에서 올드 마킹키트 사서 붙여도 상관없나용?!!</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4692151" target="_blank" rel="noopener"><span class="news-title">유니폼 마킹 안하시는 분들도 많으신가요?</span></a>
+              <div class="news-desc">유니폼에 마킹 안해도 어색하지 않을까 걱정이 되어서요!!</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4657678" target="_blank" rel="noopener"><span class="news-title">프페 어웨이에 마킹은 프페 올드어웨이요</span></a>
+              <div class="news-desc">프페 어웨이 유니폼 구입하려는데 원하는선수의 마킹이 없어서요 프페 올드어웨이에는 해당선수 마킹지가 있던데 이거 구입해서 부착해도 이상하지않을까요? 글을 찾아보니 올드랑 기본은 마킹</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4643554" target="_blank" rel="noopener"><span class="news-title">삼성라이온즈몰 배송 문의(쫀냐미 마킹키트)</span></a>
+              <div class="news-desc">3월 28일 삼성라이온즈몰(플레이위즈) 쫀나미 마킹키트(김성윤) 주문했는데.. 배송이 너무 지연되서 방금 고객센터 통해서 문의했더니, 다음주에 배송 예정이라고 합니다.. 너무 오래</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4557182" target="_blank" rel="noopener"><span class="news-title">25프페 02올드 홈 유니폼 마킹키트 문의 드려요</span></a>
+              <div class="news-desc">삼성라이온즈몰 25프로페셔널 02올드 홈 유니폼 원하는 마킹이 없어서 노마킹으로 구매 했는데요. 올해 팀스토어(베리즈샵?)에서 2002올드 레플리카 홈 마킹키트를 구매하면 될까요?</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(펜타힐즈 생활백서 [펜타백서])</span>
+              <a href="http://cafe.naver.com/penta100/1656" target="_blank" rel="noopener"><span class="news-title">대구삼성라이온 유니폼 어센틱샵 오픈 대구라팍 하우스오브라이온즈 방문후기</span></a>
+              <div class="news-desc">있고 마킹키트도 직원분께 말씀드리고 바로 유니폼 부착도 가능해요 가챠기계도 준비중인 거 같은데 아직 안들어왔네요 아마 위에 전시된 라이온즈 키링아닐까 싶은 ㅎㅎ 이제 라팍에도 삼성</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4509349" target="_blank" rel="noopener"><span class="news-title">인생 처음으로 유니폼 샀어요!!!!!</span></a>
+              <div class="news-desc">삼성라이온즈몰이 가장 싼 것 같아서 거기서 샀는데 지금 배송이 언제쯤 올지 모르겠어요... 최대 2주라고 하는데 혹시 경험 있으신 분들 유니폼 배송 오는데 며칠 걸리셨나요?! 제발</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4641825" target="_blank" rel="noopener"><span class="news-title">[질문] 아들의 소원인 '구자욱 선수 사인' 받기... 선배님들의 조언을 구합니다!</span></a>
+              <div class="news-desc">라팍(삼성 라이온즈 파크)에 직관 또는 원장을 가서라도 기회를 엿보고 싶지만, 구체적으로 어디서 기다려야 하는지, 혹은 몇 시쯤 가야 선수들을 만날 확률이 높은지 막막하기만 하네요</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4691850" target="_blank" rel="noopener"><span class="news-title">가방 정보 아시는 분..(사진은 없음)</span></a>
+              <div class="news-desc">오늘 출근하다가 어떤 팬분이 메신 삼성라이온즈 가방을 봤는데 아무리 검색해도 정보가 안 나와서 글 남겨봅니다! 공식 굿즈가 아닌가 싶기도 하고요.. 가방은 나일론 재질처럼 살짝 흐</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4668000" target="_blank" rel="noopener"><span class="news-title">삼성, 스프링 유니폼 출시</span></a>
+              <div class="news-desc">삼성 라이온즈, 스프링 유니폼 출시 스프링 짐색을 구매시 ‘핑크 팔각봉’ 무료 증정 판매 기간 : 4월 18일(토) 오전 10시 ~ 재고 소진 시 판매처 : 베리즈 라이온즈 팀스토</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(대구맘 365 - 결혼, 임신, 출산, 육아...)</span>
+              <a href="http://cafe.naver.com/dgmom365/7277520" target="_blank" rel="noopener"><span class="news-title">#동성로 #버터떡 #쫀득튀김소금빵 #아이들과 함께 #눈요기 입요기 가능한곳을 알아 왔습니다 여러분~</span></a>
+              <div class="news-desc">그리고 삼성라이온즈 굿즈템들도 많아서 구경할것도 많네요 지금 굿즈 이벤트도 하고 있어서 아이들과 한번 와보기 좋은거 같아요 사장님께서 저기 있는 굿즈들을 이벤트로 계속 하실 생각 </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4569089" target="_blank" rel="noopener"><span class="news-title">다시, 야구의 시간입니다 | 가짜 개막과 진짜 개막의 날</span></a>
+              <div class="news-desc">대장님부터 나오는 거 감동 심해,,, 삼성라이온즈 홈 개막을 선언합니다 내년에도 홈에서 개막하자... 열받아서 짐 챙겨서 나오려니까 점수냄 아오!!!! (다시 착석) 만루 기회를.</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(위아라 : We Are The LIONS [ 삼성라이...)</span>
+              <a href="http://cafe.naver.com/watl/65504" target="_blank" rel="noopener"><span class="news-title">이대로는 안됩니다 ㅜㅜ 제물 바칩니다.</span></a>
+              <div class="news-desc">내일경기 연패탈출시 뷰캐넌 4년 연속 10승 기념티셔츠 딱 한장 뿐인 소장해왔던거 (안 입었습니다.) 나눔합니다. 실물사진은 집에 있어서 밤에 찍어서 올릴께요. 내일 증말증말 연패</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4746743" target="_blank" rel="noopener"><span class="news-title">[박병호 은퇴식] 내 두번째 마킹 안녕</span></a>
+              <div class="news-desc">운좋게 박병호 은퇴 티셔츠도 받을 수 있었고.. 키움팬 분께서 나눠주신 박뱅 뱃지!!! (박뱅 유니폼이면... 박뱅♡ 제 2의 인생을 항상 응원함다 . . . 이 감동은 경기 시작</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4746648" target="_blank" rel="noopener"><span class="news-title">저) 박병호 은퇴 기념 티셔츠 &lt;-&gt; 님) 삼성라이온즈 사인볼</span></a>
+              <div class="news-desc">원태인 오승환 이승엽 구자욱 사인볼 이 중에 하나 있으신분 계실까요?! 원태인, 이승엽 사인볼 우선으로 찾아봅니다 5월 1일,2일 오시는분 계시면 현장 교환 원합니다 !</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4746345" target="_blank" rel="noopener"><span class="news-title">박병호 은퇴 티셔츠 교환</span></a>
+              <div class="news-desc">저: 은퇴 티셔츠 1장 으로 삼성라이온즈 최다관중 티셔츠 등 굿즈 교환 구해봅니다!</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4713467" target="_blank" rel="noopener"><span class="news-title">최다관중 티셔츠 리폼했어요(셀프X)</span></a>
+              <div class="news-desc">최다관중 티셔츠 90 사이즈가 작아서 옆선을 조금 잘랐는데 ㅠ.ㅠ 실밥 다 튀어나오고 너무 못생겨져서... 어울리면서도 "삼성 라이온즈다!!‘ 라고 대문짝하게 외치는 디자인은 아니</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(야구 24시-(KIA 기아, KT, LG,NC,SSG,...)</span>
+              <a href="http://cafe.naver.com/myrealtrips/670" target="_blank" rel="noopener"><span class="news-title">키움 박병호 은퇴,식 너무 허접한 준비에 뿔난 팬들?! 은퇴식 행사 어떤지 보니ㄷㄷ.jpg</span></a>
+              <div class="news-desc">진행·한정 티셔츠 지급 등 운영 방식에 팬 반발이 커지며 논란이 확산되고 있다. 키움 히어로즈가 박병호 코치의 은퇴식을 26일 고척스카이돔 삼성 라이온즈전에서 개최하기로 한 가운데</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(야구 24시-(KIA 기아, KT, LG,NC,SSG,...)</span>
+              <a href="http://cafe.naver.com/myrealtrips/615" target="_blank" rel="noopener"><span class="news-title">키움 박병호 은퇴, 26일 고척돔에서 개최 일정 이벤트 사인회 내용 자세히!</span></a>
+              <div class="news-desc">은퇴식은 26일 고척스카이돔에서 삼성 라이온즈와의 홈경기 전 진행되며, 기념 티셔츠 배포와 사인회 등 다양한 팬 이벤트가 마련된다. 행사에서는 감사패와 기념품 전달, 전광판 영상 </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(벤츠 GL CLUB - 벤츠 SUV 동호회 GLC ...)</span>
+              <a href="http://cafe.naver.com/benzglkml/493589" target="_blank" rel="noopener"><span class="news-title">“국민 거포의 마지막 인사”…키움, 26일 고척돔서 박병호 은퇴식 개최</span></a>
+              <div class="news-desc">키움 구단은 오는 26일 서울 고척스카이돔에서 열리는 삼성 라이온즈와의 홈 경기에 앞서 박병호 코치... 구단은 경기장을 찾는 관중 선착순 7천 명에게 기념 티셔츠를 증정하고, 사</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(곰돌이 스키 스노보드 (용평 지산 하이...)</span>
+              <a href="http://cafe.naver.com/highski/468717" target="_blank" rel="noopener"><span class="news-title">올해 첫직관 갑니다!!!</span></a>
+              <div class="news-desc">저랑 나이가 같은 대구에서 태어난 삼성라이온즈 1위중입니다. 집에서 티비로만 보다가 아이들과 처음으로 티켓 줍줍해서 직관 갑니다~ 엄청 설레네요. 내일도 승리하겠지요~ 최강삼성 승</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4725088" target="_blank" rel="noopener"><span class="news-title">안녕하세요</span></a>
+              <div class="news-desc">가장 좋아하는 삼성라이온즈 선수는 누구인가요? 1번이호성선수입니다. 3. 사자사랑방 카페는 어떻게 가입하게 되었나요? 작년굿즈엄청 사재기했는데 백팩을 구매하지 못해서 올해 구매하려</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(위아라 : We Are The LIONS [ 삼성라이...)</span>
+              <a href="http://cafe.naver.com/watl/63465" target="_blank" rel="noopener"><span class="news-title">투명 백팩 패치 파는곳 어디 도와주세요</span></a>
+              <div class="news-desc">아시는분 알려주세요 이쁜딸이 부치고 싶어합니다</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(Twinkle STARBUCKS / 트윙클 스타벅스)</span>
+              <a href="http://cafe.naver.com/twinklestarbucks/81338" target="_blank" rel="noopener"><span class="news-title">온라인스토어 세일 언박싱</span></a>
+              <div class="news-desc">ㅋㅋ 삼성라이온즈 스트로참, 로우로우 패커블백, 서머 브리즈 캔홀더, 그리고 리유저블 콜드컵까지!! 다 넘... ㅋㅋ 간식으로 달달한 쿠키랑 초콜릿 먹을 생각에 벌써부터 신나요 로</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4585257" target="_blank" rel="noopener"><span class="news-title">개막전(진)과 개막전(찐)의 직관 후기</span></a>
+              <div class="news-desc">야무지게 유니폼도 구매하고 가방꾸 하려고 투명백팩도 구매하고 설레는 마음으로 개막전을 봤으나 두둥....... 첫 우승과 함께 3,000승 후기를 쓸 수 있어서 너무 행복해요.. </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4553745" target="_blank" rel="noopener"><span class="news-title">가방 백팩 네임택</span></a>
+              <div class="news-desc">가방 백팩 네임택(김영웅선수) 3/29일 라팍 꼭 오시는 한 분께 나눔 하겠습니다. (아래 사진 그대로 드림)... 당첨자 댓글✍️ 및 바로 채팅 드릴게요! =&gt; 26일 오후</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(별빛요양간병일기 - 요양원 / 요양병원...)</span>
+              <a href="http://cafe.naver.com/diskfkrn/31670" target="_blank" rel="noopener"><span class="news-title">삼성라이온즈유니폼 저렴하게 사는 방법!</span></a>
+              <div class="news-desc">대부분의 유니폼은 셔츠 형태로 되어 있으며, 플레이어의 이름과 번호가 뒷면에 새겨져 있습니다. 3. **로고**: 유니폼에는 삼성 라이온즈의 로고가 prominently 강조되어 </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4727284" target="_blank" rel="noopener"><span class="news-title">삼성라이온즈카드 이벤트</span></a>
+              <div class="news-desc">10만원이상도 썻구요 근데 응모내역,응모현황 이런게 삼성카드 어플엔 하나도 안뜨더라구요.. 샘들도 이러셨어요? 그리고 참여 후 몇개월 뒤쯤 수령하셨어요.....??? 전 보냉백이랑</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(베팅 채널24 - 토토 프로토 스포츠분석...)</span>
+              <a href="http://cafe.naver.com/betchannel24/12263" target="_blank" rel="noopener"><span class="news-title">4월24일~25일 오늘의픽 스코어예상</span></a>
+              <div class="news-desc">[5-2 KIA 승] 18:30 [KBO] 키움 히어로즈 vs 삼성 라이온즈 삼성의 정교한 마운드 운영 지표와 최근 개선된 팀... [4-2 신시내티 승] 08:00 [NBA] 필</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(베팅 채널24 - 토토 프로토 스포츠분석...)</span>
+              <a href="http://cafe.naver.com/betchannel24/12244" target="_blank" rel="noopener"><span class="news-title">4월22일 4월23일 골드픽</span></a>
+              <div class="news-desc">분석: 두산 승 / 9.5 오버 [18:30 | KBO | 삼성 라이온즈 vs SSG 랜더스] 삼성은 최근 마운드의 탈삼진율이... 분석: 애틀랜타 승 / 8.5 오버 [07:45</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(위아라 : We Are The LIONS [ 삼성라이...)</span>
+              <a href="http://cafe.naver.com/watl/64655" target="_blank" rel="noopener"><span class="news-title">삼성라이온즈 카드 혜택</span></a>
+              <div class="news-desc">사용 하고 있지만 좋은것 같네요~ 모르시는분들 참고 하시면 될것 같네욤</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(PREVET)</span>
+              <a href="http://cafe.naver.com/knuprevet/48" target="_blank" rel="noopener"><span class="news-title">뜨개가 본업인것마냥 살고 있는 대학생</span></a>
+              <div class="news-desc">그 다음 주제는 제가 또 요새는 야구를 잘 못봤지만 삼성 라이온즈를 약 5년정도 봐온 야빠같은거라 KBO에서... 포그밀크 보스턴백 이거는 도아니티에서 보자마자 너무 이쁜데 마침 </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4684839" target="_blank" rel="noopener"><span class="news-title">삼성카드 이벤트로 이번에 보스턴백 받으신 분들!!</span></a>
+              <div class="news-desc">보스턴백 신청하면 얼마만에 오셨나요? 예상일보다 다들 엄청 빨리 받으신 것 같아서요!!</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4658584" target="_blank" rel="noopener"><span class="news-title">삼성카드 라이온즈백 왔어요</span></a>
+              <div class="news-desc">3월에 삼성라이온즈카드 발급받고 굿즈 신청했는데 오늘 드뎌 왔네요 보스턴백 보냉백 둘다 넘 예뻐요 화이트 색상이라 막 들고 댕기기에 아까울듯</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4658179" target="_blank" rel="noopener"><span class="news-title">삼성카드 삼성라이온즈 보스턴백 &보냉백 받았어요. 너무 예뻐요^~</span></a>
+              <div class="news-desc">삼성라이온즈 삼성카드 3월에 신규발급받고 보스턴백과 보냉백 받았어요, 가방 너무 멋지고 예뻐요. 진짜 보스턴백 너무 예쁘고 크기도 생각보다 크고 너무 좋아요. 작년에 받은 삼성라이</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(베팅 채널24 - 토토 프로토 스포츠분석...)</span>
+              <a href="http://cafe.naver.com/betchannel24/12161" target="_blank" rel="noopener"><span class="news-title">4월12일 4월13일 골드픽</span></a>
+              <div class="news-desc">분석: LG 승 / 8.5 오버 [14:00 | KBO | 삼성 vs NC] 삼성 라이온즈는 최근 마운드의 탈삼진율이 상승하고 수비... 분석: 밀워키 승 / 고득점 양상 [03:</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4692451" target="_blank" rel="noopener"><span class="news-title">다들 삼성 라이온즈 모자 평소에도 쓰고 다니시나요?</span></a>
+              <div class="news-desc">안녕하세요:) 최근에 선물로 삼성 라이온즈 볼캡을 받았는데요 다들 평소에도 쓰고 다니시나요? 저는 야구장 갈때만 쓰려고 했는데 선물해준 지인이 평소엔 안 쓰고 다니냐고 물어서요 하</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4712949" target="_blank" rel="noopener"><span class="news-title">4/22(수) 제가 이걸 돈 내고 봤어요!!!! 워후!!</span></a>
+              <div class="news-desc">삼성 라이온즈 vs SSG 랜더스 260422 @대구 라이온즈파크 네.... 왜 제가 이런 경기를 보러 갔을까요 내 소중한... 긴팔 - 우븐 - 산산자켓 - 목도리 까지 했는데 </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(현서맘의 체험일기)</span>
+              <a href="http://cafe.naver.com/hyunsermomslife/36" target="_blank" rel="noopener"><span class="news-title">오클리 OO9438 아이자켓 리덕스 편광 스포츠 선글라스 찐 추천 후기 PXG선글라스 이노티안경 삼성라이온즈유...</span></a>
+              <div class="news-desc">보다 보니까 오클리 OO9438 아이자켓 리덕스는 2026년 3월 21일 기준으로 실제 후기 글도 올라와 있고, 블로그... 아이자켓 리덕스는 고개를 자주 돌리거나 팔 스윙이 커져</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4685077" target="_blank" rel="noopener"><span class="news-title">삼성라이온즈 홈런 자켓</span></a>
+              
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4703112" target="_blank" rel="noopener"><span class="news-title">삼린이육성중님 뜨게질모자+야구공키링 감사합니다</span></a>
+              <div class="news-desc">주셔서 감사합니다ㅎ 뜨게질실이 삭아 떨어질때 까지 달고다니겠습니다 처음으로 나눔해주신 삼린이육성님에게 감사드립니다^^ 오늘 경기도 이겼으면 더더욱 좋았겠지만 내일을 기약하면서...</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(다이렉트 결혼준비)</span>
+              <a href="http://cafe.naver.com/directwedding/8867303" target="_blank" rel="noopener"><span class="news-title">삼성 라이온즈 키링 개시</span></a>
+              <div class="news-desc">삼성 라이온즈 팬 계신가요!? 이번에 출시한 라이온즈 키링 가방에 달아봤는데 귀엽네요 ㅎㅎ 최강 삼성 파이팅!!</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4641635" target="_blank" rel="noopener"><span class="news-title">최강삼성 타월은 무료로 줄때도 있고 안 줄 때도 있는걸까요?</span></a>
+              <div class="news-desc">예전에 나눠줬던거 같은데.. 요즘은 안 나눠주는지 궁금해요!</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(리뷰365 공식카페)</span>
+              <a href="http://cafe.naver.com/review365days/1066" target="_blank" rel="noopener"><span class="news-title">삼성라이온즈 김지찬 NC 트레이드설 진실과 진짜 이유</span></a>
+              <div class="news-desc">삼성라이온즈 김지찬 트레이드설, 과연 진짜일까요? 결론부터 말씀드리면 절대 흔들릴 필요 없습니다.... 준비물 체크리스트 ☑ 땀을 닦을 수 있는 쾌적한 팀 로고 타월 ☑ 목을 보호</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4556866" target="_blank" rel="noopener"><span class="news-title">타월 똑딱이 단추남았어요~</span></a>
+              <div class="news-desc">가족,지인 작업하고 똑딱이 단추가 7개작업분 정도 남았어요~ 혹시 작업하고싶으신 삼팬분들이 계실까싶어 글남겨봐요~^^ 수량이적어서 간단히 하고,재료 준비후 정식나눔 진행할께요~ h</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4630465" target="_blank" rel="noopener"><span class="news-title">937버스에서 동대구역환승센터역 내리면서 삼성라이온즈 니트머플러 놓고 내렸습니다</span></a>
+              <div class="news-desc">습득하신 분 있으시면 댓글 부탁드립니다 ㅠㅠ</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4502972" target="_blank" rel="noopener"><span class="news-title">상경중~ 스토커!</span></a>
+              <div class="news-desc">명절 지내러 친정으로 상경중인데 고속도로 여기저기에 사고가 좀 있어서 속도가 거북이인 상황이라 살짝 지루하던 중! 어?? 어엇~!!?? 어디서 많이 보던 스티커~~ "LIONS" </div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(SM[유스스]에셈.스팽.smer.본디지.bds...)</span>
+              <a href="http://cafe.naver.com/jalsalaa3/413156" target="_blank" rel="noopener"><span class="news-title">앞사진 릴참이요</span></a>
+              <div class="news-desc">제가 좋아하는 야구팀인 삼성라이온즈 유니폼과 좋아하는 해외축구팀인 리버풀 유니폼과 리버풀 머플러 2개가 있습니다.</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4757611" target="_blank" rel="noopener"><span class="news-title">반갑습니다-!</span></a>
+              <div class="news-desc">95년 어린이회원 2. 가장 좋아하는 삼성라이온즈 선수는 누구인가요? 오승환 3. 사자사랑방 카페는 어떻게 가입하게 되었나요? 카페 검색 4. 기존 회원들에 하고 싶은 말 및 앞으</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4747497" target="_blank" rel="noopener"><span class="news-title">5월1일 or2일 or3일 4자리 구해요^^</span></a>
+              <div class="news-desc">어린이회원 2명데리고 대구 첫직관 가고싶습니다 좋은분께 양도받고싶어요^^ 후기는 아이들과 꼭 남기겠습니다 감나합니다♡♡삼성라이온즈 화이팅♡♡</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(사자 사랑방 (삼성라이온즈 팬 커뮤니...)</span>
+              <a href="http://cafe.naver.com/lionsball/4737243" target="_blank" rel="noopener"><span class="news-title">가입 인사드립니다</span></a>
+              <div class="news-desc">어린이라이온즈였습니다 2. 가장 좋아하는 삼성라이온즈 선수는 누구인가요? 이만수(예전) 현재는 김지찬선수 3. 사자사랑방 카페는 어떻게 가입하게 되었나요? 네이버 메인화면 통해서입</div>
+            </div>
+            <div class="news-item">
+              <span class="news-src badge-cafe">카페(차알못차잘알)</span>
+              <a href="http://cafe.naver.com/carjala/216" target="_blank" rel="noopener"><span class="news-title">두산베어스 프로야구 티켓 예매 일정 좌석 확인</span></a>
+              <div class="news-desc">외야 지정석: 일반 9,000원, 청소년·군경 7,000원, 어린이·유공자·경로자 4,500원 할인 혜택도 다양하게 제공되니, 본인이 해당되는 경우 꼭 챙겨보세요. 예를 들어, 유</div>
+            </div></div>
     </div>
   </div>
 </div>
@@ -762,6 +1123,15 @@ new Chart(document.getElementById('resultChart'), {
   },
   options: sideOpts(),
 });
+
+// 뉴스 날짜 필터
+function filterNews(date, btn) {
+  document.querySelectorAll('.news-filter button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.news-group').forEach(g => {
+    g.style.display = (date === 'all' || g.dataset.date === date) ? '' : 'none';
+  });
+}
 </script>
 </body>
 </html>

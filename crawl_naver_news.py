@@ -30,7 +30,8 @@ DATE_STR      = yesterday.strftime("%Y.%m.%d")
 DATE_YYYYMMDD = yesterday.strftime("%Y%m%d")
 VALID_DATES   = {DATE_YYYYMMDD, now_kst.strftime("%Y%m%d")}  # 어제 + 오늘
 
-NEWS_QUERY = "삼성 라이온즈 베리즈"
+NEWS_QUERY    = "삼성라이온즈 베리즈"
+NEWS_MAX_DAY  = 5   # 하루 최대 뉴스 건수
 
 CAFE_KEYWORDS = [
     "유니폼", "베리즈", "응원봉", "마킹키트", "로고볼",
@@ -77,12 +78,12 @@ def yyyymmdd_to_str(d: str) -> str:
         return DATE_STR
 
 
-def naver_search(endpoint: str, query: str, display: int = MAX_DISPLAY) -> list:
+def naver_search(endpoint: str, query: str, display: int = MAX_DISPLAY, sort: str = "date") -> list:
     headers = {
         "X-Naver-Client-Id":     NAVER_CLIENT_ID,
         "X-Naver-Client-Secret": NAVER_CLIENT_SECRET,
     }
-    params = {"query": query, "display": display, "sort": "date"}
+    params = {"query": query, "display": display, "sort": sort}
     resp = requests.get(
         f"https://openapi.naver.com/v1/search/{endpoint}.json",
         headers=headers, params=params, timeout=10,
@@ -98,8 +99,11 @@ def is_trade_post(title: str) -> bool:
 
 
 def process_news(items: list) -> list:
+    # 관련도순으로 이미 정렬되어 있으므로 날짜 필터 후 상위 NEWS_MAX_DAY개만 사용
     results = []
     for item in items:
+        if len(results) >= NEWS_MAX_DAY:
+            break
         raw_pub  = item.get("pubDate", "")
         pub_date = parse_pub_date(raw_pub)
         print(f"  [뉴스] {pub_date or '?'} | {strip_html(item.get('title',''))[:30]}")
@@ -177,9 +181,9 @@ def main():
 
     print(f"=== 네이버 검색 ({DATE_STR} KST) ===")
 
-    # 뉴스: 삼성 라이온즈 베리즈
+    # 뉴스: 삼성라이온즈 베리즈 (관련도순, 하루 최대 5건)
     print(f"\n[뉴스] 쿼리: {NEWS_QUERY!r}")
-    news_items = naver_search("news", NEWS_QUERY, display=20)
+    news_items = naver_search("news", NEWS_QUERY, display=50, sort="sim")
     rows = process_news(news_items)
     print(f"  → {len(rows)}건 수집")
 
