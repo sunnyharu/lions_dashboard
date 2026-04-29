@@ -68,7 +68,7 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.04.29 05:33</span>
+  <span class="updated">최종 업데이트: 2026.04.29 05:38</span>
 </div>
 
 <div class="kpi-row">
@@ -79,12 +79,12 @@
   </div>
   <div class="kpi">
     <div class="label">ON 거래액 (누계)</div>
-    <div class="value">876,705,500</div>
+    <div class="value">881,020,000</div>
     <div class="sub">원</div>
   </div>
   <div class="kpi">
     <div class="label">총 거래액 (누계)</div>
-    <div class="value red">3,499,953,310</div>
+    <div class="value red">3,504,267,810</div>
     <div class="sub">원</div>
   </div>
   <div class="kpi">
@@ -102,15 +102,15 @@
 <div class="charts">
   <div class="chart-card">
     <h3>날짜별 거래액 추이</h3>
-    <canvas id="trendChart" height="220"></canvas>
+    <canvas id="trendChart" height="120"></canvas>
   </div>
   <div class="chart-card">
     <h3>홈 / 어웨이 평균 거래액</h3>
-    <canvas id="haChart" height="220"></canvas>
+    <canvas id="haChart" height="120"></canvas>
   </div>
   <div class="chart-card">
     <h3>경기 결과별 평균 거래액</h3>
-    <canvas id="resultChart" height="220"></canvas>
+    <canvas id="resultChart" height="120"></canvas>
   </div>
 </div>
 
@@ -133,8 +133,8 @@
           <td>두산</td>
           <td><span class="badge win">승</span></td>
           <td class="num">6,069,300</td>
-          <td class="num">-</td>
-          <td class="num bold">6,069,300</td>
+          <td class="num">4,314,500</td>
+          <td class="num bold">10,383,800</td>
         </tr>
         <tr>
           <td>2026.04.27</td>
@@ -543,7 +543,7 @@ new Chart(document.getElementById('trendChart'), {
         borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
       },
       {
-        label: 'ON거래액', data: [54443000, 20325000, 11560000, 8300000, 8255000, 15005000, 18370000, 15439000, 16481000, 12055000, 9834000, 10081000, 15686000, 16098000, 11975000, 11498000, 29970000, 22887000, 14195000, 14075000, 15885000, 16690000, 25361000, 15450500, 12805000, 13532500, 15521000, 22469000, 18342500, 16649000, 18710000, 17655500, 16833500, 165063500, 46790500, 23441000, 28727000, 16447000, 13433000, 6516000, 3800000, 4099500, 5951500, 0],
+        label: 'ON거래액', data: [54443000, 20325000, 11560000, 8300000, 8255000, 15005000, 18370000, 15439000, 16481000, 12055000, 9834000, 10081000, 15686000, 16098000, 11975000, 11498000, 29970000, 22887000, 14195000, 14075000, 15885000, 16690000, 25361000, 15450500, 12805000, 13532500, 15521000, 22469000, 18342500, 16649000, 18710000, 17655500, 16833500, 165063500, 46790500, 23441000, 28727000, 16447000, 13433000, 6516000, 3800000, 4099500, 5951500, 4314500],
         borderColor: ON, backgroundColor: alpha(ON, .1),
         borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
       },
@@ -566,7 +566,7 @@ new Chart(document.getElementById('haChart'), {
     labels: ['홈', '어웨이'],
     datasets: [
       { label: 'OFF거래액', data: [128812287, 14748226], backgroundColor: alpha(OFF, .8) },
-      { label: 'ON거래액',  data: [31068285,  12707807],  backgroundColor: alpha(ON,  .8) },
+      { label: 'ON거래액',  data: [31068285,  13039692],  backgroundColor: alpha(ON,  .8) },
     ]
   },
   options: {
@@ -582,7 +582,7 @@ new Chart(document.getElementById('resultChart'), {
     labels: ['승', '패'],
     datasets: [
       { label: 'OFF거래액', data: [70499120, 83112129], backgroundColor: alpha(OFF, .8) },
-      { label: 'ON거래액',  data: [28929884,  16630227],  backgroundColor: alpha(ON,  .8) },
+      { label: 'ON거래액',  data: [29261769,  16630227],  backgroundColor: alpha(ON,  .8) },
     ]
   },
   options: {
