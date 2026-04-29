@@ -56,6 +56,28 @@ def fetch_data():
             continue
         sales[date] = {"off": off, "on": on}
 
+    # ── 뉴스이슈 ──────────────────────────────────────────
+    news = []
+    try:
+        ws_news  = sh.worksheet("뉴스이슈")
+        news_raw = ws_news.get_all_records()
+        for row in news_raw:
+            date = str(row.get("날짜", "")).strip()
+            if not date:
+                continue
+            parts = date.split(".")
+            if len(parts) == 3:
+                date = f"{parts[0]}.{int(parts[1]):02d}.{int(parts[2]):02d}"
+            news.append({
+                "date":    date,
+                "source":  row.get("출처", ""),
+                "title":   row.get("제목", ""),
+                "summary": row.get("요약", ""),
+                "link":    row.get("링크", ""),
+            })
+    except Exception:
+        pass  # 시트 없으면 빈 리스트
+
     # ── 경기현황 ──────────────────────────────────────────
     ws_game  = sh.worksheet("경기현황")
     game_raw = ws_game.get_all_records()
@@ -89,10 +111,10 @@ def fetch_data():
             "result":    g["result"],
         })
 
-    return merged
+    return merged, news
 
 
-def build_html(data: list) -> str:
+def build_html(data: list, news: list) -> str:
     game_days = [r for r in data if r["result"]]
 
     def avg(lst): return int(sum(lst) / len(lst)) if lst else 0
@@ -101,6 +123,11 @@ def build_html(data: list) -> str:
     total_off   = sum(r["off"]   for r in data if r["off"])
     total_on    = sum(r["on"]    for r in data if r["on"])
     total_total = total_off + total_on
+
+    dates_with_sales = [r["date"] for r in data if r["off"] or r["on"]]
+    date_range_start = dates_with_sales[0]  if dates_with_sales else ""
+    date_range_end   = dates_with_sales[-1] if dates_with_sales else ""
+    date_range_label = f"{date_range_start} ~ {date_range_end}" if date_range_start else ""
 
     home_rows  = [r for r in game_days if r["home_away"] == "홈"]
     away_rows  = [r for r in game_days if r["home_away"] == "어웨이"]
@@ -151,6 +178,30 @@ def build_html(data: list) -> str:
             res_labels.append(f"{rs} {ml}")
             res_off_data.append(avg(monthly_res[m].get(rs + "_off", [])))
             res_on_data.append(avg(monthly_res[m].get(rs + "_on",  [])))
+
+    # 뉴스 패널 HTML
+    from collections import defaultdict as _dd
+    news_by_date = _dd(list)
+    for n in news:
+        news_by_date[n["date"]].append(n)
+
+    news_html = ""
+    for date in sorted(news_by_date.keys(), reverse=True):
+        items = news_by_date[date]
+        news_html += f'<div class="news-date">{date}</div>'
+        for n in items:
+            src_cls = "badge-news" if n["source"] == "뉴스" else "badge-cafe"
+            link_open  = f'<a href="{n["link"]}" target="_blank" rel="noopener">' if n["link"] else ""
+            link_close = "</a>" if n["link"] else ""
+            news_html += f"""
+            <div class="news-item">
+              <span class="news-src {src_cls}">{n["source"]}</span>
+              {link_open}<span class="news-title">{n["title"]}</span>{link_close}
+              {'<div class="news-desc">' + n["summary"] + '</div>' if n["summary"] else ""}
+            </div>"""
+
+    if not news_html:
+        news_html = '<div class="news-empty">수집된 이슈 없음</div>'
 
     # 테이블 행
     table_rows = ""
@@ -218,7 +269,9 @@ def build_html(data: list) -> str:
 
   /* 테이블 */
   .table-section {{ padding: 0 32px 32px; }}
+  .table-layout {{ display: flex; gap: 16px; align-items: flex-start; }}
   .table-card {{
+    flex: 1; min-width: 0;
     background: white; border-radius: 12px; padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07); overflow-x: auto;
   }}
@@ -230,6 +283,26 @@ def build_html(data: list) -> str:
   td.bold {{ font-weight: 700; color: #002D72; }}
   tr:hover {{ background: #fafbff; }}
 
+  /* 뉴스 패널 */
+  .news-panel {{
+    width: 300px; flex-shrink: 0;
+    background: white; border-radius: 12px; padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    max-height: 600px; overflow-y: auto;
+  }}
+  .news-panel h3 {{ font-size: 13px; color: #555; margin-bottom: 14px; font-weight: 600; }}
+  .news-date {{ font-size: 11px; font-weight: 700; color: #002D72; margin: 12px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #eef; }}
+  .news-date:first-child {{ margin-top: 0; }}
+  .news-item {{ margin-bottom: 10px; }}
+  .news-src {{ display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; margin-bottom: 3px; }}
+  .badge-news {{ background: #e3f2fd; color: #1565c0; }}
+  .badge-cafe {{ background: #e8f5e9; color: #2e7d32; }}
+  .news-title {{ font-size: 12px; color: #333; line-height: 1.4; }}
+  .news-title a, a.news-title {{ color: #333; text-decoration: none; }}
+  .news-title:hover, a.news-title:hover {{ color: #002D72; text-decoration: underline; }}
+  .news-desc {{ font-size: 11px; color: #888; margin-top: 2px; line-height: 1.4; }}
+  .news-empty {{ font-size: 12px; color: #aaa; text-align: center; padding: 20px 0; }}
+
   .badge {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }}
   .badge.win    {{ background: #e8f5e9; color: #2e7d32; }}
   .badge.lose   {{ background: #ffebee; color: #c62828; }}
@@ -239,6 +312,8 @@ def build_html(data: list) -> str:
   @media (max-width: 900px) {{
     .charts {{ grid-template-columns: 1fr; }}
     .kpi-row, .charts, .table-section {{ padding-left: 16px; padding-right: 16px; }}
+    .table-layout {{ flex-direction: column; }}
+    .news-panel {{ width: 100%; max-height: 400px; }}
   }}
 </style>
 </head>
@@ -253,17 +328,17 @@ def build_html(data: list) -> str:
   <div class="kpi">
     <div class="label">OFF 거래액 (누계)</div>
     <div class="value">{fmt(total_off)}</div>
-    <div class="sub">원</div>
+    <div class="sub">원 · {date_range_label}</div>
   </div>
   <div class="kpi">
     <div class="label">ON 거래액 (누계)</div>
     <div class="value">{fmt(total_on)}</div>
-    <div class="sub">원</div>
+    <div class="sub">원 · {date_range_label}</div>
   </div>
   <div class="kpi">
     <div class="label">총 거래액 (누계)</div>
     <div class="value red">{fmt(total_total)}</div>
-    <div class="sub">원</div>
+    <div class="sub">원 · {date_range_label}</div>
   </div>
   <div class="kpi">
     <div class="label">경기 수</div>
@@ -297,19 +372,25 @@ def build_html(data: list) -> str:
 </div>
 
 <div class="table-section">
-  <div class="table-card">
-    <h3>전체 데이터</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>날짜</th><th>홈/어웨이</th><th>상대팀</th><th>결과</th>
-          <th style="text-align:right">OFF거래액</th>
-          <th style="text-align:right">ON거래액</th>
-          <th style="text-align:right">합계</th>
-        </tr>
-      </thead>
-      <tbody>{table_rows}</tbody>
-    </table>
+  <div class="table-layout">
+    <div class="table-card">
+      <h3>전체 데이터</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th><th>홈/어웨이</th><th>상대팀</th><th>결과</th>
+            <th style="text-align:right">OFF거래액</th>
+            <th style="text-align:right">ON거래액</th>
+            <th style="text-align:right">합계</th>
+          </tr>
+        </thead>
+        <tbody>{table_rows}</tbody>
+      </table>
+    </div>
+    <div class="news-panel">
+      <h3>날짜별 주요 이슈</h3>
+      {news_html}
+    </div>
   </div>
 </div>
 
@@ -414,11 +495,11 @@ new Chart(document.getElementById('resultChart'), {{
 
 def main():
     print("데이터 조회 중...")
-    data = fetch_data()
-    print(f"병합된 데이터: {len(data)}일")
+    data, news = fetch_data()
+    print(f"병합된 데이터: {len(data)}일 / 뉴스이슈: {len(news)}건")
 
     os.makedirs("dashboard", exist_ok=True)
-    html = build_html(data)
+    html = build_html(data, news)
     with open("dashboard/index.html", "w", encoding="utf-8") as f:
         f.write(html)
     print("dashboard/index.html 생성 완료")
