@@ -6,8 +6,10 @@
 import json
 import os
 import re
+import time
 import requests
 from datetime import datetime, timedelta, timezone
+from bs4 import BeautifulSoup
 
 from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
@@ -98,12 +100,48 @@ def is_trade_post(title: str) -> bool:
     return any(kw in title for kw in TRADE_KEYWORDS)
 
 
-NEWS_REQUIRED = ["삼성라이온즈", "베리즈"]  # 제목+설명에 둘 다 있어야 통과
+NEWS_REQUIRED = ["삼성라이온즈", "베리즈"]
+
+ARTICLE_SELECTORS = [
+    "div#dic_area",           # 네이버 뉴스 본문
+    "div.newsct_article",
+    "div._article_body",
+    "div.article_body",
+    "article",
+    "div#content",
+]
+
+FETCH_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept-Language": "ko-KR,ko;q=0.9",
+}
 
 
-def has_all_keywords(title: str, desc: str) -> bool:
-    text = (title + desc).replace(" ", "")
-    return all(kw.replace(" ", "") in text for kw in NEWS_REQUIRED)
+def fetch_article_text(url: str) -> str:
+    """기사 URL 본문 텍스트 반환. 실패 시 빈 문자열."""
+    try:
+        resp = requests.get(url, headers=FETCH_HEADERS, timeout=10)
+        if resp.status_code != 200:
+            return ""
+        soup = BeautifulSoup(resp.text, "html.parser")
+        for sel in ARTICLE_SELECTORS:
+            tag, _, cls = sel.partition(".")
+            attr = {"class": cls} if cls else {}
+            if "#" in sel:
+                tag, _, id_ = sel.partition("#")
+                attr = {"id": id_}
+            el = soup.find(tag or True, attr)
+            if el:
+                return el.get_text(" ", strip=True)
+        return soup.get_text(" ", strip=True)[:3000]
+    except Exception as e:
+        print(f"    본문 fetch 오류: {e}")
+        return ""
+
+
+def has_all_keywords(text: str) -> bool:
+    normalized = text.replace(" ", "")
+    return all(kw.replace(" ", "") in normalized for kw in NEWS_REQUIRED)
 
 
 def process_news(items: list) -> list:
@@ -113,16 +151,19 @@ def process_news(items: list) -> list:
             break
         raw_pub  = item.get("pubDate", "")
         pub_date = parse_pub_date(raw_pub)
-        title = strip_html(item.get("title", ""))
-        desc  = strip_html(item.get("description", ""))
         if pub_date not in VALID_DATES:
             continue
-        if not has_all_keywords(title, desc):
-            print(f"  [뉴스] 키워드 미충족 스킵: {title[:30]}")
+        title = strip_html(item.get("title", ""))
+        link  = item.get("link", "") or item.get("originallink", "")
+        print(f"  [뉴스] 본문 확인 중: {title[:30]}")
+        body = fetch_article_text(link)
+        if not has_all_keywords(title + body):
+            print(f"    → 키워드 미충족 스킵")
             continue
-        print(f"  [뉴스] {pub_date} | {title[:30]}")
-        link = item.get("link", "") or item.get("originallink", "")
-        results.append([yyyymmdd_to_str(pub_date), "뉴스", title, desc[:100], link])
+        desc = strip_html(item.get("description", ""))[:100]
+        print(f"    → 수집 ({pub_date})")
+        results.append([yyyymmdd_to_str(pub_date), "뉴스", title, desc, link])
+        time.sleep(0.5)
     return results
 
 
