@@ -46,7 +46,9 @@
 
   /* 테이블 */
   .table-section { padding: 0 32px 32px; }
+  .table-layout { display: flex; gap: 16px; align-items: flex-start; }
   .table-card {
+    flex: 1; min-width: 0;
     background: white; border-radius: 12px; padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07); overflow-x: auto;
   }
@@ -58,6 +60,26 @@
   td.bold { font-weight: 700; color: #002D72; }
   tr:hover { background: #fafbff; }
 
+  /* 뉴스 패널 */
+  .news-panel {
+    width: 300px; flex-shrink: 0;
+    background: white; border-radius: 12px; padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    max-height: 600px; overflow-y: auto;
+  }
+  .news-panel h3 { font-size: 13px; color: #555; margin-bottom: 14px; font-weight: 600; }
+  .news-date { font-size: 11px; font-weight: 700; color: #002D72; margin: 12px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #eef; }
+  .news-date:first-child { margin-top: 0; }
+  .news-item { margin-bottom: 10px; }
+  .news-src { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; margin-bottom: 3px; }
+  .badge-news { background: #e3f2fd; color: #1565c0; }
+  .badge-cafe { background: #e8f5e9; color: #2e7d32; }
+  .news-title { font-size: 12px; color: #333; line-height: 1.4; }
+  .news-title a, a.news-title { color: #333; text-decoration: none; }
+  .news-title:hover, a.news-title:hover { color: #002D72; text-decoration: underline; }
+  .news-desc { font-size: 11px; color: #888; margin-top: 2px; line-height: 1.4; }
+  .news-empty { font-size: 12px; color: #aaa; text-align: center; padding: 20px 0; }
+
   .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
   .badge.win    { background: #e8f5e9; color: #2e7d32; }
   .badge.lose   { background: #ffebee; color: #c62828; }
@@ -67,6 +89,8 @@
   @media (max-width: 900px) {
     .charts { grid-template-columns: 1fr; }
     .kpi-row, .charts, .table-section { padding-left: 16px; padding-right: 16px; }
+    .table-layout { flex-direction: column; }
+    .news-panel { width: 100%; max-height: 400px; }
   }
 </style>
 </head>
@@ -74,24 +98,24 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.04.29 06:09</span>
+  <span class="updated">최종 업데이트: 2026.04.29 06:48</span>
 </div>
 
 <div class="kpi-row">
   <div class="kpi">
     <div class="label">OFF 거래액 (누계)</div>
     <div class="value">2,623,247,810</div>
-    <div class="sub">원</div>
+    <div class="sub">원 · 2026.03.16 ~ 2026.04.28</div>
   </div>
   <div class="kpi">
     <div class="label">ON 거래액 (누계)</div>
     <div class="value">881,020,000</div>
-    <div class="sub">원</div>
+    <div class="sub">원 · 2026.03.16 ~ 2026.04.28</div>
   </div>
   <div class="kpi">
     <div class="label">총 거래액 (누계)</div>
     <div class="value red">3,504,267,810</div>
-    <div class="sub">원</div>
+    <div class="sub">원 · 2026.03.16 ~ 2026.04.28</div>
   </div>
   <div class="kpi">
     <div class="label">경기 수</div>
@@ -125,18 +149,19 @@
 </div>
 
 <div class="table-section">
-  <div class="table-card">
-    <h3>전체 데이터</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>날짜</th><th>홈/어웨이</th><th>상대팀</th><th>결과</th>
-          <th style="text-align:right">OFF거래액</th>
-          <th style="text-align:right">ON거래액</th>
-          <th style="text-align:right">합계</th>
-        </tr>
-      </thead>
-      <tbody>
+  <div class="table-layout">
+    <div class="table-card">
+      <h3>전체 데이터</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th><th>홈/어웨이</th><th>상대팀</th><th>결과</th>
+            <th style="text-align:right">OFF거래액</th>
+            <th style="text-align:right">ON거래액</th>
+            <th style="text-align:right">합계</th>
+          </tr>
+        </thead>
+        <tbody>
         <tr>
           <td>2026.04.28</td>
           <td>어웨이</td>
@@ -533,7 +558,12 @@
           <td class="num">54,443,000</td>
           <td class="num bold">70,664,500</td>
         </tr></tbody>
-    </table>
+      </table>
+    </div>
+    <div class="news-panel">
+      <h3>날짜별 주요 이슈</h3>
+      <div class="news-empty">수집된 이슈 없음</div>
+    </div>
   </div>
 </div>
 
