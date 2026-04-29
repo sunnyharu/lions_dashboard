@@ -45,8 +45,9 @@ def fetch_data():
         parts = date.split(".")
         if len(parts) == 3:
             date = f"{parts[0]}.{int(parts[1]):02d}.{int(parts[2]):02d}"
-        off = row.get("OFF거래액", "") or 0
-        on  = row.get("ON거래액",  "") or 0
+        off  = row.get("OFF거래액", "") or 0
+        on   = row.get("ON거래액",  "") or 0
+        note = str(row.get("특이사항", "") or "").strip()
         try: off = int(float(str(off).replace(",", "")))
         except: off = 0
         try: on  = int(float(str(on).replace(",", "")))
@@ -54,7 +55,7 @@ def fetch_data():
         # 날짜 중복 시 ON거래액이 있는 행 우선
         if date in sales and on == 0:
             continue
-        sales[date] = {"off": off, "on": on}
+        sales[date] = {"off": off, "on": on, "note": note}
 
     # ── 뉴스이슈 ──────────────────────────────────────────
     news = []
@@ -143,6 +144,7 @@ def fetch_data():
             "home_away": g["home_away"],
             "opponent":  g["opponent"],
             "result":    g["result"],
+            "note":      s.get("note", ""),
         })
 
     return merged, news, digest
@@ -176,6 +178,7 @@ def build_html(data: list, news: list, digest: str) -> str:
     chart_off    = [r["off"]   for r in data]
     chart_on     = [r["on"]    for r in data]
     chart_total  = [r["total"] for r in data]
+    chart_notes  = [r.get("note", "") for r in data]
 
     # 월별 홈/어웨이 평균
     from collections import defaultdict
@@ -455,9 +458,34 @@ def build_html(data: list, news: list, digest: str) -> str:
 const OFF = '#002D72', ON = '#C8102E', TOT = '#6c757d';
 const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
 
+// ── 특이사항 노트 플러그인 ──
+const chartNotes = {json.dumps(chart_notes)};
+const notePlugin = {{
+  id: 'notePlugin',
+  afterDatasetsDraw(chart) {{
+    const ctx = chart.ctx;
+    const meta = chart.getDatasetMeta(0);
+    meta.data.forEach((pt, i) => {{
+      const note = chartNotes[i];
+      if (!note) return;
+      ctx.save();
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillStyle = '#C8102E';
+      ctx.textAlign = 'center';
+      // 최대 16자 잘라서 표시
+      const text = note.length > 16 ? note.substring(0, 15) + '…' : note;
+      ctx.translate(pt.x, pt.y - 14);
+      ctx.rotate(-Math.PI / 8);
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }});
+  }}
+}};
+
 // ── 추이 차트 ──
 new Chart(document.getElementById('trendChart'), {{
   type: 'line',
+  plugins: [notePlugin],
   data: {{
     labels: {json.dumps(chart_dates)},
     datasets: [
@@ -475,6 +503,7 @@ new Chart(document.getElementById('trendChart'), {{
   }},
   options: {{
     responsive: true,
+    layout: {{ padding: {{ top: 30 }} }},
     plugins: {{ legend: {{ position: 'top' }} }},
     scales: {{
       x: {{ ticks: {{ maxTicksLimit: 12 }} }},
