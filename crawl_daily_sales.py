@@ -168,11 +168,34 @@ async def run():
         await page.evaluate(js_click("현황"))
         await page.wait_for_timeout(1000)
 
-        # 매장일별판매집계표 클릭 후 페이지 로드 대기
-        await page.evaluate(js_click_contains("매장일별판매집계표"))
-        # 페이지 콘텐츠 변경 감지 (판매년월 필터 등장 대기)
+        # 메뉴 링크 목록 추출 → 매장일별판매집계표 href 찾기
+        menu_links = await page.evaluate("""() => {
+            return Array.from(document.querySelectorAll('a[href]'))
+                .filter(a => a.href && !a.href.endsWith('#'))
+                .map(a => ({text: a.textContent.trim(), href: a.href}));
+        }""")
+        print(f"메뉴 링크 목록: {menu_links}")
+
+        target_url = None
+        for link in menu_links:
+            if "매장일별판매집계표" in link["text"] and "즐겨찾기" not in link.get("text", ""):
+                target_url = link["href"]
+                break
+        if not target_url:
+            for link in menu_links:
+                if "매장일별판매집계표" in link["text"]:
+                    target_url = link["href"]
+                    break
+
+        print(f"이동 URL: {target_url}")
+        if target_url:
+            await page.goto(target_url)
+        else:
+            # href 없으면 Playwright 네이티브 클릭 시도
+            await page.locator("a", has_text="매장일별판매집계표").first.click(force=True)
+
         try:
-            await page.wait_for_selector("text=판매년월", timeout=10000)
+            await page.wait_for_selector("text=판매년월", timeout=15000)
         except:
             await page.wait_for_timeout(3000)
         await page.screenshot(path="debug_after_menu.png", full_page=True)
