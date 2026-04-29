@@ -5,6 +5,9 @@ on:
     - cron: '0 1 * * *'   # 매일 오전 10시 KST (UTC+9 → UTC 01:00)
   workflow_dispatch:        # 수동 실행 버튼
 
+permissions:
+  contents: write
+
 jobs:
   crawl:
     runs-on: ubuntu-latest
@@ -44,9 +47,12 @@ jobs:
         run: python generate_dashboard.py
 
       - name: 대시보드 커밋
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/sunnyharu/lions_dashboard.git
           git add dashboard/index.html
           git diff --cached --quiet || git commit -m "chore: 대시보드 업데이트 $(date +'%Y-%m-%d')"
           git push
