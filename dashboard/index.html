@@ -68,7 +68,7 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.04.29 05:46</span>
+  <span class="updated">최종 업데이트: 2026.04.29 05:52</span>
 </div>
 
 <div class="kpi-row">
@@ -563,7 +563,7 @@ new Chart(document.getElementById('trendChart'), {
   }
 });
 
-// 바 상단 수치 표시 인라인 플러그인
+// 바 상단 수치 (백만 단위 반올림) 인라인 플러그인
 const topLabelPlugin = {
   id: 'topLabel',
   afterDatasetsDraw(chart) {
@@ -576,52 +576,54 @@ const topLabelPlugin = {
         ctx.font = 'bold 11px sans-serif';
         ctx.fillStyle = '#444';
         ctx.textAlign = 'center';
-        ctx.fillText((v / 1e4).toFixed(0) + '만', bar.x, bar.y - 5);
+        ctx.fillText(Math.round(v / 1e6) + '백만', bar.x, bar.y - 5);
         ctx.restore();
       });
     });
   }
 };
 
-const sideOpts = (vals) => ({
+const sideOpts = () => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: { legend: { position: 'top' } },
   scales: {
     y: {
-      min: Math.floor(Math.min(...vals) * 0.85 / 1e5) * 1e5,
-      ticks: { callback: v => (v/1e4).toFixed(0)+'만' }
+      min: 0,
+      ticks: { display: false },
+      grid: { display: false },
+      border: { display: false },
     }
   },
-  layout: { padding: { top: 20 } }
+  layout: { padding: { top: 24, bottom: 0 } }
 });
 
-// ── 홈/어웨이 ──
+// ── 홈/어웨이 월별 ──
 new Chart(document.getElementById('haChart'), {
   type: 'bar',
   plugins: [topLabelPlugin],
   data: {
-    labels: ['홈', '어웨이'],
+    labels: ["3\uc6d4 \ud648", "3\uc6d4 \uc5b4\uc6e8\uc774", "4\uc6d4 \ud648", "4\uc6d4 \uc5b4\uc6e8\uc774"],
     datasets: [
-      { label: 'OFF거래액', data: [128812287, 14748226], backgroundColor: alpha(OFF, .8) },
-      { label: 'ON거래액',  data: [31068285,  13039692],  backgroundColor: alpha(ON,  .8) },
+      { label: 'OFF거래액', data: [134639990, 0, 127222913, 14748226], backgroundColor: alpha(OFF, .8) },
+      { label: 'ON거래액',  data: [14427333, 0, 35606727, 13039692],  backgroundColor: alpha(ON,  .8) },
     ]
   },
-  options: sideOpts([128812287, 14748226, 31068285, 13039692]),
+  options: sideOpts(),
 });
 
-// ── 결과별 ──
+// ── 결과별 월별 ──
 new Chart(document.getElementById('resultChart'), {
   type: 'bar',
   plugins: [topLabelPlugin],
   data: {
-    labels: ['승', '패'],
+    labels: ["3\uc6d4 \uc2b9", "3\uc6d4 \ud328", "4\uc6d4 \uc2b9", "4\uc6d4 \ud328"],
     datasets: [
-      { label: 'OFF거래액', data: [70499120, 83112129], backgroundColor: alpha(OFF, .8) },
-      { label: 'ON거래액',  data: [29261769,  16630227],  backgroundColor: alpha(ON,  .8) },
+      { label: 'OFF거래액', data: [0, 150137135, 70499120, 68217683], backgroundColor: alpha(OFF, .8) },
+      { label: 'ON거래액',  data: [0, 15892000, 29261769, 16794277],  backgroundColor: alpha(ON,  .8) },
     ]
   },
-  options: sideOpts([70499120, 83112129, 29261769, 16630227]),
+  options: sideOpts(),
 });
 </script>
 </body>
