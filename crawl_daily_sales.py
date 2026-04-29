@@ -173,10 +173,21 @@ async def run():
         await page.screenshot(path="debug_after_menu.png", full_page=True)
         print("매장일별판매집계표 로드 완료")
 
-        # 3) 조회 버튼 네이티브 클릭 (당월 기본값 사용)
+        # 3) 조회 버튼 클릭 시도 (실패해도 계속 진행)
         print(f"조회 기준: {YEAR}년 {MONTH}월")
-        await page.locator("button:has-text('조회'), a:has-text('조회')").first.click()
-        await page.wait_for_timeout(3000)
+        try:
+            # 버튼 구조 확인
+            btns = await page.evaluate("""() => {
+                return Array.from(document.querySelectorAll('button, a, span, div'))
+                    .filter(el => el.textContent.trim().includes('조회') && el.offsetParent !== null)
+                    .map(el => ({tag: el.tagName, text: el.textContent.trim(), class: el.className}))
+                    .slice(0, 5);
+            }""")
+            print(f"조회 버튼 후보: {btns}")
+            await page.locator(":visible").filter(has_text="조회").first.click(timeout=5000)
+            await page.wait_for_timeout(3000)
+        except Exception as e:
+            print(f"조회 클릭 실패(계속 진행): {e}")
         await page.screenshot(path="debug_after_search.png", full_page=True)
 
         # 4) 엑셀 다운로드 (네이티브 클릭)
