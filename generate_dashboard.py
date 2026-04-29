@@ -251,6 +251,7 @@ def build_html(data: list, news: list) -> str:
   .kpi .label {{ font-size: 12px; color: #888; margin-bottom: 8px; }}
   .kpi .value {{ font-size: 24px; font-weight: 700; color: #002D72; }}
   .kpi .value.red {{ color: #C8102E; }}
+  .kpi .value .unit {{ font-size: 13px; font-weight: 400; color: #888; margin-left: 3px; }}
   .kpi .sub   {{ font-size: 11px; color: #aaa; margin-top: 4px; }}
 
   /* 차트 그리드 */
@@ -327,18 +328,18 @@ def build_html(data: list, news: list) -> str:
 <div class="kpi-row">
   <div class="kpi">
     <div class="label">OFF 거래액 (누계)</div>
-    <div class="value">{fmt(total_off)}</div>
-    <div class="sub">원 · {date_range_label}</div>
+    <div class="value">{fmt(total_off)}<span class="unit">원</span></div>
+    <div class="sub">{date_range_label}</div>
   </div>
   <div class="kpi">
     <div class="label">ON 거래액 (누계)</div>
-    <div class="value">{fmt(total_on)}</div>
-    <div class="sub">원 · {date_range_label}</div>
+    <div class="value">{fmt(total_on)}<span class="unit">원</span></div>
+    <div class="sub">{date_range_label}</div>
   </div>
   <div class="kpi">
     <div class="label">총 거래액 (누계)</div>
-    <div class="value red">{fmt(total_total)}</div>
-    <div class="sub">원 · {date_range_label}</div>
+    <div class="value red">{fmt(total_total)}<span class="unit">원</span></div>
+    <div class="sub">{date_range_label}</div>
   </div>
   <div class="kpi">
     <div class="label">경기 수</div>
