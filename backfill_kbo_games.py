@@ -137,19 +137,26 @@ def upload_all(games: list):
 
     try:
         ws = sh.worksheet(SHEET_NAME)
-        ws.clear()
-        print(f"기존 '{SHEET_NAME}' 시트 초기화")
     except gspread.WorksheetNotFound:
         ws = sh.add_worksheet(title=SHEET_NAME, rows=500, cols=10)
         print(f"'{SHEET_NAME}' 시트 신규 생성")
 
-    ws.append_row(["날짜", "홈/어웨이", "상대팀", "결과"])
+    existing = ws.get_all_values()
+    if not existing:
+        ws.append_row(["날짜", "홈/어웨이", "상대팀", "결과"])
 
-    rows = [[g["날짜"], g["홈/어웨이"], g["상대팀"], g["결과"]] for g in games]
-    if rows:
-        ws.append_rows(rows)
+    # 이미 적재된 날짜는 건너뜀
+    existing_dates = {row[0] for row in existing[1:] if row}
+    new_rows = [
+        [g["날짜"], g["홈/어웨이"], g["상대팀"], g["결과"]]
+        for g in games if g["날짜"] not in existing_dates
+    ]
 
-    print(f"적재 완료: {len(rows)}경기")
+    if new_rows:
+        ws.append_rows(new_rows)
+        print(f"적재 완료: {len(new_rows)}경기")
+    else:
+        print("추가할 신규 데이터 없음 (이미 모두 적재됨)")
     for r in rows:
         print(f"  {r[0]} | {r[1]:5} | {r[2]:4} | {r[3]}")
 
