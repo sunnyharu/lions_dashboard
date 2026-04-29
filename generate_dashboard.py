@@ -59,25 +59,48 @@ def fetch_data():
     # ── 뉴스이슈 ──────────────────────────────────────────
     news = []
     try:
-        ws_news  = sh.worksheet("뉴스이슈")
-        news_raw = ws_news.get_all_records()
-        for row in news_raw:
-            date = str(row.get("날짜", "")).strip()
-            if not date:
-                continue
-            parts = date.split(".")
-            if len(parts) == 3:
-                date = f"{parts[0]}.{int(parts[1]):02d}.{int(parts[2]):02d}"
-            news.append({
-                "date":    date,
-                "source":  row.get("출처", ""),
-                "title":   row.get("제목", ""),
-                "summary": row.get("AI요약", "") or row.get("요약", ""),
-                "views":   row.get("조회수", 0) or 0,
-                "link":    row.get("링크", ""),
-            })
-    except Exception:
-        pass
+        ws_news   = sh.worksheet("뉴스이슈")
+        all_vals  = ws_news.get_all_values()
+        if len(all_vals) > 1:
+            header = all_vals[0]
+            def col(h, fallback=-1):
+                return header.index(h) if h in header else fallback
+
+            ci_date    = col("날짜",   0)
+            ci_source  = col("출처",   1)
+            ci_title   = col("제목",   2)
+            ci_summary = col("AI요약", col("요약", 3))
+            ci_views   = col("조회수", -1)
+            ci_link    = col("링크",   col("링크", 4))
+
+            for row in all_vals[1:]:
+                def cell(i, default=""):
+                    return row[i].strip() if i >= 0 and i < len(row) else default
+
+                date = cell(ci_date)
+                if not date:
+                    continue
+                parts = date.split(".")
+                if len(parts) == 3:
+                    try:
+                        date = f"{parts[0]}.{int(parts[1]):02d}.{int(parts[2]):02d}"
+                    except Exception:
+                        pass
+                views = 0
+                if ci_views >= 0:
+                    try: views = int(cell(ci_views, "0") or 0)
+                    except: views = 0
+                news.append({
+                    "date":    date,
+                    "source":  cell(ci_source),
+                    "title":   cell(ci_title),
+                    "summary": cell(ci_summary),
+                    "views":   views,
+                    "link":    cell(ci_link),
+                })
+        print(f"뉴스이슈 {len(news)}건 로드")
+    except Exception as e:
+        print(f"뉴스이슈 로드 오류: {e}")
 
     # ── 카페트렌드 다이제스트 ─────────────────────────────
     digest = ""
