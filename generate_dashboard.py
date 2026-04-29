@@ -203,12 +203,18 @@ def build_html(data: list) -> str:
   .kpi .sub   {{ font-size: 11px; color: #aaa; margin-top: 4px; }}
 
   /* 차트 그리드 */
-  .charts {{ display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; padding: 20px 32px; }}
+  .charts {{ display: grid; grid-template-columns: 2fr 1fr 1fr; grid-auto-rows: 320px; gap: 16px; padding: 20px 32px; }}
   .chart-card {{
     background: white; border-radius: 12px; padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
   }}
   .chart-card h3 {{ font-size: 13px; color: #555; margin-bottom: 16px; font-weight: 600; }}
+  .chart-card.side {{
+    display: flex; flex-direction: column; padding-bottom: 12px;
+  }}
+  .chart-card.side .chart-wrap {{
+    flex: 1; min-height: 0; position: relative;
+  }}
 
   /* 테이블 */
   .table-section {{ padding: 0 32px 32px; }}
@@ -276,15 +282,15 @@ def build_html(data: list) -> str:
     <h3>날짜별 거래액 추이</h3>
     <canvas id="trendChart" height="120"></canvas>
   </div>
-  <div class="chart-card">
+  <div class="chart-card side">
     <h3>홈 / 어웨이 평균 거래액</h3>
-    <div style="position:relative; height:200px;">
+    <div class="chart-wrap">
       <canvas id="haChart"></canvas>
     </div>
   </div>
-  <div class="chart-card">
+  <div class="chart-card side">
     <h3>경기 결과별 평균 거래액</h3>
-    <div style="position:relative; height:200px;">
+    <div class="chart-wrap">
       <canvas id="resultChart"></canvas>
     </div>
   </div>
