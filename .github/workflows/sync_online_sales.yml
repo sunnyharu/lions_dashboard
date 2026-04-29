@@ -1,0 +1,27 @@
+name: 온라인 매출 동기화
+
+on:
+  push:
+    paths:
+      - 'data/online_sales.xlsx'   # 파일 push 시 자동 실행
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: Google Sheets 업데이트
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python sync_online_sales.py
