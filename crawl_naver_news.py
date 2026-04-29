@@ -217,14 +217,29 @@ def collect_cafe_posts() -> list:
     print(f"\n[카페] 키워드별 수집 (최근 7일, lionsball)")
     seen   = set()
     posts  = []
+    first_item_logged = False
     for kw in CAFE_KEYWORDS:
         items = naver_search("cafearticle", f"삼성 라이온즈 {kw}", display=30, sort="sim")
+        if items and not first_item_logged:
+            print(f"  [디버그] 첫 카페 항목 키: {list(items[0].keys())}")
+            print(f"  [디버그] link={items[0].get('link','')[:60]}")
+            print(f"  [디버그] cafeurl={items[0].get('cafeurl','')[:60]}")
+            print(f"  [디버그] cafename={items[0].get('cafename','')}")
+            first_item_logged = True
         for item in items:
-            link = item.get("link", "") or item.get("url", "")
-            if "lionsball" not in link or link in seen:
+            link     = item.get("link", "") or item.get("url", "")
+            cafeurl  = item.get("cafeurl", "")
+            cafename = item.get("cafename", "")
+            is_lionsball = (
+                "lionsball" in link or
+                "lionsball" in cafeurl or
+                "사자사랑방" in cafename.replace(" ", "")
+            )
+            if not is_lionsball or link in seen:
                 continue
             pub_date = parse_pub_date(item.get("pubDate", ""))
-            if pub_date not in VALID_DATES:
+            # 파싱 실패 시 수집 허용 (sort=sim이므로 최근 글일 가능성 높음)
+            if pub_date and pub_date not in VALID_DATES:
                 continue
             title = strip_html(item.get("title", ""))
             if is_trade_post(title):
