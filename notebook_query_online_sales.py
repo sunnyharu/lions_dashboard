@@ -29,7 +29,12 @@ GROUP BY 1
 ORDER BY 1
 """
 
-df = pd.read_sql(SQL, conn)
+cursor = conn.cursor()
+cursor.execute(SQL)
+rows = cursor.fetchall()
+columns = [desc[0] for desc in cursor.description]
+df = pd.DataFrame(rows, columns=columns)
+
 df.to_excel("online_sales.xlsx", index=False)
 print(f"저장 완료: {len(df)}일치")
 print(df.tail())
