@@ -151,7 +151,7 @@ def fetch_data():
 
 
 def build_html(data: list, news: list, digest: str) -> str:
-    game_days = [r for r in data if r["result"]]
+    game_days = [r for r in data if r["result"] and r["result"] != "취소"]
 
     def avg(lst): return int(sum(lst) / len(lst)) if lst else 0
     def fmt(n):   return f"{n:,}" if n else "-"
