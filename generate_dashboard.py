@@ -124,10 +124,14 @@ def fetch_data():
         parts = date.split(".")
         if len(parts) == 3:
             date = f"{parts[0]}.{int(parts[1]):02d}.{int(parts[2]):02d}"
+        crowd = 0
+        try: crowd = int(float(str(row.get("관중수", 0) or 0).replace(",", "")))
+        except: crowd = 0
         games[date] = {
             "home_away": row.get("홈/어웨이", ""),
             "opponent":  row.get("상대팀", ""),
             "result":    row.get("결과", ""),
+            "crowd":     crowd,
         }
 
     # ── 병합 ─────────────────────────────────────────────
@@ -144,6 +148,7 @@ def fetch_data():
             "home_away": g["home_away"],
             "opponent":  g["opponent"],
             "result":    g["result"],
+            "crowd":     g.get("crowd", 0),
             "note":      s.get("note", ""),
         })
 
@@ -172,6 +177,13 @@ def build_html(data: list, news: list, digest: str) -> str:
     wins       = len(win_rows)
     losses     = len(lose_rows)
     win_rate   = f"{wins/(wins+losses)*100:.0f}%" if (wins+losses) > 0 else "-"
+
+    # 관중수 통계 (홈 경기만)
+    STADIUM_CAPACITY = 24000
+    home_crowd_rows  = [r for r in home_rows if r.get("crowd", 0) > 0]
+    avg_crowd        = int(sum(r["crowd"] for r in home_crowd_rows) / len(home_crowd_rows)) if home_crowd_rows else 0
+    avg_occupancy    = f"{avg_crowd / STADIUM_CAPACITY * 100:.1f}%" if avg_crowd else "-"
+    total_crowd      = sum(r["crowd"] for r in home_crowd_rows)
 
     # Chart 데이터
     chart_dates  = [r["date"][5:] for r in data]  # "04.01" 형태
@@ -245,14 +257,19 @@ def build_html(data: list, news: list, digest: str) -> str:
     # 테이블 행
     table_rows = ""
     for r in reversed(data):
-        result_cls = {"승": "win", "패": "lose", "무": "draw", "취소": "cancel"}.get(r["result"], "")
-        result_txt = r["result"] or "-"
+        result_cls   = {"승": "win", "패": "lose", "무": "draw", "취소": "cancel"}.get(r["result"], "")
+        result_txt   = r["result"] or "-"
+        crowd        = r.get("crowd", 0)
+        occupancy    = f"{crowd / STADIUM_CAPACITY * 100:.1f}%" if crowd and r["home_away"] == "홈" else "-"
+        crowd_txt    = fmt(crowd) if crowd else "-"
         table_rows += f"""
         <tr>
           <td>{r["date"]}</td>
           <td>{r["home_away"] or "-"}</td>
           <td>{r["opponent"] or "-"}</td>
           <td><span class="badge {result_cls}">{result_txt}</span></td>
+          <td class="num">{crowd_txt}</td>
+          <td class="num">{occupancy}</td>
           <td class="num">{fmt(r["off"])}</td>
           <td class="num">{fmt(r["on"])}</td>
           <td class="num bold">{fmt(r["total"])}</td>
@@ -397,6 +414,11 @@ def build_html(data: list, news: list, digest: str) -> str:
     <div class="value">{win_rate}</div>
     <div class="sub">{wins}승 {losses}패</div>
   </div>
+  <div class="kpi">
+    <div class="label">홈 평균 관중</div>
+    <div class="value">{fmt(avg_crowd)}<span class="unit">명</span></div>
+    <div class="sub">평균 점유율 {avg_occupancy} (수용 {STADIUM_CAPACITY:,}명)</div>
+  </div>
 </div>
 
 <div class="charts">
@@ -425,6 +447,8 @@ def build_html(data: list, news: list, digest: str) -> str:
       <thead>
         <tr>
           <th>날짜</th><th>홈/어웨이</th><th>상대팀</th><th>결과</th>
+          <th style="text-align:right">관중수</th>
+          <th style="text-align:right">점유율</th>
           <th style="text-align:right">OFF거래액</th>
           <th style="text-align:right">ON거래액</th>
           <th style="text-align:right">합계</th>

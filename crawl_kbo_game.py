@@ -28,7 +28,9 @@ GAME_MONTH = yesterday.strftime("%m")        # "04"
 DAY_TEXT   = yesterday.strftime("%m.%d")     # "04.28"
 DATE_STR   = yesterday.strftime("%Y.%m.%d")  # "2026.04.28"
 
+STADIUM_CAPACITY = 24000  # 대구 삼성 라이온즈 파크 수용인원
 KBO_API = "https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList"
+SHEET_HEADER = ["날짜", "홈/어웨이", "상대팀", "결과", "관중수"]
 
 
 def fetch_kbo_game() -> dict | None:
@@ -65,7 +67,19 @@ def fetch_kbo_game() -> dict | None:
         if not play_cell:
             continue
 
-        return parse_play(play_cell["Text"])
+        # 관중수 셀 (class="crowd")
+        crowd_cell = next((c for c in cells if c.get("Class") == "crowd"), None)
+        crowd = 0
+        if crowd_cell:
+            crowd_text = crowd_cell.get("Text", "").replace(",", "").strip()
+            nums = re.findall(r"\d+", crowd_text)
+            if nums:
+                crowd = int(nums[0])
+
+        game = parse_play(play_cell["Text"])
+        if game:
+            game["관중수"] = crowd
+        return game
 
     print(f"어제({DAY_TEXT}) 삼성 라이온즈 경기 없음")
     return None
@@ -139,9 +153,24 @@ def upload_to_sheets(game: dict):
 
     existing = ws.get_all_values()
     if not existing:
-        ws.append_row(["날짜", "홈/어웨이", "상대팀", "결과"])
+        ws.append_row(SHEET_HEADER)
+        existing = [SHEET_HEADER]
 
-    row = [game["날짜"], game["홈/어웨이"], game["상대팀"], game["결과"]]
+    # 헤더에 관중수 없으면 추가
+    header = existing[0]
+    if "관중수" not in header:
+        ws.update([SHEET_HEADER], "A1:E1")
+        print("헤더에 '관중수' 컬럼 추가")
+        header = SHEET_HEADER
+
+    # 중복 날짜 체크
+    date_col = header.index("날짜") if "날짜" in header else 0
+    existing_dates = {r[date_col].strip() for r in existing[1:] if r}
+    if game["날짜"] in existing_dates:
+        print(f"이미 존재하는 날짜 스킵: {game['날짜']}")
+        return
+
+    row = [game["날짜"], game["홈/어웨이"], game["상대팀"], game["결과"], game.get("관중수", 0)]
     ws.append_row(row)
     print(f"Google Sheets 적재 완료: {row}")
 
