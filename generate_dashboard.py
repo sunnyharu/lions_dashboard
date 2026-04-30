@@ -218,7 +218,10 @@ def build_html(data: list, news: list, digest: str) -> str:
 
     # 뉴스 / 카페 분리
     news_items = [n for n in news if n["source"] == "뉴스"]
-    cafe_items = [n for n in news if "카페" in n["source"]]
+    cafe_items = sorted(
+        [n for n in news if "카페" in n["source"]],
+        key=lambda x: x.get("views", 0), reverse=True
+    )[:10]
 
     def issue_item_html(n):
         link_open  = f'<a href="{n["link"]}" target="_blank" rel="noopener">' if n["link"] else ""
