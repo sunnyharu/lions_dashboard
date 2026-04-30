@@ -67,22 +67,47 @@ def fetch_kbo_game() -> dict | None:
         if not play_cell:
             continue
 
-        # 관중수 셀 (class="crowd")
-        crowd_cell = next((c for c in cells if c.get("Class") == "crowd"), None)
-        crowd = 0
-        if crowd_cell:
-            crowd_text = crowd_cell.get("Text", "").replace(",", "").strip()
-            nums = re.findall(r"\d+", crowd_text)
-            if nums:
-                crowd = int(nums[0])
-
         game = parse_play(play_cell["Text"])
         if game:
+            # 홈 경기일 때만 관중수 수집
+            crowd = 0
+            if game.get("홈/어웨이") == "홈":
+                crowd = fetch_crowd()
             game["관중수"] = crowd
         return game
 
     print(f"어제({DAY_TEXT}) 삼성 라이온즈 경기 없음")
     return None
+
+
+def fetch_crowd() -> int:
+    """KBO 관중수 페이지에서 어제 삼성 홈 경기 관중수 조회"""
+    url = "https://www.koreabaseball.com/Record/Crowd/GraphDaily.aspx"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept-Language": "ko-KR,ko;q=0.9",
+    }
+    params = {"season": SEASON, "month": GAME_MONTH, "team": "삼성", "homeAway": "홈"}
+    try:
+        resp = requests.get(url, headers=headers, params=params, timeout=15)
+        resp.raise_for_status()
+        from bs4 import BeautifulSoup
+        soup  = BeautifulSoup(resp.text, "html.parser")
+        table = soup.find("table")
+        if not table:
+            return 0
+        # DATE_STR = "2026.04.28" → "2026/04/28"
+        target_date = DATE_STR.replace(".", "/")
+        for row in table.find_all("tr")[1:]:
+            cols = [td.get_text(strip=True) for td in row.find_all("td")]
+            if len(cols) < 6:
+                continue
+            if cols[0] == target_date and cols[2] == "삼성":
+                crowd_str = cols[5].replace(",", "")
+                return int(crowd_str) if crowd_str.isdigit() else 0
+    except Exception as e:
+        print(f"  관중수 조회 오류: {e}")
+    return 0
 
 
 def parse_play(html: str) -> dict:
