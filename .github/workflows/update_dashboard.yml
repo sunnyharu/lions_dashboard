@@ -1,0 +1,39 @@
+name: 대시보드 수동 업데이트
+
+on:
+  workflow_dispatch:   # 수동 실행 버튼만 (자동 스케줄 없음)
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: 대시보드 생성 (전체 시트 기준)
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python generate_dashboard.py
+
+      - name: 대시보드 커밋
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/sunnyharu/lions_dashboard.git
+          git add dashboard/index.html
+          git diff --cached --quiet || git commit -m "chore: 대시보드 수동 업데이트 $(date +'%Y-%m-%d %H:%M')"
+          git push
