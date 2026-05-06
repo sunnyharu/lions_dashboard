@@ -24,7 +24,13 @@ jobs:
 
       - name: 이미 실행됐는지 확인
         id: check
-        run: python check_already_run.py
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "수동 실행 → 스킵 없이 실행"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            python check_already_run.py
+          fi
 
   crawl:
     needs: check
