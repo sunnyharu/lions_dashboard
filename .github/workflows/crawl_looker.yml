@@ -1,0 +1,38 @@
+name: 루커 온라인 매출 수집 (테스트)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: Playwright 브라우저 설치
+        run: python -m playwright install chromium --with-deps
+
+      - name: 루커 대시보드 스크래핑
+        env:
+          GOOGLE_EMAIL:      ${{ secrets.GOOGLE_EMAIL }}
+          GOOGLE_PASSWORD:   ${{ secrets.GOOGLE_PASSWORD }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python crawl_looker.py
+
+      - name: 스크린샷 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: looker-screenshots
+          path: debug_*.png
+          if-no-files-found: ignore
