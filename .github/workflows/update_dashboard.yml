@@ -36,4 +36,5 @@ jobs:
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/sunnyharu/lions_dashboard.git
           git add dashboard/index.html
           git diff --cached --quiet || git commit -m "chore: 대시보드 수동 업데이트 $(date +'%Y-%m-%d %H:%M')"
+          git pull --rebase origin main
           git push
