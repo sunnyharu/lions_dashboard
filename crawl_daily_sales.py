@@ -68,27 +68,39 @@ def upload_to_sheets(rows: list):
     existing = ws.get_all_values()
     if not existing:
         ws.append_row(["날짜", "OFF거래액"])
-        existing_dates = set()
-    else:
-        header = existing[0]
-        date_col_idx = header.index("날짜") if "날짜" in header else 0
-        existing_dates = {
-            normalize_date(r[date_col_idx])
-            for r in existing[1:]
-            if r and len(r) > date_col_idx and r[date_col_idx].strip()
-        }
+        existing = [["날짜", "OFF거래액"]]
 
-    inserted = 0
+    header = existing[0]
+    date_col_idx = header.index("날짜")  if "날짜"    in header else 0
+    off_col_idx  = header.index("OFF거래액") if "OFF거래액" in header else 1
+
+    # {날짜: 행번호(1-based)} 매핑
+    existing_map = {}
+    for i, r in enumerate(existing[1:], start=2):
+        if r and len(r) > date_col_idx and r[date_col_idx].strip():
+            existing_map[normalize_date(r[date_col_idx])] = (i, r)
+
+    inserted = updated = skipped = 0
     for row in rows:
         date_key = normalize_date(str(row[0]))
-        if date_key in existing_dates:
-            print(f"중복 날짜 스킵: {date_key}")
-            continue
-        ws.append_row(row)
-        existing_dates.add(date_key)
-        inserted += 1
+        if date_key in existing_map:
+            row_num, existing_row = existing_map[date_key]
+            # OFF거래액이 비어있거나 0이면 업데이트
+            existing_off = existing_row[off_col_idx].strip() if len(existing_row) > off_col_idx else ""
+            if not existing_off or existing_off in ("0", ""):
+                off_cell = f"{chr(65 + off_col_idx)}{row_num}"
+                ws.update([[row[1]]], off_cell)
+                print(f"OFF거래액 업데이트: {date_key} → {row[1]:,}")
+                updated += 1
+            else:
+                print(f"중복 날짜 스킵: {date_key}")
+                skipped += 1
+        else:
+            ws.append_row(row)
+            existing_map[date_key] = (0, row)
+            inserted += 1
 
-    print(f"Google Sheets 적재 완료: {inserted}행 삽입 (중복 {len(rows) - inserted}행 스킵)")
+    print(f"Google Sheets 적재 완료: {inserted}행 삽입 / {updated}행 업데이트 / {skipped}행 스킵")
 
 
 async def login_and_get_cookies() -> dict:
