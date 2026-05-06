@@ -91,13 +91,23 @@ def parse_pdf(pdf_bytes: bytes) -> list:
     year_match = re.search(r"\b(20\d{2})\b", full_text)
     year = int(year_match.group(1)) if year_match else datetime.now(KST).year
 
-    # 행 패턴: MM/DD <결제금액> <건당평균> <배송비제외금액>
-    # 예: "05/05 45,165,500 96,714.1 44,778,500"
-    row_pattern = re.compile(r"(\d{2}/\d{2})\s+([\d,]+)\s+[\d,.]+\s+[\d,]+")
+    # 결제액 섹션만 추출 (구매 고객 수 테이블과 분리)
+    # "결제액" 헤더 이후 텍스트만 파싱
+    section_match = re.search(r"결제액\s+결제액 추이", full_text)
+    parse_text = full_text[section_match.start():] if section_match else full_text
 
-    for m in row_pattern.finditer(full_text):
+    # 행 패턴: MM/DD <결제금액(콤마포함)> <건당평균> <배송비제외금액>
+    # 예: "05/05 45,165,500 96,714.1 44,778,500"
+    # 결제금액은 반드시 콤마(,)가 있는 형태 (1,000원 이상) → 구매 고객 수(467 등)와 구분
+    row_pattern = re.compile(r"(\d{2}/\d{2})\s+((?:\d{1,3},)+\d{3})\s+[\d,.]+\s+[\d,]+")
+
+    seen_dates = set()
+    for m in row_pattern.finditer(parse_text):
         month_day  = m.group(1)   # "05/05"
         amount_str = m.group(2)   # "45,165,500"
+        if month_day in seen_dates:
+            continue  # 날짜 중복 스킵 (같은 날짜 두 번 나오는 경우)
+        seen_dates.add(month_day)
         month, day = map(int, month_day.split("/"))
         amount = int(amount_str.replace(",", ""))
         date_str = f"{year}.{month:02d}.{day:02d}"
