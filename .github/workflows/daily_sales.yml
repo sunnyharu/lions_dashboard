@@ -73,13 +73,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/sunnyharu/lions_dashboard.git
           # 오늘 날짜(KST)를 last_run.txt에 기록
-          python -c "
-from datetime import datetime, timezone, timedelta
-KST = timezone(timedelta(hours=9))
-today = datetime.now(KST).strftime('%Y-%m-%d')
-open('last_run.txt', 'w').write(today)
-print('last_run.txt:', today)
-"
+          TZ='Asia/Seoul' date +'%Y-%m-%d' > last_run.txt
+          echo "last_run.txt: $(cat last_run.txt)"
           git add dashboard/index.html last_run.txt
           git diff --cached --quiet || git commit -m "chore: 대시보드 업데이트 $(date +'%Y-%m-%d')"
           git push
