@@ -1,4 +1,4 @@
-name: 온라인 매출 수집 (Berriz PDF)
+name: 온라인 매출 수집 (PDF)
 
 on:
   schedule:
