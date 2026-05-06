@@ -1,0 +1,45 @@
+name: 온라인 매출 수집 (Berriz PDF)
+
+on:
+  schedule:
+    - cron: '30 2 * * *'   # 매일 오전 11시 30분 KST (UTC+9 → UTC 02:30)
+  workflow_dispatch:        # 수동 실행
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: Berriz PDF → ON거래액 수집
+        env:
+          GOOGLE_EMAIL:       ${{ secrets.GOOGLE_EMAIL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python crawl_online_sales.py
+
+      - name: 대시보드 생성
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python generate_dashboard.py
+
+      - name: 대시보드 커밋 & 푸시
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/sunnyharu/lions_dashboard.git
+          git add dashboard/index.html
+          git diff --cached --quiet || git commit -m "chore: 온라인매출 대시보드 업데이트 $(date +'%Y-%m-%d')"
+          git push
