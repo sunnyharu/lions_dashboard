@@ -22,13 +22,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 패키지 설치 (경량)
-        run: pip install gspread google-auth python-dotenv
-
       - name: 이미 실행됐는지 확인
         id: check
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: python check_already_run.py
 
   crawl:
@@ -70,14 +65,22 @@ jobs:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: python generate_dashboard.py
 
-      - name: 대시보드 커밋
+      - name: 대시보드 및 실행일 커밋
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/sunnyharu/lions_dashboard.git
-          git add dashboard/index.html
+          # 오늘 날짜(KST)를 last_run.txt에 기록
+          python -c "
+from datetime import datetime, timezone, timedelta
+KST = timezone(timedelta(hours=9))
+today = datetime.now(KST).strftime('%Y-%m-%d')
+open('last_run.txt', 'w').write(today)
+print('last_run.txt:', today)
+"
+          git add dashboard/index.html last_run.txt
           git diff --cached --quiet || git commit -m "chore: 대시보드 업데이트 $(date +'%Y-%m-%d')"
           git push
 

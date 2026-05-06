@@ -1,24 +1,12 @@
 """
-어제 날짜 데이터가 이미 시트에 있으면 GITHUB_OUTPUT에 skip=true 출력
-→ GitHub Actions에서 이후 스텝을 건너뜀
+오늘 날짜로 last_run.txt가 이미 커밋되어 있으면 skip=true 출력
+→ GitHub Actions에서 이후 crawl job을 건너뜀
 """
-import json
 import os
-import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
-from dotenv import load_dotenv
-from google.oauth2.service_account import Credentials
-import gspread
-
-load_dotenv()
-
-SPREADSHEET_ID   = "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU"
-GOOGLE_CREDS_ENV = os.environ.get("GOOGLE_CREDENTIALS", "")
-GOOGLE_CREDS_FILE = "google_credentials.json"
-
-yesterday = datetime.today() - timedelta(days=1)
-YESTERDAY_STR = yesterday.strftime("%Y.%m.%d")  # "2026.04.28"
+KST = timezone(timedelta(hours=9))
+TODAY = datetime.now(KST).strftime("%Y-%m-%d")
 
 
 def set_output(key: str, value: str):
@@ -31,39 +19,18 @@ def set_output(key: str, value: str):
 
 
 def main():
-    scopes = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive",
-    ]
-    try:
-        if GOOGLE_CREDS_ENV:
-            creds = Credentials.from_service_account_info(json.loads(GOOGLE_CREDS_ENV), scopes=scopes)
-        else:
-            creds = Credentials.from_service_account_file(GOOGLE_CREDS_FILE, scopes=scopes)
-        client = gspread.authorize(creds)
-        sh     = client.open_by_key(SPREADSHEET_ID)
-        ws     = sh.worksheet("일별매출")
-        vals   = ws.get_all_values()
-    except Exception as e:
-        print(f"시트 조회 오류: {e} → 스킵 없이 실행")
-        set_output("skip", "false")
-        return
+    last_run_file = "last_run.txt"
 
-    header = vals[0] if vals else []
-    date_col = header.index("날짜") if "날짜" in header else 0
+    if os.path.exists(last_run_file):
+        with open(last_run_file) as f:
+            last_run = f.read().strip()
+        if last_run == TODAY:
+            print(f"오늘({TODAY}) 이미 실행됨 → 스킵")
+            set_output("skip", "true")
+            return
 
-    existing_dates = {
-        row[date_col].strip()
-        for row in vals[1:]
-        if row and len(row) > date_col
-    }
-
-    if YESTERDAY_STR in existing_dates:
-        print(f"이미 실행됨: {YESTERDAY_STR} 데이터 존재 → 스킵")
-        set_output("skip", "true")
-    else:
-        print(f"미실행: {YESTERDAY_STR} 데이터 없음 → 실행")
-        set_output("skip", "false")
+    print(f"오늘({TODAY}) 미실행 → 실행")
+    set_output("skip", "false")
 
 
 if __name__ == "__main__":
