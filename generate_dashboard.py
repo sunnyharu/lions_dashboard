@@ -229,7 +229,10 @@ def build_html(data: list, news: list, digest: str) -> str:
             res_on_data.append(avg(monthly_res[m].get(rs + "_on",  [])))
 
     # 뉴스 / 카페 분리
-    news_items = [n for n in news if n["source"] == "뉴스"]
+    news_items = sorted(
+        [n for n in news if n["source"] == "뉴스"],
+        key=lambda x: x.get("date", ""), reverse=True
+    )[:10]
     cafe_items = sorted(
         [n for n in news if "카페" in n["source"]],
         key=lambda x: x.get("views", 0), reverse=True

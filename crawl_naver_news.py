@@ -31,7 +31,7 @@ VALID_DATES = {(NOW_KST - timedelta(days=i)).strftime("%Y%m%d") for i in range(7
 DATE_TODAY  = NOW_KST.strftime("%Y.%m.%d")
 
 NEWS_QUERY    = "삼성 라이온즈"
-NEWS_MAX      = 5
+NEWS_MAX      = 10
 CAFE_TOP_N    = 10
 CAFE_KEYWORDS = [
     "유니폼", "베리즈", "응원봉", "마킹키트", "로고볼",
@@ -185,8 +185,8 @@ def is_trade_post(title: str) -> bool:
 # ── 뉴스 ──────────────────────────────────────────────────────────────────────
 
 def process_news() -> list:
-    print(f"\n[뉴스] '{NEWS_QUERY}' 관련도순 최근 7일 상위 {NEWS_MAX}건")
-    items   = naver_search("news", NEWS_QUERY, display=50, sort="sim")
+    print(f"\n[뉴스] '{NEWS_QUERY}' 최신순 최근 7일 상위 {NEWS_MAX}건")
+    items   = naver_search("news", NEWS_QUERY, display=50, sort="date")
     results = []
     for item in items:
         if len(results) >= NEWS_MAX:
