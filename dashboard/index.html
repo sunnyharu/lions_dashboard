@@ -106,7 +106,7 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.05.07 01:44</span>
+  <span class="updated">최종 업데이트: 2026.05.07 01:46</span>
 </div>
 
 <div class="kpi-row">
@@ -117,12 +117,12 @@
   </div>
   <div class="kpi">
     <div class="label">ON 거래액 (누계)</div>
-    <div class="value">1,416,856,500<span class="unit">원</span></div>
+    <div class="value">1,455,435,500<span class="unit">원</span></div>
     <div class="sub">2026.03.16 ~ 2026.05.06</div>
   </div>
   <div class="kpi">
     <div class="label">총 거래액 (누계)</div>
-    <div class="value red">4,615,296,610<span class="unit">원</span></div>
+    <div class="value red">4,653,875,610<span class="unit">원</span></div>
     <div class="sub">2026.03.16 ~ 2026.05.06</div>
   </div>
   <div class="kpi">
@@ -184,8 +184,8 @@
           <td class="num">24,000</td>
           <td class="num">100.0%</td>
           <td class="num">61,059,910</td>
-          <td class="num">-</td>
-          <td class="num bold">61,059,910</td>
+          <td class="num">38,579,000</td>
+          <td class="num bold">99,638,910</td>
         </tr>
         <tr>
           <td>2026.05.05</td>
@@ -947,7 +947,7 @@ new Chart(document.getElementById('trendChart'), {
         borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
       },
       {
-        label: 'ON거래액', data: [54443000, 20325000, 11560000, 8300000, 8255000, 15005000, 18370000, 15439000, 16481000, 12055000, 9834000, 10081000, 15686000, 16098000, 11975000, 11498000, 29970000, 22887000, 14195000, 14075000, 15885000, 16690000, 25361000, 15450500, 12805000, 13532500, 15521000, 22469000, 18342500, 16649000, 18710000, 17655500, 16833500, 165063500, 46790500, 23441000, 28727000, 16447000, 13433000, 6516000, 3800000, 4099500, 5951500, 4314500, 4219500, 4634000, 283739000, 81810500, 63302500, 52965500, 45165500, 0],
+        label: 'ON거래액', data: [54443000, 20325000, 11560000, 8300000, 8255000, 15005000, 18370000, 15439000, 16481000, 12055000, 9834000, 10081000, 15686000, 16098000, 11975000, 11498000, 29970000, 22887000, 14195000, 14075000, 15885000, 16690000, 25361000, 15450500, 12805000, 13532500, 15521000, 22469000, 18342500, 16649000, 18710000, 17655500, 16833500, 165063500, 46790500, 23441000, 28727000, 16447000, 13433000, 6516000, 3800000, 4099500, 5951500, 4314500, 4219500, 4634000, 283739000, 81810500, 63302500, 52965500, 45165500, 38579000],
         borderColor: ON, backgroundColor: alpha(ON, .1),
         borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
       },
@@ -1007,7 +1007,7 @@ new Chart(document.getElementById('haChart'), {
     labels: ["\ud648 3\uc6d4", "\ud648 4\uc6d4", "\ud648 5\uc6d4", "\uc5b4\uc6e8\uc774 3\uc6d4", "\uc5b4\uc6e8\uc774 4\uc6d4", "\uc5b4\uc6e8\uc774 5\uc6d4"],
     datasets: [
       { label: 'OFF거래액', data: [134639990, 134822748, 108187694, 0, 13985219, 0], backgroundColor: alpha(OFF, .8) },
-      { label: 'ON거래액',  data: [14427333, 37484050, 118504375, 0, 11826035, 0],  backgroundColor: alpha(ON,  .8) },
+      { label: 'ON거래액',  data: [14427333, 37484050, 102519300, 0, 11826035, 0],  backgroundColor: alpha(ON,  .8) },
     ]
   },
   options: sideOpts(),
@@ -1021,7 +1021,7 @@ new Chart(document.getElementById('resultChart'), {
     labels: ["\uc2b9 3\uc6d4", "\uc2b9 4\uc6d4", "\uc2b9 5\uc6d4", "\ud328 3\uc6d4", "\ud328 4\uc6d4", "\ud328 5\uc6d4"],
     datasets: [
       { label: 'OFF거래액', data: [0, 70499120, 103612582, 150137135, 57048361, 126488140], backgroundColor: alpha(OFF, .8) },
-      { label: 'ON거래액',  data: [0, 29261769, 130735666, 15892000, 14545636, 81810500],  backgroundColor: alpha(ON,  .8) },
+      { label: 'ON거래액',  data: [0, 29261769, 107696500, 15892000, 14545636, 81810500],  backgroundColor: alpha(ON,  .8) },
     ]
   },
   options: sideOpts(),
