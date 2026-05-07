@@ -425,6 +425,16 @@ def build_html(data: list, news: list, digest: str) -> str:
   }}
   #excelDownloadBtn:hover {{ background: #185c37; }}
 
+  /* 페이지네이션 */
+  .pagination {{ display: flex; gap: 6px; justify-content: center; padding: 16px 0 4px; flex-wrap: wrap; }}
+  .page-btn {{
+    padding: 5px 12px; border: 1.5px solid #ddd; border-radius: 6px;
+    background: white; color: #444; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; min-width: 36px;
+  }}
+  .page-btn.active {{ background: #002D72; color: white; border-color: #002D72; }}
+  .page-btn:hover:not(.active) {{ background: #f0f4ff; border-color: #002D72; }}
+
   .badge {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }}
   .badge.win    {{ background: #e8f5e9; color: #2e7d32; }}
   .badge.lose   {{ background: #ffebee; color: #c62828; }}
@@ -536,6 +546,7 @@ def build_html(data: list, news: list, digest: str) -> str:
       </thead>
       <tbody>{table_rows}</tbody>
     </table>
+    <div class="pagination" id="pagination"></div>
   </div>
 </div>
 
@@ -562,27 +573,57 @@ def build_html(data: list, news: list, digest: str) -> str:
 </div>
 
 <script>
-// ── 월별 필터 & KPI 업데이트 ──
+// ── 월별 필터 & 페이지네이션 ──
 const allData = {json.dumps(data)};
+const ROWS_PER_PAGE = 15;
+let currentMonth = 'all';
+let currentPage  = 1;
 
 document.querySelectorAll('.filter-btn').forEach(btn => {{
   btn.addEventListener('click', function() {{
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
-    filterByMonth(this.dataset.month);
+    currentMonth = this.dataset.month;
+    currentPage  = 1;
+    updateKPI(currentMonth);
+    renderTable();
   }});
 }});
 
-function filterByMonth(month) {{
-  const rows = document.querySelectorAll('#dataTable tbody tr');
-  rows.forEach(row => {{
-    if (month === 'all' || row.dataset.month === month) {{
-      row.style.display = '';
-    }} else {{
-      row.style.display = 'none';
-    }}
-  }});
-  updateKPI(month);
+function getFilteredRows() {{
+  const allRows = Array.from(document.querySelectorAll('#dataTable tbody tr'));
+  return currentMonth === 'all'
+    ? allRows
+    : allRows.filter(row => row.dataset.month === currentMonth);
+}}
+
+function renderTable() {{
+  const allRows     = Array.from(document.querySelectorAll('#dataTable tbody tr'));
+  const filtered    = getFilteredRows();
+  const totalPages  = Math.ceil(filtered.length / ROWS_PER_PAGE);
+  const start       = (currentPage - 1) * ROWS_PER_PAGE;
+  const pageRows    = filtered.slice(start, start + ROWS_PER_PAGE);
+
+  allRows.forEach(row => row.style.display = 'none');
+  pageRows.forEach(row => row.style.display = '');
+
+  renderPagination(totalPages);
+}}
+
+function renderPagination(totalPages) {{
+  const container = document.getElementById('pagination');
+  if (totalPages <= 1) {{ container.innerHTML = ''; return; }}
+  let html = '';
+  for (let i = 1; i <= totalPages; i++) {{
+    html += `<button class="page-btn ${{i === currentPage ? 'active' : ''}}" onclick="goToPage(${{i}})">${{i}}</button>`;
+  }}
+  container.innerHTML = html;
+}}
+
+function goToPage(page) {{
+  currentPage = page;
+  renderTable();
+  document.querySelector('.table-card:last-of-type').scrollIntoView({{behavior:'smooth', block:'start'}});
 }}
 
 function updateKPI(month) {{
@@ -596,13 +637,12 @@ function updateKPI(month) {{
   document.getElementById('kpi-total').textContent = fmt(total);
 }}
 
-// ── 엑셀 다운로드 ──
+// ── 엑셀 다운로드 (현재 필터 기준 전체 데이터) ──
 function downloadExcel() {{
-  const rows = document.querySelectorAll('#dataTable tbody tr');
-  const headers = ['날짜','홈/어웨이','상대팀','결과','관중수','점유율','OFF거래액','ON거래액','합계'];
-  const csvData = [headers];
-  rows.forEach(row => {{
-    if (row.style.display === 'none') return;
+  const filtered = getFilteredRows();
+  const headers  = ['날짜','홈/어웨이','상대팀','결과','관중수','점유율','OFF거래액','ON거래액','합계'];
+  const csvData  = [headers];
+  filtered.forEach(row => {{
     const cells = row.querySelectorAll('td');
     csvData.push(Array.from(cells).map(td => td.textContent.trim()));
   }});
@@ -611,6 +651,9 @@ function downloadExcel() {{
   XLSX.utils.book_append_sheet(wb, ws, '매출데이터');
   XLSX.writeFile(wb, '삼성라이온즈_매출데이터.xlsx');
 }}
+
+// 초기 렌더링
+renderTable();
 
 const OFF = '#002D72', ON = '#C8102E', TOT = '#6c757d';
 const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
