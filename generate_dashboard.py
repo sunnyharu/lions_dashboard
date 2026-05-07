@@ -228,6 +228,44 @@ def build_html(data: list, news: list, digest: str) -> str:
             res_off_data.append(avg(monthly_res[m].get(rs + "_off", [])))
             res_on_data.append(avg(monthly_res[m].get(rs + "_on",  [])))
 
+    # ── 월별 요약 데이터 계산 ────────────────────────────────
+    monthly_summary = defaultdict(lambda: {"off": 0, "on": 0})
+    for r in data:
+        m = r["date"][:7]  # "2026.05"
+        monthly_summary[m]["off"] += r["off"]
+        monthly_summary[m]["on"]  += r["on"]
+    unique_months = sorted(monthly_summary.keys())
+
+    # 월별 필터 버튼 HTML
+    filter_btns_html = '<button class="filter-btn active" data-month="all">전체</button>\n'
+    for m in unique_months:
+        label = f"{m[2:4]}년 {int(m[5:7])}월"
+        filter_btns_html += f'<button class="filter-btn" data-month="{m}">{label}</button>\n'
+
+    # 월별 요약 테이블 행 HTML
+    summary_rows_html = ""
+    grand_off = grand_on = 0
+    for m in unique_months:
+        off = monthly_summary[m]["off"]
+        on  = monthly_summary[m]["on"]
+        tot = off + on
+        grand_off += off
+        grand_on  += on
+        label = f"{m[2:4]}년 {int(m[5:7])}월"
+        summary_rows_html += f"""<tr>
+      <td>{label}</td>
+      <td class="num">{fmt(off)}</td>
+      <td class="num">{fmt(on)}</td>
+      <td class="num bold">{fmt(tot)}</td>
+    </tr>"""
+    grand_tot = grand_off + grand_on
+    summary_rows_html += f"""<tr class="summary-total">
+  <td>합계</td>
+  <td class="num">{fmt(grand_off)}</td>
+  <td class="num">{fmt(grand_on)}</td>
+  <td class="num bold">{fmt(grand_tot)}</td>
+</tr>"""
+
     # 뉴스 / 카페 분리
     news_items = sorted(
         [n for n in news if n["source"] == "뉴스"],
@@ -266,7 +304,7 @@ def build_html(data: list, news: list, digest: str) -> str:
         occupancy    = f"{crowd / STADIUM_CAPACITY * 100:.1f}%" if crowd and r["home_away"] == "홈" else "-"
         crowd_txt    = fmt(crowd) if crowd else "-"
         table_rows += f"""
-        <tr>
+        <tr data-month="{r['date'][:7]}">
           <td>{r["date"]}</td>
           <td>{r["home_away"] or "-"}</td>
           <td>{r["opponent"] or "-"}</td>
@@ -287,6 +325,7 @@ def build_html(data: list, news: list, digest: str) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>삼성 라이온즈 매출 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; color: #1a1a2e; }}
@@ -371,6 +410,21 @@ def build_html(data: list, news: list, digest: str) -> str:
   .issue-empty {{ font-size: 12px; color: #bbb; text-align: center; padding: 20px 0; }}
   .digest-text {{ font-size: 12px; color: #333; line-height: 1.8; white-space: pre-line; }}
 
+  .filter-bar {{ display: flex; gap: 8px; flex-wrap: wrap; }}
+  .filter-btn {{
+    padding: 6px 14px; border: 1.5px solid #002D72; border-radius: 20px;
+    background: white; color: #002D72; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }}
+  .filter-btn.active {{ background: #002D72; color: white; }}
+  .filter-btn:hover:not(.active) {{ background: #e8edf5; }}
+  .summary-total {{ background: #f0f4ff; font-weight: 700; }}
+  #excelDownloadBtn {{
+    padding: 7px 16px; background: #217346; color: white; border: none;
+    border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }}
+  #excelDownloadBtn:hover {{ background: #185c37; }}
+
   .badge {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }}
   .badge.win    {{ background: #e8f5e9; color: #2e7d32; }}
   .badge.lose   {{ background: #ffebee; color: #c62828; }}
@@ -394,17 +448,17 @@ def build_html(data: list, news: list, digest: str) -> str:
 <div class="kpi-row">
   <div class="kpi">
     <div class="label">OFF 거래액 (누계)</div>
-    <div class="value">{fmt(total_off)}<span class="unit">원</span></div>
+    <div class="value"><span id="kpi-off">{fmt(total_off)}</span><span class="unit">원</span></div>
     <div class="sub">{date_range_label}</div>
   </div>
   <div class="kpi">
     <div class="label">ON 거래액 (누계)</div>
-    <div class="value">{fmt(total_on)}<span class="unit">원</span></div>
+    <div class="value"><span id="kpi-on">{fmt(total_on)}</span><span class="unit">원</span></div>
     <div class="sub">{date_range_label}</div>
   </div>
   <div class="kpi">
     <div class="label">총 거래액 (누계)</div>
-    <div class="value red">{fmt(total_total)}<span class="unit">원</span></div>
+    <div class="value red"><span id="kpi-total">{fmt(total_total)}</span><span class="unit">원</span></div>
     <div class="sub">{date_range_label}</div>
   </div>
   <div class="kpi">
@@ -444,9 +498,32 @@ def build_html(data: list, news: list, digest: str) -> str:
 </div>
 
 <div class="table-section">
-  <div class="table-card">
-    <h3>전체 데이터</h3>
+  <!-- 월별 요약 -->
+  <div class="table-card" style="margin-bottom:16px">
+    <h3>월별 합계</h3>
     <table>
+      <thead>
+        <tr>
+          <th>월</th>
+          <th style="text-align:right">OFF거래액</th>
+          <th style="text-align:right">ON거래액</th>
+          <th style="text-align:right">합계</th>
+        </tr>
+      </thead>
+      <tbody>{summary_rows_html}</tbody>
+    </table>
+  </div>
+  <!-- 전체 데이터 -->
+  <div class="table-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin-bottom:0">전체 데이터</h3>
+      <button id="excelDownloadBtn" onclick="downloadExcel()">📥 엑셀 다운로드</button>
+    </div>
+    <!-- 월별 필터 -->
+    <div class="filter-bar" style="margin-bottom:16px">
+      {filter_btns_html}
+    </div>
+    <table id="dataTable">
       <thead>
         <tr>
           <th>날짜</th><th>홈/어웨이</th><th>상대팀</th><th>결과</th>
@@ -485,6 +562,56 @@ def build_html(data: list, news: list, digest: str) -> str:
 </div>
 
 <script>
+// ── 월별 필터 & KPI 업데이트 ──
+const allData = {json.dumps(data)};
+
+document.querySelectorAll('.filter-btn').forEach(btn => {{
+  btn.addEventListener('click', function() {{
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    filterByMonth(this.dataset.month);
+  }});
+}});
+
+function filterByMonth(month) {{
+  const rows = document.querySelectorAll('#dataTable tbody tr');
+  rows.forEach(row => {{
+    if (month === 'all' || row.dataset.month === month) {{
+      row.style.display = '';
+    }} else {{
+      row.style.display = 'none';
+    }}
+  }});
+  updateKPI(month);
+}}
+
+function updateKPI(month) {{
+  const filtered = month === 'all' ? allData : allData.filter(r => r.date.startsWith(month));
+  const off   = filtered.reduce((s, r) => s + r.off, 0);
+  const on    = filtered.reduce((s, r) => s + r.on, 0);
+  const total = off + on;
+  const fmt   = n => (n && n !== 0) ? n.toLocaleString('ko-KR') : '-';
+  document.getElementById('kpi-off').textContent   = fmt(off);
+  document.getElementById('kpi-on').textContent    = fmt(on);
+  document.getElementById('kpi-total').textContent = fmt(total);
+}}
+
+// ── 엑셀 다운로드 ──
+function downloadExcel() {{
+  const rows = document.querySelectorAll('#dataTable tbody tr');
+  const headers = ['날짜','홈/어웨이','상대팀','결과','관중수','점유율','OFF거래액','ON거래액','합계'];
+  const csvData = [headers];
+  rows.forEach(row => {{
+    if (row.style.display === 'none') return;
+    const cells = row.querySelectorAll('td');
+    csvData.push(Array.from(cells).map(td => td.textContent.trim()));
+  }});
+  const ws = XLSX.utils.aoa_to_sheet(csvData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '매출데이터');
+  XLSX.writeFile(wb, '삼성라이온즈_매출데이터.xlsx');
+}}
+
 const OFF = '#002D72', ON = '#C8102E', TOT = '#6c757d';
 const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
 

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>삼성 라이온즈 매출 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; color: #1a1a2e; }
@@ -89,6 +90,21 @@
   .issue-empty { font-size: 12px; color: #bbb; text-align: center; padding: 20px 0; }
   .digest-text { font-size: 12px; color: #333; line-height: 1.8; white-space: pre-line; }
 
+  .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 6px 14px; border: 1.5px solid #002D72; border-radius: 20px;
+    background: white; color: #002D72; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .filter-btn.active { background: #002D72; color: white; }
+  .filter-btn:hover:not(.active) { background: #e8edf5; }
+  .summary-total { background: #f0f4ff; font-weight: 700; }
+  #excelDownloadBtn {
+    padding: 7px 16px; background: #217346; color: white; border: none;
+    border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  #excelDownloadBtn:hover { background: #185c37; }
+
   .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
   .badge.win    { background: #e8f5e9; color: #2e7d32; }
   .badge.lose   { background: #ffebee; color: #c62828; }
@@ -106,39 +122,39 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.05.06 08:22</span>
+  <span class="updated">최종 업데이트: 2026.05.07 12:56</span>
 </div>
 
 <div class="kpi-row">
   <div class="kpi">
     <div class="label">OFF 거래액 (누계)</div>
-    <div class="value">3,137,380,200<span class="unit">원</span></div>
-    <div class="sub">2026.03.16 ~ 2026.05.05</div>
+    <div class="value"><span id="kpi-off">3,198,440,110</span><span class="unit">원</span></div>
+    <div class="sub">2026.03.16 ~ 2026.05.06</div>
   </div>
   <div class="kpi">
     <div class="label">ON 거래액 (누계)</div>
-    <div class="value">1,416,856,500<span class="unit">원</span></div>
-    <div class="sub">2026.03.16 ~ 2026.05.05</div>
+    <div class="value"><span id="kpi-on">1,455,435,500</span><span class="unit">원</span></div>
+    <div class="sub">2026.03.16 ~ 2026.05.06</div>
   </div>
   <div class="kpi">
     <div class="label">총 거래액 (누계)</div>
-    <div class="value red">4,554,236,700<span class="unit">원</span></div>
-    <div class="sub">2026.03.16 ~ 2026.05.05</div>
+    <div class="value red"><span id="kpi-total">4,653,875,610</span><span class="unit">원</span></div>
+    <div class="sub">2026.03.16 ~ 2026.05.06</div>
   </div>
   <div class="kpi">
     <div class="label">경기 수</div>
-    <div class="value">31</div>
-    <div class="sub">홈 17 · 어웨이 14</div>
+    <div class="value">32</div>
+    <div class="sub">홈 18 · 어웨이 14</div>
   </div>
   <div class="kpi">
     <div class="label">승률</div>
-    <div class="value">53%</div>
-    <div class="sub">16승 14패</div>
+    <div class="value">55%</div>
+    <div class="sub">17승 14패</div>
   </div>
   <div class="kpi">
     <div class="label">홈 평균 관중</div>
-    <div class="value">23,688<span class="unit">명</span></div>
-    <div class="sub">평균 점유율 98.7% (수용 24,000명)</div>
+    <div class="value">23,706<span class="unit">명</span></div>
+    <div class="sub">평균 점유율 98.8% (수용 24,000명)</div>
   </div>
 </div>
 
@@ -162,9 +178,56 @@
 </div>
 
 <div class="table-section">
-  <div class="table-card">
-    <h3>전체 데이터</h3>
+  <!-- 월별 요약 -->
+  <div class="table-card" style="margin-bottom:16px">
+    <h3>월별 합계</h3>
     <table>
+      <thead>
+        <tr>
+          <th>월</th>
+          <th style="text-align:right">OFF거래액</th>
+          <th style="text-align:right">ON거래액</th>
+          <th style="text-align:right">합계</th>
+        </tr>
+      </thead>
+      <tbody><tr>
+      <td>26년 3월</td>
+      <td class="num">1,005,882,560</td>
+      <td class="num">255,405,000</td>
+      <td class="num bold">1,261,287,560</td>
+    </tr><tr>
+      <td>26년 4월</td>
+      <td class="num">1,630,938,080</td>
+      <td class="num">634,468,500</td>
+      <td class="num bold">2,265,406,580</td>
+    </tr><tr>
+      <td>26년 5월</td>
+      <td class="num">561,619,470</td>
+      <td class="num">565,562,000</td>
+      <td class="num bold">1,127,181,470</td>
+    </tr><tr class="summary-total">
+  <td>합계</td>
+  <td class="num">3,198,440,110</td>
+  <td class="num">1,455,435,500</td>
+  <td class="num bold">4,653,875,610</td>
+</tr></tbody>
+    </table>
+  </div>
+  <!-- 전체 데이터 -->
+  <div class="table-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin-bottom:0">전체 데이터</h3>
+      <button id="excelDownloadBtn" onclick="downloadExcel()">📥 엑셀 다운로드</button>
+    </div>
+    <!-- 월별 필터 -->
+    <div class="filter-bar" style="margin-bottom:16px">
+      <button class="filter-btn active" data-month="all">전체</button>
+<button class="filter-btn" data-month="2026.03">26년 3월</button>
+<button class="filter-btn" data-month="2026.04">26년 4월</button>
+<button class="filter-btn" data-month="2026.05">26년 5월</button>
+
+    </div>
+    <table id="dataTable">
       <thead>
         <tr>
           <th>날짜</th><th>홈/어웨이</th><th>상대팀</th><th>결과</th>
@@ -176,7 +239,18 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
+        <tr data-month="2026.05">
+          <td>2026.05.06</td>
+          <td>홈</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">61,059,910</td>
+          <td class="num">38,579,000</td>
+          <td class="num bold">99,638,910</td>
+        </tr>
+        <tr data-month="2026.05">
           <td>2026.05.05</td>
           <td>홈</td>
           <td>키움</td>
@@ -187,7 +261,7 @@
           <td class="num">45,165,500</td>
           <td class="num bold">174,424,700</td>
         </tr>
-        <tr>
+        <tr data-month="2026.05">
           <td>2026.05.04</td>
           <td>-</td>
           <td>-</td>
@@ -198,7 +272,7 @@
           <td class="num">52,965,500</td>
           <td class="num bold">73,646,500</td>
         </tr>
-        <tr>
+        <tr data-month="2026.05">
           <td>2026.05.03</td>
           <td>홈</td>
           <td>한화</td>
@@ -209,7 +283,7 @@
           <td class="num">63,302,500</td>
           <td class="num bold">158,720,270</td>
         </tr>
-        <tr>
+        <tr data-month="2026.05">
           <td>2026.05.02</td>
           <td>홈</td>
           <td>한화</td>
@@ -220,7 +294,7 @@
           <td class="num">81,810,500</td>
           <td class="num bold">208,298,640</td>
         </tr>
-        <tr>
+        <tr data-month="2026.05">
           <td>2026.05.01</td>
           <td>홈</td>
           <td>한화</td>
@@ -231,7 +305,7 @@
           <td class="num">283,739,000</td>
           <td class="num bold">412,452,450</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.30</td>
           <td>어웨이</td>
           <td>두산</td>
@@ -242,7 +316,7 @@
           <td class="num">4,634,000</td>
           <td class="num bold">11,737,830</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.29</td>
           <td>어웨이</td>
           <td>두산</td>
@@ -253,7 +327,7 @@
           <td class="num">4,219,500</td>
           <td class="num bold">10,688,500</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.28</td>
           <td>어웨이</td>
           <td>두산</td>
@@ -264,7 +338,7 @@
           <td class="num">4,314,500</td>
           <td class="num bold">10,383,800</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.27</td>
           <td>-</td>
           <td>-</td>
@@ -275,7 +349,7 @@
           <td class="num">5,951,500</td>
           <td class="num bold">9,283,600</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.26</td>
           <td>어웨이</td>
           <td>키움</td>
@@ -286,7 +360,7 @@
           <td class="num">4,099,500</td>
           <td class="num bold">22,354,800</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.25</td>
           <td>어웨이</td>
           <td>키움</td>
@@ -297,7 +371,7 @@
           <td class="num">3,800,000</td>
           <td class="num bold">27,378,930</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.24</td>
           <td>어웨이</td>
           <td>키움</td>
@@ -308,7 +382,7 @@
           <td class="num">6,516,000</td>
           <td class="num bold">12,769,200</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.23</td>
           <td>홈</td>
           <td>SSG</td>
@@ -319,7 +393,7 @@
           <td class="num">13,433,000</td>
           <td class="num bold">114,800,110</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.22</td>
           <td>홈</td>
           <td>SSG</td>
@@ -330,7 +404,7 @@
           <td class="num">16,447,000</td>
           <td class="num bold">123,323,830</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.21</td>
           <td>홈</td>
           <td>SSG</td>
@@ -341,7 +415,7 @@
           <td class="num">28,727,000</td>
           <td class="num bold">147,568,770</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.20</td>
           <td>-</td>
           <td>-</td>
@@ -352,7 +426,7 @@
           <td class="num">23,441,000</td>
           <td class="num bold">35,042,830</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.19</td>
           <td>홈</td>
           <td>LG</td>
@@ -363,7 +437,7 @@
           <td class="num">46,790,500</td>
           <td class="num bold">238,752,910</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.18</td>
           <td>홈</td>
           <td>LG</td>
@@ -374,7 +448,7 @@
           <td class="num">165,063,500</td>
           <td class="num bold">352,155,520</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.17</td>
           <td>홈</td>
           <td>LG</td>
@@ -385,7 +459,7 @@
           <td class="num">16,833,500</td>
           <td class="num bold">68,058,070</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.16</td>
           <td>어웨이</td>
           <td>한화</td>
@@ -396,7 +470,7 @@
           <td class="num">17,655,500</td>
           <td class="num bold">26,051,000</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.15</td>
           <td>어웨이</td>
           <td>한화</td>
@@ -407,7 +481,7 @@
           <td class="num">18,710,000</td>
           <td class="num bold">29,179,430</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.14</td>
           <td>어웨이</td>
           <td>한화</td>
@@ -418,7 +492,7 @@
           <td class="num">16,649,000</td>
           <td class="num bold">25,539,990</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.13</td>
           <td>-</td>
           <td>-</td>
@@ -429,7 +503,7 @@
           <td class="num">18,342,500</td>
           <td class="num bold">22,775,630</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.12</td>
           <td>홈</td>
           <td>NC</td>
@@ -440,7 +514,7 @@
           <td class="num">22,469,000</td>
           <td class="num bold">165,562,420</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.11</td>
           <td>홈</td>
           <td>NC</td>
@@ -451,7 +525,7 @@
           <td class="num">15,521,000</td>
           <td class="num bold">167,969,710</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.10</td>
           <td>홈</td>
           <td>NC</td>
@@ -462,7 +536,7 @@
           <td class="num">13,532,500</td>
           <td class="num bold">142,609,220</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.09</td>
           <td>어웨이</td>
           <td>KIA</td>
@@ -473,7 +547,7 @@
           <td class="num">12,805,000</td>
           <td class="num bold">22,311,700</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.08</td>
           <td>어웨이</td>
           <td>KIA</td>
@@ -484,7 +558,7 @@
           <td class="num">15,450,500</td>
           <td class="num bold">27,244,560</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.07</td>
           <td>어웨이</td>
           <td>KIA</td>
@@ -495,7 +569,7 @@
           <td class="num">25,361,000</td>
           <td class="num bold">35,389,700</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.06</td>
           <td>-</td>
           <td>-</td>
@@ -506,7 +580,7 @@
           <td class="num">16,690,000</td>
           <td class="num bold">23,509,200</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.05</td>
           <td>어웨이</td>
           <td>KT</td>
@@ -517,7 +591,7 @@
           <td class="num">15,885,000</td>
           <td class="num bold">50,914,540</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.04</td>
           <td>어웨이</td>
           <td>KT</td>
@@ -528,7 +602,7 @@
           <td class="num">14,075,000</td>
           <td class="num bold">47,330,760</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.03</td>
           <td>어웨이</td>
           <td>KT</td>
@@ -539,7 +613,7 @@
           <td class="num">14,195,000</td>
           <td class="num bold">24,394,530</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.02</td>
           <td>홈</td>
           <td>두산</td>
@@ -550,7 +624,7 @@
           <td class="num">22,887,000</td>
           <td class="num bold">136,501,740</td>
         </tr>
-        <tr>
+        <tr data-month="2026.04">
           <td>2026.04.01</td>
           <td>홈</td>
           <td>두산</td>
@@ -561,7 +635,7 @@
           <td class="num">29,970,000</td>
           <td class="num bold">133,823,750</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.31</td>
           <td>홈</td>
           <td>두산</td>
@@ -572,7 +646,7 @@
           <td class="num">11,498,000</td>
           <td class="num bold">115,143,700</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.30</td>
           <td>-</td>
           <td>-</td>
@@ -583,7 +657,7 @@
           <td class="num">11,975,000</td>
           <td class="num bold">21,210,000</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.29</td>
           <td>홈</td>
           <td>롯데</td>
@@ -594,7 +668,7 @@
           <td class="num">16,098,000</td>
           <td class="num bold">151,231,370</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.28</td>
           <td>홈</td>
           <td>롯데</td>
@@ -605,7 +679,7 @@
           <td class="num">15,686,000</td>
           <td class="num bold">180,826,900</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.27</td>
           <td>-</td>
           <td>-</td>
@@ -616,7 +690,7 @@
           <td class="num">10,081,000</td>
           <td class="num bold">39,159,540</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.26</td>
           <td>-</td>
           <td>-</td>
@@ -627,7 +701,7 @@
           <td class="num">9,834,000</td>
           <td class="num bold">32,013,010</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.25</td>
           <td>-</td>
           <td>-</td>
@@ -638,7 +712,7 @@
           <td class="num">12,055,000</td>
           <td class="num bold">22,101,460</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.24</td>
           <td>-</td>
           <td>-</td>
@@ -649,7 +723,7 @@
           <td class="num">16,481,000</td>
           <td class="num bold">69,617,410</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.23</td>
           <td>-</td>
           <td>-</td>
@@ -660,7 +734,7 @@
           <td class="num">15,439,000</td>
           <td class="num bold">75,939,870</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.22</td>
           <td>-</td>
           <td>-</td>
@@ -671,7 +745,7 @@
           <td class="num">18,370,000</td>
           <td class="num bold">196,916,510</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.21</td>
           <td>-</td>
           <td>-</td>
@@ -682,7 +756,7 @@
           <td class="num">15,005,000</td>
           <td class="num bold">168,158,710</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.20</td>
           <td>-</td>
           <td>-</td>
@@ -693,7 +767,7 @@
           <td class="num">8,255,000</td>
           <td class="num bold">31,482,600</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.19</td>
           <td>-</td>
           <td>-</td>
@@ -704,7 +778,7 @@
           <td class="num">8,300,000</td>
           <td class="num bold">27,857,780</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.18</td>
           <td>-</td>
           <td>-</td>
@@ -715,7 +789,7 @@
           <td class="num">11,560,000</td>
           <td class="num bold">23,367,600</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.17</td>
           <td>-</td>
           <td>-</td>
@@ -726,7 +800,7 @@
           <td class="num">20,325,000</td>
           <td class="num bold">35,596,600</td>
         </tr>
-        <tr>
+        <tr data-month="2026.03">
           <td>2026.03.16</td>
           <td>-</td>
           <td>-</td>
@@ -749,73 +823,73 @@
         <h4>뉴스</h4>
         <div class="issue-item">
           <div class="issue-meta"></div>
-          <a href="https://m.sports.naver.com/kbaseball/article/657/0000051124" target="_blank" rel="noopener"><div class="issue-title">잘 버텼던 삼성라이온즈…'구자욱부터 돌아왔다'</div></a>
+          <a href="https://m.sports.naver.com/kbaseball/article/109/0005528913" target="_blank" rel="noopener"><div class="issue-title">“호성아 연락 좀 해라” 최원태의 진심…수술 후 재활 중인 이호성 향...</div></a>
+          <div class="issue-desc">삼성 라이온즈 최원태 투수가 지난해 미국 훈련소에서 만난 후배 이호성을 향해 따뜻한 응원을 전했으며, 이호성은 현재 팔꿈치 인대 접합 수술 후 재활 중입니다.</div>
+        </div><div class="issue-item">
+          <div class="issue-meta"></div>
+          <a href="https://www.hg-times.com/news/articleView.html?idxno=301813" target="_blank" rel="noopener"><div class="issue-title">[KBO] 롯데, 선두 KT 완파..2위 LG 1위 반게임 차 추격</div></a>
           <div class="issue-desc"># 요약
 
-주장 구자욱의 복귀와 함께 완전체를 향하는 삼성라이온즈가 어린이날 대구삼성라이온즈파크에서 펼쳐지는 2026 신한 SOL KBO리그 키움히어로즈와의 주중 3연전 첫 경기에 출전한다.</div>
-        </div><div class="issue-item">
-          <div class="issue-meta"></div>
-          <a href="https://m.sports.naver.com/kbaseball/article/025/0003521092" target="_blank" rel="noopener"><div class="issue-title">구자욱 2번 배치, 김영웅·이재현도 복귀 임박… 삼성 타선 완전체 되어...</div></a>
-          <div class="issue-desc"># 기사 한 줄 요약
+삼성 라이온즈가 정준재의 극적인 끝내기 안타로 키움 히어로즈를 2-1로 신승하며 3연승을 기록했다.
 
-삼성 라이온즈가 구자욱(5일 1군 복귀), 이재현(주중 훈련 후 다음주 복귀 예정), 김영웅(10일 복귀 계획) 등 부상자들을 속속 복귀시키며 전력을 회복하고 있다.</div>
+(참고: 기사에 상품 판매·출시 정보가 없습니다.)</div>
         </div><div class="issue-item">
           <div class="issue-meta"></div>
-          <a href="https://m.sports.naver.com/kbaseball/article/109/0005527530" target="_blank" rel="noopener"><div class="issue-title">삼성의 자존심 구자욱 복귀, 익살 가득한 미소 [O! SPORTS 숏폼]</div></a>
+          <a href="https://m.sports.naver.com/kbaseball/article/241/0003508930" target="_blank" rel="noopener"><div class="issue-title">프로의 벽 확인한 롯데 신인왕 후보 박정민, 6일 KT전 무실점 투구 의미</div></a>
+          <div class="issue-desc">롯데 자이언츠 신인 우완 투수 박정민(23)이 6일 KT 위즈전에서 무실점 투구로 부진에서 벗어나 신인왕 후보로서의 경쟁력을 다시 입증했다.</div>
+        </div><div class="issue-item">
+          <div class="issue-meta"></div>
+          <a href="https://m.sports.naver.com/wbaseball/article/477/0000607288" target="_blank" rel="noopener"><div class="issue-title">삼성 KS 진출 영웅은 대만서도 잘 나간다…3G ERA 1.06→시즌 첫 승까지...</div></a>
           <div class="issue-desc"># 한 줄 요약
 
-삼성 라이온즈의 구자욱이 갈비뼈 미세 실금 부상에서 회복해 1군 훈련에 복귀했다.</div>
+삼성 라이온즈에서 활약했던 우완투수 데니 레예스(30)가 대만프로야구 퉁이 라이온스에서 시즌 첫 승을 거두며 평균자책점 1.06으로 우수한 성적을 기록 중이다.</div>
         </div><div class="issue-item">
           <div class="issue-meta"></div>
-          <a href="https://m.sports.naver.com/kbaseball/article/088/0001008283" target="_blank" rel="noopener"><div class="issue-title">[프로야구 전망대] 중심 타선 깨어난 삼성 라이온즈, 상승세 불 당길까</div></a>
-          <div class="issue-desc"># 기사 요약
-
-최형우가 KBO리그 통산 최다 안타 기록(2,623개)을 달성했으며, 삼성 라이온즈는 디아즈의 끝내기 역전 3점 홈런으로 한화를 꺾고 부상 선수들의 복귀를 기대하며 타선 재가동을 준비 중이다.</div>
-        </div><div class="issue-item">
-          <div class="issue-meta"></div>
-          <a href="https://m.sports.naver.com/kbaseball/article/003/0013923224" target="_blank" rel="noopener"><div class="issue-title">부진 이어간 삼성 강민호, 재정비 차원 2군행…'어깨 통증' 문동주도 1군...</div></a>
-          <div class="issue-desc"># 한 줄 요약
-
-삼성 라이온즈의 베테랑 포수 강민호가 부진으로 2군 재정비에 들어가고, 한화 이글스 투수 문동주는 어깨 통증으로 1군 엔트리에서 제외되며, NC 다이노스의 외국인 투수 드류 버하겐(6주 계약, 총액 10만 달러)도 라일리 톰슨의 복귀에 따라 계약이 만료된다.</div>
-        </div><div class="issue-item">
-          <div class="issue-meta"></div>
-          <a href="https://m.sports.naver.com/kbaseball/article/109/0005526789" target="_blank" rel="noopener"><div class="issue-title">타율 .197' 삼성 강민호, 퓨처스 무대에서 재정비 나선다 [오!쎈 대구]</div></a>
-          <div class="issue-desc"># 기사 요약
-
-삼성 라이온즈 포수 강민호가 부진으로 퓨처스에서 재정비하며, 장승현과 김상준이 1군 엔트리에 콜업되었다.</div>
-        </div><div class="issue-item">
-          <div class="issue-meta"></div>
-          <a href="https://m.sports.naver.com/kbaseball/article/311/0002006560" target="_blank" rel="noopener"><div class="issue-title">비 쏟아지는 라팍, 한화 vs 삼성 6번째 맞대결 미뤄지나 [대구 현장]</div></a>
-          <div class="issue-desc"># 한 줄 요약
-
-한화 이글스와 삼성 라이온즈의 3일 2026 신한 SOL KBO리그 6차전이 대구의 악천후로 인해 지연 또는 취소될 가능성이 높아졌다.</div>
-        </div><div class="issue-item">
-          <div class="issue-meta"></div>
-          <a href="https://m.sports.naver.com/kbaseball/article/001/0016056442" target="_blank" rel="noopener"><div class="issue-title">삼성 디아즈 끝내기 3점포…롯데 레이예스 역전 석점포로 4연승(종합)</div></a>
-          <div class="issue-desc"># 한 줄 요약
-
-2026 신한 SOL KBO리그에서 삼성 디아즈의 끝내기 3점홈런, 롯데 레이예스의 뒤집기 3점홈런, KT 힐리어드의 결승 3점홈런 등 외국인 타자들의 결정적인 홈런으로 삼성·롯데·KT가 각각 역전승을 거뒀다.</div>
-        </div><div class="issue-item">
-          <div class="issue-meta"></div>
-          <a href="https://m.sports.naver.com/kbaseball/article/055/0001353232" target="_blank" rel="noopener"><div class="issue-title">삼성 디아즈 끝내기 3점포…롯데 레이예스 역전 석점포로 4연승</div></a>
+          <a href="https://m.entertain.naver.com/article/008/0005353976" target="_blank" rel="noopener"><div class="issue-title">오승환, 보유 중인 금만 1000돈…"9억4000만원" 김종민 입이 떡</div></a>
           <div class="issue-desc"># 요약
 
-**2026 신한 SOL KBO리그**: 삼성 라이온즈의 외국인 거포 르윈 디아즈가 9회말 끝내기 역전 3점 홈런을 터뜨려 한화 이글스를 7-6으로 꺾었고, 롯데 자이언츠는 빅터 레이예스의 뒤집기 3점 홈런으로 SSG 랜더스를 5-2로 이겼으며, KT 위즈는 샘 힐리어드의 2점 홈런으로 KIA 타이거즈를 6-4로, NC 다이노스는 한석현의 3점 홈런으로 LG 트윈스를 10-3으로, 두산 베어스는 키움 히어로즈를 14-3으로 각각 격파했다.</div>
+야구 레전드 오승환이 KBS2 '슈퍼맨이 돌아왔다'에 출연해 보유한 금 1000돈(약 9억4000만원 상당)을 공개했으며, 한국 시리즈 우승 반지 5개와 순금 트로피, 황금 야구공 등을 소장 중인 것으로 밝혀졌다.</div>
         </div><div class="issue-item">
           <div class="issue-meta"></div>
-          <a href="https://m.sports.naver.com/kbaseball/article/003/0013923653" target="_blank" rel="noopener"><div class="issue-title">삼성 최형우, 손아섭 넘고 통산 최다 안타 신기록…'4연승' 롯데, 꼴찌 ...</div></a>
+          <a href="https://m.sports.naver.com/kbaseball/article/109/0005528886" target="_blank" rel="noopener"><div class="issue-title">‘깜짝 트레이드’ 삼성이 제안했는데, 두산도 대박 조짐…22세 군필 외...</div></a>
           <div class="issue-desc"># 한 줄 요약
 
-삼성 라이온즈의 최형우가 KBO리그 통산 최다 안타 2623개로 단독 1위에 올라섰으며, 3일 한화 이글스와의 경기에서 홈런을 포함한 4안타 2타점으로 7-6 역전승을 주도했다. (상품 판매·출시 정보 없음)</div>
+두산 베어스가 삼성 라이온즈와 내야수 박계범을 주고 외야수 류승민(22세)을 받는 1대1 트레이드에 합의해 외야 세대교체의 미래 자원을 확보했다.</div>
+        </div><div class="issue-item">
+          <div class="issue-meta"></div>
+          <a href="https://m.sports.naver.com/kbaseball/article/117/0004061898" target="_blank" rel="noopener"><div class="issue-title">"발버둥 치는데 안 따라주더라" 8-1 대승만큼 반가운 아픈 손가락의 부...</div></a>
+          <div class="issue-desc"># 한 줄 요약
+
+롯데 자이언츠의 구승민이 5월 6일 2026 신한 SOL BANK KBO리그 KT 위즈전(위즈파크)에서 시즌 첫 등판을 1이닝 무실점으로 성공적으로 마쳤다.</div>
+        </div><div class="issue-item">
+          <div class="issue-meta"></div>
+          <a href="https://m.sports.naver.com/kbaseball/article/472/0000040195" target="_blank" rel="noopener"><div class="issue-title">[게임노트] 2026년 5월 6일...'정준재 끝내기 2루타' SSG, 9회말 뒤집기쇼...</div></a>
+          <div class="issue-desc"># 2026년 5월 6일 KBO 리그: LG가 두산을 6-1로 제압하며 kt와의 순위 격차를 0.5게임차로 줄였고, SSG는 정준재의 끝내기 2루타로 NC를 7-6으로 역전승하며 3연패를 탈출했으며, 롯데는 kt를 8-1로 대파했다.</div>
+        </div><div class="issue-item">
+          <div class="issue-meta"></div>
+          <a href="https://n.news.naver.com/mnews/article/421/0008930094?sid=102" target="_blank" rel="noopener"><div class="issue-title">포항야구장 전광판 14년 만에 고화질로 교체…"판독 정확도↑"</div></a>
+          <div class="issue-desc"># 한 줄 요약
+
+포항야구장의 전광판이 14년 만에 폭 25m, 높이 8.4m의 고화질 전광판으로 교체되어 5월 11일 최종 테스트 후 KT위즈와의 경기부터 가동될 예정이다.</div>
+        </div><div class="issue-item">
+          <div class="issue-meta"></div>
+          <a href="https://www.insight.co.kr/news/553004" target="_blank" rel="noopener"><div class="issue-title">음주운전 이어 "뚱녀" 팬 조롱까지... 롯데 최충연, KBO 제재 받는다</div></a>
+          <div class="issue-desc"># 요약
+
+롯데 자이언츠 투수 최충연이 여성 팬을 비하한 영상 논란으로 KBO가 본격 징계 검토에 들어갔으며, 현재 2군으로 내려간 상태에서 '품위손상 행위' 적용을 검토 중이다.</div>
         </div>
       </div>
     </div>
     <div class="issue-col-right">
       <div class="issue-box cafe-digest">
         <h4>카페 트렌드 다이제스트</h4>
-        <div class="digest-text"># 삼성 라이온즈 팬 카페 최근 7일 주요 관심사 분석
+        <div class="digest-text"># 삼성 라이온즈 팬 카페 최근 이슈 정리
 
-**유니폼이 압도적 관심사**로, 특히 **베리즈샵의 배송 지연과 고객 응응 문제**가 가장 큰 불만입니다. 팬들은 여러 판매처(삼성라이온즈몰, 팀스토어, 베리즈)의 혼란스러운 구조와 제작 기간 장기화에 대해 적극적으로 질의하고 있으며, 마킹 유니폼 수령에 수개월이 소요되는 점을 강하게 지적하고 있습니다. 이 외에도 **응원봉, 마킹키트, 레전더리 유니폼 출시** 등이 부차적 관심사이며, 선수 응원(김태훈, 강민호, 디아즈 등)과 직관 경험 공유도 활발합니다.</div>
+**주요 관심 상품:** 유니폼(홈/어웨이/레트로), 응원봉, 마킹키트 등 공식 굿즈가 가장 인기 있으며, 선수 개인 응원(이승민, 류지혁 등)도 활발합니다.
+
+**주요 이슈:** 베리즈샵의 배송 지연(2-3개월 소요), 1:1 고객센터 응답 부진, 마킹키트 품절 등으로 팬들의 불만이 높습니다. 올해 유니폼 판매처 변경(기존 삼성라이온즈몰→베리즈/팀스토어)으로 인한 혼란도 지속되고 있습니다.
+
+**긍정적 반응:** 레전더리 유니폼(2011-2014 우승 시즌), 스프링 짐색 유니폼 출시에는 기대감이 높으며, 직관 후기와 함께 응원봉·유니폼 구매 후 만족감을 나누는 글들이 많습니다.</div>
       </div>
       <div class="issue-box cafe-posts">
         <h4>카페 인기글 TOP 10 (사자사랑방)</h4>
@@ -896,11 +970,61 @@
 </div>
 
 <script>
+// ── 월별 필터 & KPI 업데이트 ──
+const allData = [{"date": "2026.03.16", "off": 16221500, "on": 54443000, "total": 70664500, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": "\uc655\uc870\ub808\ud50c\ub9ac\uce74 \uac1c\uc2dc"}, {"date": "2026.03.17", "off": 15271600, "on": 20325000, "total": 35596600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.18", "off": 11807600, "on": 11560000, "total": 23367600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.19", "off": 19557780, "on": 8300000, "total": 27857780, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.20", "off": 23227600, "on": 8255000, "total": 31482600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.21", "off": 153153710, "on": 15005000, "total": 168158710, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.22", "off": 178546510, "on": 18370000, "total": 196916510, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.23", "off": 60500870, "on": 15439000, "total": 75939870, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.24", "off": 53136410, "on": 16481000, "total": 69617410, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.25", "off": 10046460, "on": 12055000, "total": 22101460, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.26", "off": 22179010, "on": 9834000, "total": 32013010, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.27", "off": 29078540, "on": 10081000, "total": 39159540, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.28", "off": 165140900, "on": 15686000, "total": 180826900, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "\ud328", "crowd": 24000, "note": "\uac1c\ub9c9"}, {"date": "2026.03.29", "off": 135133370, "on": 16098000, "total": 151231370, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.03.30", "off": 9235000, "on": 11975000, "total": 21210000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.31", "off": 103645700, "on": 11498000, "total": 115143700, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "-", "crowd": 21489, "note": ""}, {"date": "2026.04.01", "off": 103853750, "on": 29970000, "total": 133823750, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "\uc2b9", "crowd": 23120, "note": ""}, {"date": "2026.04.02", "off": 113614740, "on": 22887000, "total": 136501740, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "\uc2b9", "crowd": 23617, "note": ""}, {"date": "2026.04.03", "off": 10199530, "on": 14195000, "total": 24394530, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KT", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.04", "off": 33255760, "on": 14075000, "total": 47330760, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KT", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.05", "off": 35029540, "on": 15885000, "total": 50914540, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KT", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.06", "off": 6819200, "on": 16690000, "total": 23509200, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.04.07", "off": 10028700, "on": 25361000, "total": 35389700, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.08", "off": 11794060, "on": 15450500, "total": 27244560, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.09", "off": 9506700, "on": 12805000, "total": 22311700, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\ucde8\uc18c", "crowd": 0, "note": ""}, {"date": "2026.04.10", "off": 129076720, "on": 13532500, "total": 142609220, "home_away": "\ud648", "opponent": "NC", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.04.11", "off": 152448710, "on": 15521000, "total": 167969710, "home_away": "\ud648", "opponent": "NC", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.04.12", "off": 143093420, "on": 22469000, "total": 165562420, "home_away": "\ud648", "opponent": "NC", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.04.13", "off": 4433130, "on": 18342500, "total": 22775630, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.04.14", "off": 8890990, "on": 16649000, "total": 25539990, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.15", "off": 10469430, "on": 18710000, "total": 29179430, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.16", "off": 8395500, "on": 17655500, "total": 26051000, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.17", "off": 51224570, "on": 16833500, "total": 68058070, "home_away": "\ud648", "opponent": "LG", "result": "\ucde8\uc18c", "crowd": 0, "note": ""}, {"date": "2026.04.18", "off": 187092020, "on": 165063500, "total": 352155520, "home_away": "\ud648", "opponent": "LG", "result": "\uc2b9", "crowd": 24000, "note": "\ub9ac\ubbf8\ud2f0\ub4dc\uc2a4\ud504\ub9c1 \uc720\ub2c8\ud3fc \uac1c\uc2dc"}, {"date": "2026.04.19", "off": 191962410, "on": 46790500, "total": 238752910, "home_away": "\ud648", "opponent": "LG", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.04.20", "off": 11601830, "on": 23441000, "total": 35042830, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.04.21", "off": 118841770, "on": 28727000, "total": 147568770, "home_away": "\ud648", "opponent": "SSG", "result": "\ud328", "crowd": 23420, "note": ""}, {"date": "2026.04.22", "off": 106876830, "on": 16447000, "total": 123323830, "home_away": "\ud648", "opponent": "SSG", "result": "\ud328", "crowd": 23539, "note": ""}, {"date": "2026.04.23", "off": 101367110, "on": 13433000, "total": 114800110, "home_away": "\ud648", "opponent": "SSG", "result": "\ud328", "crowd": 23524, "note": ""}, {"date": "2026.04.24", "off": 6253200, "on": 6516000, "total": 12769200, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.25", "off": 23578930, "on": 3800000, "total": 27378930, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.26", "off": 18255300, "on": 4099500, "total": 22354800, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.27", "off": 3332100, "on": 5951500, "total": 9283600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.04.28", "off": 6069300, "on": 4314500, "total": 10383800, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub450\uc0b0", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.29", "off": 6469000, "on": 4219500, "total": 10688500, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub450\uc0b0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.30", "off": 7103830, "on": 4634000, "total": 11737830, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub450\uc0b0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.05.01", "off": 128713450, "on": 283739000, "total": 412452450, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 24000, "note": "\uc655\uc870 \uc720\ub2c8\ud3fc \uac1c\uc2dc"}, {"date": "2026.05.02", "off": 126488140, "on": 81810500, "total": 208298640, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.05.03", "off": 95417770, "on": 63302500, "total": 158720270, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.05.04", "off": 20681000, "on": 52965500, "total": 73646500, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.05.05", "off": 129259200, "on": 45165500, "total": 174424700, "home_away": "\ud648", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.05.06", "off": 61059910, "on": 38579000, "total": 99638910, "home_away": "\ud648", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 24000, "note": ""}];
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    filterByMonth(this.dataset.month);
+  });
+});
+
+function filterByMonth(month) {
+  const rows = document.querySelectorAll('#dataTable tbody tr');
+  rows.forEach(row => {
+    if (month === 'all' || row.dataset.month === month) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  updateKPI(month);
+}
+
+function updateKPI(month) {
+  const filtered = month === 'all' ? allData : allData.filter(r => r.date.startsWith(month));
+  const off   = filtered.reduce((s, r) => s + r.off, 0);
+  const on    = filtered.reduce((s, r) => s + r.on, 0);
+  const total = off + on;
+  const fmt   = n => (n && n !== 0) ? n.toLocaleString('ko-KR') : '-';
+  document.getElementById('kpi-off').textContent   = fmt(off);
+  document.getElementById('kpi-on').textContent    = fmt(on);
+  document.getElementById('kpi-total').textContent = fmt(total);
+}
+
+// ── 엑셀 다운로드 ──
+function downloadExcel() {
+  const rows = document.querySelectorAll('#dataTable tbody tr');
+  const headers = ['날짜','홈/어웨이','상대팀','결과','관중수','점유율','OFF거래액','ON거래액','합계'];
+  const csvData = [headers];
+  rows.forEach(row => {
+    if (row.style.display === 'none') return;
+    const cells = row.querySelectorAll('td');
+    csvData.push(Array.from(cells).map(td => td.textContent.trim()));
+  });
+  const ws = XLSX.utils.aoa_to_sheet(csvData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '매출데이터');
+  XLSX.writeFile(wb, '삼성라이온즈_매출데이터.xlsx');
+}
+
 const OFF = '#002D72', ON = '#C8102E', TOT = '#6c757d';
 const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
 
 // ── 특이사항 노트 플러그인 ──
-const chartNotes = ["\uc655\uc870\ub808\ud50c\ub9ac\uce74 \uac1c\uc2dc", "", "", "", "", "", "", "", "", "", "", "", "\uac1c\ub9c9", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "\ub9ac\ubbf8\ud2f0\ub4dc\uc2a4\ud504\ub9c1 \uc720\ub2c8\ud3fc \uac1c\uc2dc", "", "", "", "", "", "", "", "", "", "", "", "", "\uc655\uc870 \uc720\ub2c8\ud3fc \uac1c\uc2dc", "", "", "", ""];
+const chartNotes = ["\uc655\uc870\ub808\ud50c\ub9ac\uce74 \uac1c\uc2dc", "", "", "", "", "", "", "", "", "", "", "", "\uac1c\ub9c9", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "\ub9ac\ubbf8\ud2f0\ub4dc\uc2a4\ud504\ub9c1 \uc720\ub2c8\ud3fc \uac1c\uc2dc", "", "", "", "", "", "", "", "", "", "", "", "", "\uc655\uc870 \uc720\ub2c8\ud3fc \uac1c\uc2dc", "", "", "", "", ""];
 const notePlugin = {
   id: 'notePlugin',
   afterDatasetsDraw(chart) {
@@ -928,15 +1052,15 @@ new Chart(document.getElementById('trendChart'), {
   type: 'line',
   plugins: [notePlugin],
   data: {
-    labels: ["03.16", "03.17", "03.18", "03.19", "03.20", "03.21", "03.22", "03.23", "03.24", "03.25", "03.26", "03.27", "03.28", "03.29", "03.30", "03.31", "04.01", "04.02", "04.03", "04.04", "04.05", "04.06", "04.07", "04.08", "04.09", "04.10", "04.11", "04.12", "04.13", "04.14", "04.15", "04.16", "04.17", "04.18", "04.19", "04.20", "04.21", "04.22", "04.23", "04.24", "04.25", "04.26", "04.27", "04.28", "04.29", "04.30", "05.01", "05.02", "05.03", "05.04", "05.05"],
+    labels: ["03.16", "03.17", "03.18", "03.19", "03.20", "03.21", "03.22", "03.23", "03.24", "03.25", "03.26", "03.27", "03.28", "03.29", "03.30", "03.31", "04.01", "04.02", "04.03", "04.04", "04.05", "04.06", "04.07", "04.08", "04.09", "04.10", "04.11", "04.12", "04.13", "04.14", "04.15", "04.16", "04.17", "04.18", "04.19", "04.20", "04.21", "04.22", "04.23", "04.24", "04.25", "04.26", "04.27", "04.28", "04.29", "04.30", "05.01", "05.02", "05.03", "05.04", "05.05", "05.06"],
     datasets: [
       {
-        label: 'OFF거래액', data: [16221500, 15271600, 11807600, 19557780, 23227600, 153153710, 178546510, 60500870, 53136410, 10046460, 22179010, 29078540, 165140900, 135133370, 9235000, 103645700, 103853750, 113614740, 10199530, 33255760, 35029540, 6819200, 10028700, 11794060, 9506700, 129076720, 152448710, 143093420, 4433130, 8890990, 10469430, 8395500, 51224570, 187092020, 191962410, 11601830, 118841770, 106876830, 101367110, 6253200, 23578930, 18255300, 3332100, 6069300, 6469000, 7103830, 128713450, 126488140, 95417770, 20681000, 129259200],
+        label: 'OFF거래액', data: [16221500, 15271600, 11807600, 19557780, 23227600, 153153710, 178546510, 60500870, 53136410, 10046460, 22179010, 29078540, 165140900, 135133370, 9235000, 103645700, 103853750, 113614740, 10199530, 33255760, 35029540, 6819200, 10028700, 11794060, 9506700, 129076720, 152448710, 143093420, 4433130, 8890990, 10469430, 8395500, 51224570, 187092020, 191962410, 11601830, 118841770, 106876830, 101367110, 6253200, 23578930, 18255300, 3332100, 6069300, 6469000, 7103830, 128713450, 126488140, 95417770, 20681000, 129259200, 61059910],
         borderColor: OFF, backgroundColor: alpha(OFF, .15),
         borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
       },
       {
-        label: 'ON거래액', data: [54443000, 20325000, 11560000, 8300000, 8255000, 15005000, 18370000, 15439000, 16481000, 12055000, 9834000, 10081000, 15686000, 16098000, 11975000, 11498000, 29970000, 22887000, 14195000, 14075000, 15885000, 16690000, 25361000, 15450500, 12805000, 13532500, 15521000, 22469000, 18342500, 16649000, 18710000, 17655500, 16833500, 165063500, 46790500, 23441000, 28727000, 16447000, 13433000, 6516000, 3800000, 4099500, 5951500, 4314500, 4219500, 4634000, 283739000, 81810500, 63302500, 52965500, 45165500],
+        label: 'ON거래액', data: [54443000, 20325000, 11560000, 8300000, 8255000, 15005000, 18370000, 15439000, 16481000, 12055000, 9834000, 10081000, 15686000, 16098000, 11975000, 11498000, 29970000, 22887000, 14195000, 14075000, 15885000, 16690000, 25361000, 15450500, 12805000, 13532500, 15521000, 22469000, 18342500, 16649000, 18710000, 17655500, 16833500, 165063500, 46790500, 23441000, 28727000, 16447000, 13433000, 6516000, 3800000, 4099500, 5951500, 4314500, 4219500, 4634000, 283739000, 81810500, 63302500, 52965500, 45165500, 38579000],
         borderColor: ON, backgroundColor: alpha(ON, .1),
         borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
       },
@@ -995,8 +1119,8 @@ new Chart(document.getElementById('haChart'), {
   data: {
     labels: ["\ud648 3\uc6d4", "\ud648 4\uc6d4", "\ud648 5\uc6d4", "\uc5b4\uc6e8\uc774 3\uc6d4", "\uc5b4\uc6e8\uc774 4\uc6d4", "\uc5b4\uc6e8\uc774 5\uc6d4"],
     datasets: [
-      { label: 'OFF거래액', data: [134639990, 134822748, 119969640, 0, 13985219, 0], backgroundColor: alpha(OFF, .8) },
-      { label: 'ON거래액',  data: [14427333, 37484050, 118504375, 0, 11826035, 0],  backgroundColor: alpha(ON,  .8) },
+      { label: 'OFF거래액', data: [134639990, 134822748, 108187694, 0, 13985219, 0], backgroundColor: alpha(OFF, .8) },
+      { label: 'ON거래액',  data: [14427333, 37484050, 102519300, 0, 11826035, 0],  backgroundColor: alpha(ON,  .8) },
     ]
   },
   options: sideOpts(),
@@ -1009,8 +1133,8 @@ new Chart(document.getElementById('resultChart'), {
   data: {
     labels: ["\uc2b9 3\uc6d4", "\uc2b9 4\uc6d4", "\uc2b9 5\uc6d4", "\ud328 3\uc6d4", "\ud328 4\uc6d4", "\ud328 5\uc6d4"],
     datasets: [
-      { label: 'OFF거래액', data: [0, 70499120, 117796806, 150137135, 57048361, 126488140], backgroundColor: alpha(OFF, .8) },
-      { label: 'ON거래액',  data: [0, 29261769, 130735666, 15892000, 14545636, 81810500],  backgroundColor: alpha(ON,  .8) },
+      { label: 'OFF거래액', data: [0, 70499120, 103612582, 150137135, 57048361, 126488140], backgroundColor: alpha(OFF, .8) },
+      { label: 'ON거래액',  data: [0, 29261769, 107696500, 15892000, 14545636, 81810500],  backgroundColor: alpha(ON,  .8) },
     ]
   },
   options: sideOpts(),
