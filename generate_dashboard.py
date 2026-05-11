@@ -271,8 +271,10 @@ def build_html(data: list, news: list, digest: str) -> str:
         [n for n in news if n["source"] == "뉴스"],
         key=lambda x: x.get("date", ""), reverse=True
     )[:10]
+    from datetime import date as _date, timedelta as _td
+    _cutoff = (_date.today() - _td(days=3)).strftime("%Y.%m.%d")
     cafe_items = sorted(
-        [n for n in news if "카페" in n["source"]],
+        [n for n in news if "카페" in n["source"] and n.get("date", "") >= _cutoff],
         key=lambda x: x.get("views", 0), reverse=True
     )[:10]
 
