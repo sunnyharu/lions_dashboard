@@ -240,12 +240,12 @@ def collect_cafe_posts() -> list:
             if link in seen:
                 continue
             pub_date = parse_pub_date(item.get("pubDate", ""))
-            # sort=date 사용하므로 날짜 필터는 관대하게: 30일 이내
+            # 최근 3일 이내 글만 수집
             if pub_date:
                 from datetime import date as _date
                 try:
                     item_date = datetime.strptime(pub_date, "%Y%m%d").date()
-                    if (_date.today() - item_date).days > 30:
+                    if (_date.today() - item_date).days > 3:
                         continue
                 except Exception:
                     pass
