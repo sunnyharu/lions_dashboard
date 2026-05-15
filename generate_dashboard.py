@@ -814,7 +814,7 @@ new Chart(document.getElementById('resultChart'), {{
 }});
 
 // ── 특이사항 입력 모달 ──
-const WORKER_URL = 'https://lions-note.YOUR_SUBDOMAIN.workers.dev';
+const WORKER_URL = 'https://lions-note.freelywind222.workers.dev';
 
 function openNoteModal() {{
   const today = new Date();
