@@ -121,6 +121,45 @@
   .badge.draw   { background: #e3f2fd; color: #1565c0; }
   .badge.cancel { background: #f5f5f5; color: #757575; }
 
+  /* 특이사항 플로팅 버튼 & 모달 */
+  .fab {
+    position: fixed; bottom: 32px; right: 32px; z-index: 999;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #C8102E; color: white; border: none;
+    font-size: 22px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .fab:hover { background: #a00d26; }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,.45); align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: 16px; padding: 28px 32px;
+    width: 420px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,.2);
+  }
+  .modal h3 { font-size: 16px; font-weight: 700; color: #002D72; margin-bottom: 20px; }
+  .modal label { font-size: 12px; color: #666; font-weight: 600; display: block; margin-bottom: 6px; }
+  .modal input, .modal textarea {
+    width: 100%; border: 1.5px solid #ddd; border-radius: 8px;
+    padding: 10px 12px; font-size: 13px; margin-bottom: 16px;
+    font-family: inherit; outline: none;
+  }
+  .modal input:focus, .modal textarea:focus { border-color: #002D72; }
+  .modal textarea { height: 80px; resize: vertical; }
+  .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+  .modal-btns button {
+    padding: 9px 20px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; border: none;
+  }
+  .btn-cancel { background: #f0f0f0; color: #555; }
+  .btn-submit { background: #002D72; color: white; }
+  .btn-submit:hover { background: #001a4a; }
+  .btn-submit:disabled { background: #aaa; cursor: not-allowed; }
+  .modal-status { font-size: 12px; margin-top: 10px; text-align: center; min-height: 18px; }
+
   @media (max-width: 900px) {
     .charts { grid-template-columns: 1fr; }
     .kpi-row, .charts, .table-section, .issue-section { padding-left: 16px; padding-right: 16px; }
@@ -132,7 +171,7 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.05.15 04:48</span>
+  <span class="updated">최종 업데이트: 2026.05.15 16:49</span>
 </div>
 
 <div class="kpi-row">
@@ -1269,6 +1308,80 @@ new Chart(document.getElementById('resultChart'), {
   options: sideOpts(),
 });
 
+// ── 특이사항 입력 모달 ──
+const WORKER_URL = 'https://lions-note.YOUR_SUBDOMAIN.workers.dev';
+
+function openNoteModal() {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth()+1).padStart(2,'0');
+  const d = String(today.getDate()).padStart(2,'0');
+  document.getElementById('noteDate').value = `${y}.${m}.${d}`;
+  document.getElementById('noteText').value = '';
+  document.getElementById('noteStatus').textContent = '';
+  document.getElementById('noteSubmitBtn').disabled = false;
+  document.getElementById('noteModal').classList.add('open');
+}
+
+function closeNoteModal() {
+  document.getElementById('noteModal').classList.remove('open');
+}
+
+document.getElementById('noteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeNoteModal();
+});
+
+async function submitNote() {
+  const date = document.getElementById('noteDate').value.trim();
+  const note = document.getElementById('noteText').value.trim();
+  const status = document.getElementById('noteStatus');
+  const btn = document.getElementById('noteSubmitBtn');
+
+  if (!date || !note) { status.textContent = '날짜와 내용을 모두 입력해주세요.'; return; }
+
+  btn.disabled = true;
+  status.style.color = '#666';
+  status.textContent = '업데이트 중... (약 1~2분 소요)';
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, note }),
+    });
+    if (res.ok) {
+      status.style.color = '#2e7d32';
+      status.textContent = '✓ 업데이트 요청 완료! 대시보드가 곧 반영됩니다.';
+      setTimeout(closeNoteModal, 2500);
+    } else {
+      throw new Error(await res.text());
+    }
+  } catch(e) {
+    status.style.color = '#c62828';
+    status.textContent = '오류: ' + e.message;
+    btn.disabled = false;
+  }
+}
 </script>
+
+<!-- 특이사항 플로팅 버튼 -->
+<button class="fab" onclick="openNoteModal()" title="특이사항 입력">✏️</button>
+
+<!-- 특이사항 모달 -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal">
+    <h3>✏️ 특이사항 입력</h3>
+    <label>날짜</label>
+    <input type="text" id="noteDate" placeholder="2026.05.15">
+    <label>특이사항</label>
+    <textarea id="noteText" placeholder="예) 홈 개막전, 유니폼 판매 행사"></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeNoteModal()">취소</button>
+      <button class="btn-submit" id="noteSubmitBtn" onclick="submitNote()">저장</button>
+    </div>
+    <div class="modal-status" id="noteStatus"></div>
+  </div>
+</div>
+
 </body>
 </html>

@@ -1,0 +1,55 @@
+name: 특이사항 업데이트
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: '날짜 (YYYY.MM.DD)'
+        required: true
+        type: string
+      note:
+        description: '특이사항 내용'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: 특이사항 업데이트
+        env:
+          INPUT_DATE:         ${{ github.event.inputs.date }}
+          INPUT_NOTE:         ${{ github.event.inputs.note }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python update_note.py
+
+      - name: 대시보드 재생성
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python generate_dashboard.py
+
+      - name: 대시보드 커밋 & 푸시
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/sunnyharu/lions_dashboard.git
+          git add dashboard/index.html
+          git diff --cached --quiet || git commit -m "chore: 특이사항 업데이트 ${{ github.event.inputs.date }}"
+          git push
