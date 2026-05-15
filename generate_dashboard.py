@@ -523,11 +523,11 @@ def build_html(data: list, news: list, digest: str) -> str:
 <div class="charts">
   <div class="chart-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin-bottom:0">날짜별 거래액 추이</h3>
       <button onclick="openNoteModal()" title="특이사항 입력"
         style="background:none;border:1.5px solid #ddd;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:14px;color:#555;">
         ✏️ 특이사항
       </button>
+      <h3 style="margin-bottom:0">날짜별 거래액 추이</h3>
     </div>
     <canvas id="trendChart" height="120"></canvas>
   </div>
