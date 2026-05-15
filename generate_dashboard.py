@@ -525,11 +525,13 @@ def build_html(data: list, news: list, digest: str) -> str:
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
       <h3 style="margin-bottom:0">날짜별 거래액 추이</h3>
       <button onclick="openNoteModal()" title="특이사항 입력"
-        style="background:none;border:1.5px solid #ddd;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;color:#555;">
+        style="background:none;border:1.5px solid #ddd;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;color:#555;white-space:nowrap;">
         ✏️ 특이사항
       </button>
     </div>
-    <canvas id="trendChart" height="120"></canvas>
+    <div style="position:relative;width:100%;height:calc(100% - 48px)">
+      <canvas id="trendChart"></canvas>
+    </div>
   </div>
   <div class="chart-card side">
     <h3>홈 / 어웨이 평균 거래액</h3>
@@ -741,6 +743,7 @@ new Chart(document.getElementById('trendChart'), {{
   }},
   options: {{
     responsive: true,
+    maintainAspectRatio: false,
     layout: {{ padding: {{ top: 30 }} }},
     plugins: {{ legend: {{ position: 'top' }} }},
     scales: {{
