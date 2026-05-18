@@ -704,17 +704,28 @@ const notePlugin = {{
   id: 'notePlugin',
   afterDatasetsDraw(chart) {{
     const ctx = chart.ctx;
-    const meta = chart.getDatasetMeta(0);
-    meta.data.forEach((pt, i) => {{
+    const numDatasets = chart.data.datasets.length;
+    const firstMeta = chart.getDatasetMeta(0);
+
+    firstMeta.data.forEach((pt, i) => {{
       const note = chartNotes[i];
       if (!note) return;
+
+      // 모든 데이터셋 중 가장 높은 점(y값 최소) 찾기
+      let minY = pt.y;
+      for (let d = 1; d < numDatasets; d++) {{
+        const m = chart.getDatasetMeta(d);
+        if (m.data[i] && !m.hidden) {{
+          minY = Math.min(minY, m.data[i].y);
+        }}
+      }}
+
       ctx.save();
       ctx.font = 'bold 10px sans-serif';
       ctx.fillStyle = '#C8102E';
       ctx.textAlign = 'center';
-      // 최대 16자 잘라서 표시
       const text = note.length > 16 ? note.substring(0, 15) + '…' : note;
-      ctx.translate(pt.x, pt.y - 14);
+      ctx.translate(pt.x, minY - 16);
       ctx.rotate(-Math.PI / 8);
       ctx.fillText(text, 0, 0);
       ctx.restore();
