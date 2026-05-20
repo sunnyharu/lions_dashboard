@@ -31,4 +31,3 @@ jobs:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: python crawl_online_sales.py
 
-      - name: 온라인 매출 수집 완료 (대시보드는 뉴스/KBO 수집 후 최종 반영)
