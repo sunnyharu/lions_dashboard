@@ -61,17 +61,7 @@ jobs:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: python crawl_daily_sales.py
 
-      - name: KBO 경기 결과 수집
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python crawl_kbo_game.py
-
-      - name: 대시보드 생성
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python generate_dashboard.py
-
-      - name: 대시보드 및 실행일 커밋
+      - name: 실행일 커밋
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -81,8 +71,8 @@ jobs:
           # 오늘 날짜(KST)를 last_run.txt에 기록
           TZ='Asia/Seoul' date +'%Y-%m-%d' > last_run.txt
           echo "last_run.txt: $(cat last_run.txt)"
-          git add dashboard/index.html last_run.txt
-          git diff --cached --quiet || git commit -m "chore: 대시보드 업데이트 $(date +'%Y-%m-%d')"
+          git add last_run.txt
+          git diff --cached --quiet || git commit -m "chore: 매장매출 수집 완료 $(date +'%Y-%m-%d')"
           git push
 
       - name: 디버그 스크린샷 업로드
