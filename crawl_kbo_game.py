@@ -33,6 +33,17 @@ KBO_API = "https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList"
 SHEET_HEADER = ["날짜", "홈/어웨이", "상대팀", "결과", "관중수"]
 
 
+KBO_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "Accept-Language": "ko-KR,ko;q=0.9",
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "X-Requested-With": "XMLHttpRequest",
+    "Referer": "https://www.koreabaseball.com/Schedule/Schedule.aspx",
+    "Origin": "https://www.koreabaseball.com",
+}
+
+
 def fetch_kbo_game() -> dict | None:
     """어제 삼성 라이온즈 경기 정보를 KBO API에서 조회"""
     payload = {
@@ -44,9 +55,18 @@ def fetch_kbo_game() -> dict | None:
         "gameMonth": GAME_MONTH,
         "teamId":    "SS",
     }
-    resp = requests.post(KBO_API, data=payload, timeout=15)
+    resp = requests.post(KBO_API, headers=KBO_HEADERS, data=payload, timeout=15)
     resp.raise_for_status()
-    data = resp.json()
+
+    if not resp.text.strip():
+        print(f"  KBO API 빈 응답 (경기 없음 또는 차단)")
+        return None
+
+    try:
+        data = resp.json()
+    except Exception as e:
+        print(f"  KBO API JSON 파싱 오류: {e}\n  응답 내용: {resp.text[:200]}")
+        return None
 
     rows = data.get("rows", [])
     for entry in rows:
