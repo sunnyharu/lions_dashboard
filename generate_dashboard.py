@@ -329,8 +329,23 @@ def build_html(data: list, news: list, digest: str) -> str:
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
+  @font-face {{
+    font-family: 'KBO-Dia-Gothic';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/KBO-Dia-Gothic_light.woff') format('woff');
+    font-weight: 300; font-style: normal; font-display: swap;
+  }}
+  @font-face {{
+    font-family: 'KBO-Dia-Gothic';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/KBO-Dia-Gothic_medium.woff') format('woff');
+    font-weight: 500; font-style: normal; font-display: swap;
+  }}
+  @font-face {{
+    font-family: 'KBO-Dia-Gothic';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/KBO-Dia-Gothic_bold.woff') format('woff');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }}
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; color: #1a1a2e; }}
+  body {{ font-family: 'KBO-Dia-Gothic', 'Malgun Gothic', sans-serif; font-weight: 500; background: #f0f2f5; color: #1a1a2e; }}
 
   /* 헤더 */
   .header {{
