@@ -1,9 +1,7 @@
 name: 매장 일별판매집계표 수집
 
 on:
-  schedule:
-    - cron: '30 0 * * *'   # 매일 오전 09시 30분 KST (UTC+9 → UTC 00:30)
-  workflow_dispatch:        # 수동 실행 버튼
+  workflow_dispatch:        # cron-job.org 또는 수동 실행
 
 permissions:
   contents: write
