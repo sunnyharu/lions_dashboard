@@ -1,0 +1,40 @@
+name: 상품별매출 수집 테스트
+
+on:
+  workflow_dispatch:   # 수동 실행만
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: Playwright 브라우저 설치
+        run: python -m playwright install chromium --with-deps
+
+      - name: PlayMD 상품별 매출 수집 (테스트)
+        env:
+          PLAYMD_COMPANY_USER: ${{ secrets.PLAYMD_COMPANY_USER }}
+          PLAYMD_COMPANY_PASS: ${{ secrets.PLAYMD_COMPANY_PASS }}
+          PLAYMD_USER:         ${{ secrets.PLAYMD_USER }}
+          PLAYMD_PASS:         ${{ secrets.PLAYMD_PASS }}
+          GOOGLE_CREDENTIALS:  ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python crawl_product_sales.py
+
+      - name: 디버그 스크린샷 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots
+          path: debug_*.png
+          if-no-files-found: ignore
