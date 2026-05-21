@@ -71,6 +71,13 @@ def upload_to_sheets(rows: list):
         print(f"시트 '{SHEET_NAME}' 생성")
 
     existing = ws.get_all_values()
+
+    # 헤더 없거나 잘못됐으면 복구
+    if not existing or existing[0] != SHEET_HEADER:
+        ws.insert_row(SHEET_HEADER, 1)
+        print("헤더 복구 완료")
+        existing = ws.get_all_values()
+
     existing_dates = {r[0].strip() for r in existing[1:] if r}
     if DATE_SHEET in existing_dates:
         print(f"이미 존재하는 날짜 스킵: {DATE_SHEET}")
