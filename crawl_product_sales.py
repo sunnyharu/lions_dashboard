@@ -179,31 +179,34 @@ async def crawl() -> bytes | None:
         await page.screenshot(path="debug_02_menu.png")
         print(f"메뉴 이동 완료: {page.url}")
 
-        # ── 날짜 설정 (어제) ─────────────────────────
+        # ── 날짜 설정 (어제) - JavaScript로 직접 주입 ──
         print(f"날짜 설정: {DATE_PARAM}")
 
-        # 판매기간 시작일 / 종료일 모두 어제로 설정
-        date_inputs = await page.locator("input[type='text']").all()
-
-        set_count = 0
-        for inp in date_inputs[:10]:
-            try:
-                val = await inp.input_value()
-                if "-" in val and len(val) == 10:  # YYYY-MM-DD 형식
-                    await inp.triple_click()
-                    await inp.fill(DATE_PARAM)
-                    await page.keyboard.press("Tab")
-                    await page.wait_for_timeout(300)
-                    set_count += 1
-            except Exception:
-                continue
-        print(f"날짜 입력 필드 {set_count}개 설정")
+        # 날짜 형식 YYYY-MM-DD인 input 찾아서 JS로 값 주입
+        result = await page.evaluate(f"""
+            () => {{
+                const inputs = document.querySelectorAll('input[type="text"]');
+                let count = 0;
+                for (const inp of inputs) {{
+                    const val = inp.value || '';
+                    if (/^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(val)) {{
+                        inp.value = '{DATE_PARAM}';
+                        inp.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        inp.dispatchEvent(new Event('input',  {{ bubbles: true }}));
+                        count++;
+                    }}
+                }}
+                return count;
+            }}
+        """)
+        print(f"날짜 입력 필드 {result}개 설정")
+        await page.wait_for_timeout(500)
         await page.screenshot(path="debug_03_date.png")
 
         # ── 조회 클릭 ────────────────────────────────
         print("조회 클릭...")
-        await page.locator("button:has-text('조회'), a:has-text('조회')").first.click()
-        await page.wait_for_timeout(8000)  # 데이터 로딩 대기
+        await page.locator("a:has-text('조회'), button:has-text('조회')").first.click()
+        await page.wait_for_timeout(10000)  # 데이터 로딩 대기 (행 많아서 넉넉히)
         await page.screenshot(path="debug_04_result.png")
         print("조회 완료")
 
