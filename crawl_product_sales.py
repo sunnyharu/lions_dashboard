@@ -179,27 +179,29 @@ async def crawl() -> bytes | None:
         await page.screenshot(path="debug_02_menu.png")
         print(f"메뉴 이동 완료: {page.url}")
 
-        # ── 날짜 설정 (어제) - JavaScript로 직접 주입 ──
+        # ── 날짜 설정 (어제) - 키보드 입력 시뮬레이션 ──
         print(f"날짜 설정: {DATE_PARAM}")
+        import re as _re
 
-        # 날짜 형식 YYYY-MM-DD인 input 찾아서 JS로 값 주입
-        result = await page.evaluate(f"""
-            () => {{
-                const inputs = document.querySelectorAll('input[type="text"]');
-                let count = 0;
-                for (const inp of inputs) {{
-                    const val = inp.value || '';
-                    if (/^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(val)) {{
-                        inp.value = '{DATE_PARAM}';
-                        inp.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                        inp.dispatchEvent(new Event('input',  {{ bubbles: true }}));
-                        count++;
-                    }}
-                }}
-                return count;
-            }}
-        """)
-        print(f"날짜 입력 필드 {result}개 설정")
+        date_inputs = await page.locator('input[type="text"]').all()
+        set_count = 0
+        for inp in date_inputs[:10]:
+            try:
+                val = await inp.input_value()
+                print(f"  input 발견: '{val}'")
+                if _re.match(r'\d{4}-\d{2}-\d{2}', val.strip()):
+                    await inp.click()
+                    await page.keyboard.press("Control+a")
+                    await page.keyboard.type(DATE_PARAM)
+                    await page.keyboard.press("Tab")
+                    await page.wait_for_timeout(400)
+                    new_val = await inp.input_value()
+                    print(f"  → 변경 후: '{new_val}'")
+                    set_count += 1
+            except Exception as e:
+                print(f"  input 처리 오류: {e}")
+                continue
+        print(f"날짜 입력 필드 {set_count}개 설정")
         await page.wait_for_timeout(500)
         await page.screenshot(path="debug_03_date.png")
 
