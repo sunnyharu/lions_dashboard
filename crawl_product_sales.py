@@ -65,8 +65,8 @@ def upload_to_sheets(rows: list):
     try:
         ws = sh.worksheet(SHEET_NAME)
     except gspread.WorksheetNotFound:
-        ws = sh.add_worksheet(title=SHEET_NAME, rows=5000, cols=10)
-        ws.append_row(["날짜", "상품코드", "상품명", "칼라명", "사이즈명", "판매수량", "판매금액"])
+        ws = sh.add_worksheet(title=SHEET_NAME, rows=50000, cols=len(SHEET_HEADER))
+        ws.append_row(SHEET_HEADER)
         print(f"시트 '{SHEET_NAME}' 생성")
 
     existing = ws.get_all_values()
@@ -84,71 +84,61 @@ def upload_to_sheets(rows: list):
 
 # ── 엑셀 파싱 & 집계 ─────────────────────────────────
 
+SHEET_HEADER = ["판매일자", "상품코드", "상품명", "칼라명", "사이즈명", "자사바코드", "판매단가", "판매수량", "실판매금액"]
+
+# 집계 기준 컬럼 (이 조합이 같으면 수량/금액 합산)
+GROUP_COLS  = ["상품코드", "상품명", "칼라명", "사이즈명", "자사바코드", "판매단가"]
+SUM_COLS    = ["판매수량", "실판매금액"]
+
+
 def parse_and_aggregate(excel_bytes: bytes) -> list:
     """엑셀 파일 읽어서 상품별로 집계"""
     df = pd.read_excel(io.BytesIO(excel_bytes), engine="openpyxl")
+    df.columns = df.columns.str.strip()
     print(f"엑셀 로드: {len(df)}행, 컬럼: {list(df.columns)}")
 
-    # 컬럼명 공백 제거
-    df.columns = df.columns.str.strip()
+    # 필요한 컬럼만 추출 (없는 컬럼은 빈값으로)
+    for col in GROUP_COLS + SUM_COLS:
+        if col not in df.columns:
+            print(f"  컬럼 없음 (빈값 처리): {col}")
+            df[col] = "" if col in GROUP_COLS else 0
 
-    # 상품코드·상품명 컬럼 찾기 (유사 이름 대응)
-    col_map = {}
-    for col in df.columns:
-        c = col.strip()
-        if "상품코드" in c:   col_map["상품코드"] = col
-        elif "상품명" in c:   col_map["상품명"]   = col
-        elif "칼라명" in c:   col_map["칼라명"]   = col
-        elif "사이즈명" in c: col_map["사이즈명"] = col
-        elif c in ("수량", "판매수량", "QTY"):   col_map["수량"]   = col
-        elif c in ("금액", "판매금액", "매출금액", "거래금액"): col_map["금액"] = col
+    # 숫자 컬럼 변환
+    for col in SUM_COLS:
+        df[col] = (
+            df[col].astype(str)
+            .str.replace(",", "").str.strip()
+        )
+        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
-    print(f"컬럼 매핑: {col_map}")
+    # 판매단가도 숫자 변환
+    df["판매단가"] = (
+        df["판매단가"].astype(str)
+        .str.replace(",", "").str.strip()
+    )
+    df["판매단가"] = pd.to_numeric(df["판매단가"], errors="coerce").fillna(0)
 
-    required = ["상품코드", "상품명"]
-    for r in required:
-        if r not in col_map:
-            print(f"필수 컬럼 '{r}' 없음 → 집계 불가")
-            return []
-
-    # 집계 기준 컬럼
-    group_cols = [col_map[k] for k in ["상품코드", "상품명", "칼라명", "사이즈명"] if k in col_map]
-
-    # 숫자 변환
-    for key in ["수량", "금액"]:
-        if key in col_map:
-            df[col_map[key]] = (
-                df[col_map[key]]
-                .astype(str)
-                .str.replace(",", "")
-                .str.strip()
-            )
-            df[col_map[key]] = pd.to_numeric(df[col_map[key]], errors="coerce").fillna(0)
-
-    agg_dict = {}
-    if "수량" in col_map: agg_dict[col_map["수량"]] = "sum"
-    if "금액" in col_map: agg_dict[col_map["금액"]] = "sum"
-
-    if not agg_dict:
-        print("수량/금액 컬럼 없음 → 집계 불가")
-        return []
-
-    agg = df.groupby(group_cols, as_index=False).agg(agg_dict)
-    agg = agg.sort_values(col_map.get("금액", group_cols[0]), ascending=False)
-
-    print(f"집계 결과: {len(agg)}개 상품")
+    # 집계
+    agg = (
+        df.groupby(GROUP_COLS, as_index=False)
+        .agg({col: "sum" for col in SUM_COLS})
+    )
+    agg = agg.sort_values("실판매금액", ascending=False)
+    print(f"집계 결과: {len(agg)}개 상품 SKU")
 
     rows = []
     for _, r in agg.iterrows():
-        row = [DATE_SHEET]
-        row.append(str(r.get(col_map.get("상품코드", ""), "")).strip())
-        row.append(str(r.get(col_map.get("상품명",   ""), "")).strip())
-        row.append(str(r.get(col_map.get("칼라명",   ""), "")).strip()   if "칼라명"   in col_map else "")
-        row.append(str(r.get(col_map.get("사이즈명", ""), "")).strip()   if "사이즈명" in col_map else "")
-        row.append(int(r.get(col_map.get("수량", ""),  0)) if "수량" in col_map else 0)
-        row.append(int(r.get(col_map.get("금액", ""),  0)) if "금액" in col_map else 0)
-        rows.append(row)
-
+        rows.append([
+            DATE_SHEET,
+            str(r["상품코드"]).strip(),
+            str(r["상품명"]).strip(),
+            str(r["칼라명"]).strip(),
+            str(r["사이즈명"]).strip(),
+            str(r["자사바코드"]).strip(),
+            int(r["판매단가"]),
+            int(r["판매수량"]),
+            int(r["실판매금액"]),
+        ])
     return rows
 
 
