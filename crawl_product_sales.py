@@ -230,26 +230,21 @@ async def crawl() -> bytes | None:
         await page.screenshot(path="debug_04_result.png")
         print("조회 완료")
 
-        # ── 엑셀 버튼 클릭 전 모달 처리 ────────────────
-        async def dismiss_modal():
-            """열려있는 모달의 확인/OK 버튼 클릭"""
+        # ── 모달 처리 함수 (iframe 대상) ────────────────
+        async def dismiss_modal(frame):
+            """iframe 안의 모달 확인 버튼 클릭"""
             modal_sel = ".modal.in button, .modal.fade.in button"
             try:
-                btns = await page.locator(modal_sel).all()
+                btns = await frame.locator(modal_sel).all()
+                print(f"  모달 버튼 수: {len(btns)}")
                 for btn in btns:
                     txt = (await btn.text_content() or "").strip()
-                    print(f"  모달 버튼 발견: '{txt}'")
-                    if any(k in txt for k in ["확인", "OK", "ok", "예", "닫기", "계속"]):
-                        await btn.click()
-                        await page.wait_for_timeout(1000)
-                        print(f"  모달 '{txt}' 클릭")
-                        return True
-                # 버튼 텍스트 무관하게 첫 번째 버튼 클릭
+                    print(f"  모달 버튼: '{txt}'")
                 if btns:
-                    txt = (await btns[0].text_content() or "").strip()
                     await btns[0].click()
                     await page.wait_for_timeout(1000)
-                    print(f"  모달 첫 번째 버튼 클릭: '{txt}'")
+                    txt = (await btns[0].text_content() or "").strip()
+                    print(f"  모달 클릭: '{txt}'")
                     return True
             except Exception as e:
                 print(f"  모달 처리 오류: {e}")
@@ -260,12 +255,15 @@ async def crawl() -> bytes | None:
         excel_bytes = None
         excel_btn   = target_frame.locator("a:has-text('엑셀'), button:has-text('엑셀'), [title='엑셀']").first
 
+        # 엑셀 클릭 전 기존 모달 정리
+        await dismiss_modal(target_frame)
+
         try:
-            async with page.expect_download(timeout=20000) as dl_info:
+            async with page.expect_download(timeout=25000) as dl_info:
                 await excel_btn.click()
                 # 클릭 후 모달 뜨면 확인 처리
                 await page.wait_for_timeout(2000)
-                await dismiss_modal()
+                await dismiss_modal(target_frame)
 
             download    = await dl_info.value
             excel_bytes = await download.read()
