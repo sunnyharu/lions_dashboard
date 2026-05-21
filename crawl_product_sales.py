@@ -232,12 +232,37 @@ async def crawl() -> bytes | None:
 
         # ── 엑셀 다운로드 ────────────────────────────
         print("엑셀 다운로드 중...")
-        async with page.expect_download(timeout=30000) as dl_info:
-            await target_frame.locator("a:has-text('엑셀'), button:has-text('엑셀'), [title='엑셀']").first.click()
+        excel_bytes = None
 
-        download    = await dl_info.value
-        excel_bytes = await download.read()
-        print(f"엑셀 다운로드 완료: {len(excel_bytes):,} bytes")
+        # 방법 1: 직접 다운로드
+        try:
+            async with page.expect_download(timeout=15000) as dl_info:
+                await target_frame.locator("a:has-text('엑셀'), button:has-text('엑셀'), [title='엑셀']").first.click()
+            download    = await dl_info.value
+            excel_bytes = await download.read()
+            print(f"엑셀 다운로드 완료 (직접): {len(excel_bytes):,} bytes")
+        except Exception as e1:
+            print(f"직접 다운로드 실패: {e1}")
+            # 방법 2: 새 탭에서 다운로드
+            try:
+                async with context.expect_page(timeout=15000) as new_page_info:
+                    await target_frame.locator("a:has-text('엑셀'), button:has-text('엑셀'), [title='엑셀']").first.click()
+                new_page = await new_page_info.value
+                await new_page.wait_for_load_state("domcontentloaded", timeout=15000)
+                print(f"새 탭 URL: {new_page.url}")
+                async with new_page.expect_download(timeout=15000) as dl_info2:
+                    pass  # 이미 다운로드 시작됐을 수 있음
+                download    = await dl_info2.value
+                excel_bytes = await download.read()
+                print(f"엑셀 다운로드 완료 (새탭): {len(excel_bytes):,} bytes")
+                await new_page.close()
+            except Exception as e2:
+                print(f"새 탭 다운로드도 실패: {e2}")
+
+        if not excel_bytes:
+            print("엑셀 다운로드 실패")
+            await browser.close()
+            return None
 
         await browser.close()
         return excel_bytes
