@@ -195,19 +195,21 @@ def aggregate(data: list) -> list:
     # 첫 번째 행으로 컬럼 파악
     sample = data[0] if isinstance(data[0], dict) else {}
     print(f"컬럼 목록: {list(sample.keys())}")
+    print(f"첫 번째 행 전체 데이터:")
+    for k, v in sample.items():
+        print(f"  {k}: {v}")
 
     # 컬럼명 매핑 (PlayMD 내부 키 → 우리 컬럼명)
-    # 실제 키는 로그 확인 후 조정 필요
     KEY_MAP = {
-        "판매일자":  ["ASALDT", "SALDT",  "SALEDT"],
+        "판매일자":  ["ASALDT", "SALDT",  "SALEDT", "SALDATE"],
         "상품코드":  ["GODCD",  "ITEMCD", "PRODCD"],
         "상품명":    ["GODNM",  "ITEMNM", "PRODNM"],
         "칼라명":    ["CRNM",   "COLORNM","CLRNM"],
         "사이즈명":  ["SZNM",   "SIZENM", "SIZNM"],
         "자사바코드":["BARNO1", "BARCD",  "BARCODE", "MAINBARCD"],
-        "판매단가":  ["SALPR",  "SCHPR",  "PRICE"],
-        "판매수량":  ["SALQT",  "QTY",    "SALQTY"],
-        "실판매금액":["RSALAMT","SALAMT", "NETAMT"],
+        "판매단가":  ["SALPR",  "SCHPR",  "PRICE",  "GODPR",  "SALUPRC", "SAPRC", "SLPRC"],
+        "판매수량":  ["SALQT",  "QTY",    "SALQTY", "SALQTA"],
+        "실판매금액":["RSALAMT","SALAMT", "NETAMT", "RSLAMT", "ACSLAMT", "NETSLAMT", "SLAMTI", "ACSALAMT"],
     }
 
     def find_key(row, candidates):
