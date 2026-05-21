@@ -171,12 +171,11 @@ async def crawl() -> bytes | None:
         await search_input.fill("매장판매일보")
         await page.wait_for_timeout(1000)
 
-        # 검색 결과에서 클릭
+        # 검색 결과에서 클릭 (SPA라 networkidle 대신 timeout 사용)
         menu_item = page.locator("text=매장판매일보").first
         await menu_item.wait_for(timeout=5000)
         await menu_item.click()
-        await page.wait_for_timeout(2000)
-        await page.wait_for_load_state("networkidle")
+        await page.wait_for_timeout(4000)  # 탭 로딩 대기
         await page.screenshot(path="debug_02_menu.png")
         print(f"메뉴 이동 완료: {page.url}")
 
@@ -184,24 +183,27 @@ async def crawl() -> bytes | None:
         print(f"날짜 설정: {DATE_PARAM}")
 
         # 판매기간 시작일 / 종료일 모두 어제로 설정
-        date_inputs = page.locator("input[type='text']").all()
         date_inputs = await page.locator("input[type='text']").all()
 
-        # 날짜 입력 필드 찾기 (값이 날짜 형식인 것)
-        for inp in date_inputs[:5]:
-            val = await inp.input_value()
-            if "-" in val and len(val) == 10:  # YYYY-MM-DD 형식
-                await inp.triple_click()
-                await inp.fill(DATE_PARAM)
-                await page.wait_for_timeout(300)
-
+        set_count = 0
+        for inp in date_inputs[:10]:
+            try:
+                val = await inp.input_value()
+                if "-" in val and len(val) == 10:  # YYYY-MM-DD 형식
+                    await inp.triple_click()
+                    await inp.fill(DATE_PARAM)
+                    await page.keyboard.press("Tab")
+                    await page.wait_for_timeout(300)
+                    set_count += 1
+            except Exception:
+                continue
+        print(f"날짜 입력 필드 {set_count}개 설정")
         await page.screenshot(path="debug_03_date.png")
 
         # ── 조회 클릭 ────────────────────────────────
         print("조회 클릭...")
         await page.locator("button:has-text('조회'), a:has-text('조회')").first.click()
-        await page.wait_for_timeout(5000)
-        await page.wait_for_load_state("networkidle")
+        await page.wait_for_timeout(8000)  # 데이터 로딩 대기
         await page.screenshot(path="debug_04_result.png")
         print("조회 완료")
 
