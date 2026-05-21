@@ -237,14 +237,24 @@ async def crawl() -> bytes | None:
             try:
                 btns = await frame.locator(modal_sel).all()
                 print(f"  모달 버튼 수: {len(btns)}")
+                texts = []
                 for btn in btns:
-                    txt = (await btn.text_content() or "").strip()
-                    print(f"  모달 버튼: '{txt}'")
+                    try:
+                        txt = (await btn.text_content(timeout=2000) or "").strip()
+                        texts.append(txt)
+                        print(f"  모달 버튼: '{txt}'")
+                    except Exception:
+                        texts.append("")
                 if btns:
-                    await btns[0].click()
-                    await page.wait_for_timeout(1000)
-                    txt = (await btns[0].text_content() or "").strip()
-                    print(f"  모달 클릭: '{txt}'")
+                    # '예', '확인' 우선 클릭, 없으면 첫 번째
+                    idx = 0
+                    for i, t in enumerate(texts):
+                        if any(k in t for k in ["예", "확인", "OK", "계속"]):
+                            idx = i
+                            break
+                    print(f"  모달 클릭: '{texts[idx] if texts else ''}'")
+                    await btns[idx].click()
+                    await page.wait_for_timeout(1500)
                     return True
             except Exception as e:
                 print(f"  모달 처리 오류: {e}")
@@ -265,8 +275,11 @@ async def crawl() -> bytes | None:
                 await page.wait_for_timeout(2000)
                 await dismiss_modal(target_frame)
 
-            download    = await dl_info.value
-            excel_bytes = await download.read()
+            download  = await dl_info.value
+            temp_path = "/tmp/product_sales.xlsx"
+            await download.save_as(temp_path)
+            with open(temp_path, "rb") as f:
+                excel_bytes = f.read()
             print(f"엑셀 다운로드 완료: {len(excel_bytes):,} bytes")
         except Exception as e1:
             print(f"다운로드 실패: {e1}")
