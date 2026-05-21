@@ -121,15 +121,13 @@ def fetch_crowd() -> int:
             print(f"  관중수 테이블 행: {cols}")  # 컬럼 구조 확인용
             if len(cols) < 4:
                 continue
-            # 날짜 매칭 (cols[0])
-            if cols[0] == target_date:
-                # 관중수는 마지막 숫자 컬럼
-                for col in reversed(cols):
-                    crowd_str = col.replace(",", "").replace(" ", "")
-                    if crowd_str.isdigit() and int(crowd_str) > 1000:
-                        print(f"  관중수 발견: {col}")
-                        return int(crowd_str)
-        print(f"  날짜 {target_date} 관중수 행 없음")
+            # 날짜 + 삼성 홈팀 매칭 (cols[2] = 홈팀)
+            if cols[0] == target_date and cols[2] == "삼성":
+                crowd_str = cols[5].replace(",", "") if len(cols) > 5 else ""
+                if crowd_str.isdigit():
+                    print(f"  관중수 발견: {cols[5]}")
+                    return int(crowd_str)
+        print(f"  날짜 {target_date} 삼성 홈 관중수 행 없음")
     except Exception as e:
         print(f"  관중수 조회 오류: {e}")
     return 0
@@ -213,15 +211,27 @@ def upload_to_sheets(game: dict):
         print("헤더에 '관중수' 컬럼 추가")
         header = SHEET_HEADER
 
-    # 중복 날짜 체크
-    date_col = header.index("날짜") if "날짜" in header else 0
-    existing_dates = {r[date_col].strip() for r in existing[1:] if r}
-    if game["날짜"] in existing_dates:
-        print(f"이미 존재하는 날짜 스킵: {game['날짜']}")
+    # 중복 날짜 체크 → 결과가 '-'이거나 관중수 0이면 업데이트
+    date_col   = header.index("날짜")   if "날짜"   in header else 0
+    result_col = header.index("결과")   if "결과"   in header else 3
+    crowd_col  = header.index("관중수") if "관중수" in header else 4
+
+    new_row = [game["날짜"], game["홈/어웨이"], game["상대팀"], game["결과"], game.get("관중수", 0)]
+
+    for i, r in enumerate(existing[1:], start=2):
+        if not r or r[date_col].strip() != game["날짜"]:
+            continue
+        existing_result = r[result_col].strip() if len(r) > result_col else "-"
+        existing_crowd  = r[crowd_col].strip()  if len(r) > crowd_col  else "0"
+        if existing_result == "-" or existing_crowd in ("0", ""):
+            # 미완성 데이터 → 덮어쓰기
+            ws.update([new_row], f"A{i}:E{i}")
+            print(f"  기존 행 업데이트: {game['날짜']} (결과:{existing_result}→{game['결과']}, 관중:{existing_crowd}→{game.get('관중수',0)})")
+        else:
+            print(f"  이미 완성된 데이터 스킵: {game['날짜']}")
         return
 
-    row = [game["날짜"], game["홈/어웨이"], game["상대팀"], game["결과"], game.get("관중수", 0)]
-    ws.append_row(row)
+    ws.append_row(new_row)
     print(f"Google Sheets 적재 완료: {row}")
 
 
