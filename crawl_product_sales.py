@@ -230,34 +230,49 @@ async def crawl() -> bytes | None:
         await page.screenshot(path="debug_04_result.png")
         print("조회 완료")
 
+        # ── 엑셀 버튼 클릭 전 모달 처리 ────────────────
+        async def dismiss_modal():
+            """열려있는 모달의 확인/OK 버튼 클릭"""
+            modal_sel = ".modal.in button, .modal.fade.in button"
+            try:
+                btns = await page.locator(modal_sel).all()
+                for btn in btns:
+                    txt = (await btn.text_content() or "").strip()
+                    print(f"  모달 버튼 발견: '{txt}'")
+                    if any(k in txt for k in ["확인", "OK", "ok", "예", "닫기", "계속"]):
+                        await btn.click()
+                        await page.wait_for_timeout(1000)
+                        print(f"  모달 '{txt}' 클릭")
+                        return True
+                # 버튼 텍스트 무관하게 첫 번째 버튼 클릭
+                if btns:
+                    txt = (await btns[0].text_content() or "").strip()
+                    await btns[0].click()
+                    await page.wait_for_timeout(1000)
+                    print(f"  모달 첫 번째 버튼 클릭: '{txt}'")
+                    return True
+            except Exception as e:
+                print(f"  모달 처리 오류: {e}")
+            return False
+
         # ── 엑셀 다운로드 ────────────────────────────
         print("엑셀 다운로드 중...")
         excel_bytes = None
+        excel_btn   = target_frame.locator("a:has-text('엑셀'), button:has-text('엑셀'), [title='엑셀']").first
 
-        # 방법 1: 직접 다운로드
         try:
-            async with page.expect_download(timeout=15000) as dl_info:
-                await target_frame.locator("a:has-text('엑셀'), button:has-text('엑셀'), [title='엑셀']").first.click()
+            async with page.expect_download(timeout=20000) as dl_info:
+                await excel_btn.click()
+                # 클릭 후 모달 뜨면 확인 처리
+                await page.wait_for_timeout(2000)
+                await dismiss_modal()
+
             download    = await dl_info.value
             excel_bytes = await download.read()
-            print(f"엑셀 다운로드 완료 (직접): {len(excel_bytes):,} bytes")
+            print(f"엑셀 다운로드 완료: {len(excel_bytes):,} bytes")
         except Exception as e1:
-            print(f"직접 다운로드 실패: {e1}")
-            # 방법 2: 새 탭에서 다운로드
-            try:
-                async with context.expect_page(timeout=15000) as new_page_info:
-                    await target_frame.locator("a:has-text('엑셀'), button:has-text('엑셀'), [title='엑셀']").first.click()
-                new_page = await new_page_info.value
-                await new_page.wait_for_load_state("domcontentloaded", timeout=15000)
-                print(f"새 탭 URL: {new_page.url}")
-                async with new_page.expect_download(timeout=15000) as dl_info2:
-                    pass  # 이미 다운로드 시작됐을 수 있음
-                download    = await dl_info2.value
-                excel_bytes = await download.read()
-                print(f"엑셀 다운로드 완료 (새탭): {len(excel_bytes):,} bytes")
-                await new_page.close()
-            except Exception as e2:
-                print(f"새 탭 다운로드도 실패: {e2}")
+            print(f"다운로드 실패: {e1}")
+            await page.screenshot(path="debug_05_excel_error.png")
 
         if not excel_bytes:
             print("엑셀 다운로드 실패")
