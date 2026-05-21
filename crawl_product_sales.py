@@ -192,15 +192,15 @@ def aggregate(data: list) -> list:
     # 컬럼명 매핑 (PlayMD 내부 키 → 우리 컬럼명)
     # 실제 키는 로그 확인 후 조정 필요
     KEY_MAP = {
-        "판매일자":  ["SALDT",  "SALEDT", "SALDATE"],
+        "판매일자":  ["ASALDT", "SALDT",  "SALEDT"],
         "상품코드":  ["GODCD",  "ITEMCD", "PRODCD"],
         "상품명":    ["GODNM",  "ITEMNM", "PRODNM"],
-        "칼라명":    ["COLORNM","CLRNM",  "CORNM"],
-        "사이즈명":  ["SIZENM", "SIZNM"],
-        "자사바코드":["BARCD",  "BARCODE","MAINBARCD","MBARCD"],
-        "판매단가":  ["PRICE",  "SALAMT", "UNITPRICE","UPRICE"],
-        "판매수량":  ["QTY",    "SALQTY", "CNT"],
-        "실판매금액":["AMT",    "NETAMT", "REALAMT","SALAMT2","NETSAL"],
+        "칼라명":    ["CRNM",   "COLORNM","CLRNM"],
+        "사이즈명":  ["SZNM",   "SIZENM", "SIZNM"],
+        "자사바코드":["BARNO1", "BARCD",  "BARCODE", "MAINBARCD"],
+        "판매단가":  ["SALPR",  "SCHPR",  "PRICE"],
+        "판매수량":  ["SALQT",  "QTY",    "SALQTY"],
+        "실판매금액":["RSALAMT","SALAMT", "NETAMT"],
     }
 
     def find_key(row, candidates):
