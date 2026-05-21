@@ -171,19 +171,37 @@ async def crawl() -> bytes | None:
         await search_input.fill("매장판매일보")
         await page.wait_for_timeout(1000)
 
-        # 검색 결과에서 클릭 (SPA라 networkidle 대신 timeout 사용)
         menu_item = page.locator("text=매장판매일보").first
         await menu_item.wait_for(timeout=5000)
         await menu_item.click()
-        await page.wait_for_timeout(4000)  # 탭 로딩 대기
+        await page.wait_for_timeout(4000)
         await page.screenshot(path="debug_02_menu.png")
         print(f"메뉴 이동 완료: {page.url}")
 
-        # ── 날짜 설정 (어제) - 키보드 입력 시뮬레이션 ──
-        print(f"날짜 설정: {DATE_PARAM}")
+        # ── iframe 확인 → 컨텍스트 선택 ────────────
         import re as _re
+        frames = page.frames
+        print(f"프레임 수: {len(frames)}")
+        for f in frames:
+            print(f"  frame: url={f.url}")
 
-        date_inputs = await page.locator('input[type="text"]').all()
+        # 매장판매일보 내용이 있는 frame 찾기 (날짜 input 기준)
+        target_frame = page  # 기본은 main page
+        for f in frames:
+            try:
+                inputs = await f.locator('input[type="text"]').all()
+                for inp in inputs:
+                    val = await inp.input_value()
+                    if _re.match(r'\d{4}-\d{2}-\d{2}', val.strip()):
+                        print(f"  날짜 input 있는 frame: {f.url}")
+                        target_frame = f
+                        break
+            except Exception:
+                continue
+
+        # ── 날짜 설정 ────────────────────────────────
+        print(f"날짜 설정: {DATE_PARAM}")
+        date_inputs = await target_frame.locator('input[type="text"]').all()
         set_count = 0
         for inp in date_inputs[:10]:
             try:
@@ -200,22 +218,22 @@ async def crawl() -> bytes | None:
                     set_count += 1
             except Exception as e:
                 print(f"  input 처리 오류: {e}")
-                continue
         print(f"날짜 입력 필드 {set_count}개 설정")
-        await page.wait_for_timeout(500)
         await page.screenshot(path="debug_03_date.png")
 
         # ── 조회 클릭 ────────────────────────────────
         print("조회 클릭...")
-        await page.locator("a:has-text('조회'), button:has-text('조회')").first.click()
-        await page.wait_for_timeout(10000)  # 데이터 로딩 대기 (행 많아서 넉넉히)
+        조회_btn = target_frame.locator("a:has-text('조회'), button:has-text('조회'), [title='조회']").first
+        await 조회_btn.wait_for(timeout=10000)
+        await 조회_btn.click()
+        await page.wait_for_timeout(10000)
         await page.screenshot(path="debug_04_result.png")
         print("조회 완료")
 
         # ── 엑셀 다운로드 ────────────────────────────
         print("엑셀 다운로드 중...")
         async with page.expect_download(timeout=30000) as dl_info:
-            await page.locator("button:has-text('엑셀'), a:has-text('엑셀')").first.click()
+            await target_frame.locator("a:has-text('엑셀'), button:has-text('엑셀'), [title='엑셀']").first.click()
 
         download    = await dl_info.value
         excel_bytes = await download.read()
