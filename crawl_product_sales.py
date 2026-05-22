@@ -246,7 +246,7 @@ def aggregate(data: list) -> list:
         금액_raw = row.get(col_keys.get("실판매금액", ""), 0) or 0
 
         def to_int(v):
-            try: return int(str(v).replace(",", "").strip())
+            try: return int(float(str(v).replace(",", "").strip()))
             except: return 0
 
         if key not in agg:
