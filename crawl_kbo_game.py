@@ -232,7 +232,7 @@ def upload_to_sheets(game: dict):
         return
 
     ws.append_row(new_row)
-    print(f"Google Sheets 적재 완료: {row}")
+    print(f"Google Sheets 적재 완료: {new_row}")
 
 
 def main():
