@@ -679,7 +679,8 @@ def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
       <input type="date" id="prodStartDate" title="시작일">
       <span style="font-size:12px;color:#888">~</span>
       <input type="date" id="prodEndDate" title="종료일">
-      <input type="text" id="prodNameSearch" placeholder="상품명 검색" style="width:160px">
+      <input type="text" id="prodNameSearch" placeholder="상품명 검색" style="width:140px">
+      <input type="text" id="prodCodeSearch" placeholder="상품코드 (,로 여러개)" style="width:180px">
       <button class="ctrl-btn ctrl-btn-primary" onclick="applyProductFilter()">조회</button>
       <button class="ctrl-btn ctrl-btn-reset" onclick="resetProductFilter()">초기화</button>
     </div>
@@ -854,13 +855,16 @@ function aggregateProducts(rows) {{
 }}
 
 function getFilteredRaw() {{
-  const start = document.getElementById('prodStartDate').value;
-  const end   = document.getElementById('prodEndDate').value;
-  const name  = document.getElementById('prodNameSearch').value.trim();
+  const start  = document.getElementById('prodStartDate').value;
+  const end    = document.getElementById('prodEndDate').value;
+  const name   = document.getElementById('prodNameSearch').value.trim();
+  const codes  = document.getElementById('prodCodeSearch').value
+    .split(',').map(s => s.trim()).filter(s => s);
   return rawProductData.filter(r => {{
     if (start && dotToHyphen(r.date) < start) return false;
     if (end   && dotToHyphen(r.date) > end)   return false;
     if (name  && !r.name.includes(name))       return false;
+    if (codes.length && !codes.some(c => r.code.includes(c))) return false;
     return true;
   }});
 }}
@@ -874,18 +878,22 @@ function applyProductFilter() {{
   const start = document.getElementById('prodStartDate').value;
   const end   = document.getElementById('prodEndDate').value;
   const name  = document.getElementById('prodNameSearch').value.trim();
+  const codes = document.getElementById('prodCodeSearch').value
+    .split(',').map(s => s.trim()).filter(s => s);
   let label = '';
   if (start || end) label += (hyphenToDot(start)||'전체') + ' ~ ' + (hyphenToDot(end)||'전체');
-  if (name) label += (label ? ' / ' : '') + '검색: ' + name;
+  if (name)         label += (label ? ' / ' : '') + '상품명: ' + name;
+  if (codes.length) label += (label ? ' / ' : '') + '상품코드: ' + codes.join(', ');
   document.getElementById('productRangeLabel').textContent = label || '';
 
   renderProductTable();
 }}
 
 function resetProductFilter() {{
-  document.getElementById('prodStartDate').value = '';
-  document.getElementById('prodEndDate').value   = '';
+  document.getElementById('prodStartDate').value  = '';
+  document.getElementById('prodEndDate').value    = '';
   document.getElementById('prodNameSearch').value = '';
+  document.getElementById('prodCodeSearch').value = '';
   currentProductRows = aggregateProducts(rawProductData).slice(0, 10);
   productPage = 1;
   document.getElementById('productRangeLabel').textContent = '누적 매출 상위 10개 상품';
