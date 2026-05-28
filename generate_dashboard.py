@@ -702,6 +702,7 @@ def build_html(data: list, news: list, digest: str, products: list) -> str:
       </thead>
       <tbody>{product_rows_html}</tbody>
     </table>
+    <div class="pagination" id="productPagination"></div>
   </div>
 </div>
 
@@ -813,8 +814,50 @@ renderTable();
 const OFF = '#002D72', ON = '#C8102E', TOT = '#6c757d';
 const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
 
-// ── 상품별 매출 엑셀 다운로드 ──
+// ── 상품별 매출 페이지네이션 ──
 const productData = {products_json};
+const PRODUCT_ROWS_PER_PAGE = 10;
+let productPage = 1;
+
+function renderProductTable() {{
+  const allRows  = Array.from(document.querySelectorAll('#productTable tbody tr:not(.product-total-row)'));
+  const totalRow = document.querySelector('#productTable tbody .product-total-row');
+  const total    = allRows.length;
+  const totalPages = Math.ceil(total / PRODUCT_ROWS_PER_PAGE);
+  const start    = (productPage - 1) * PRODUCT_ROWS_PER_PAGE;
+  const end      = start + PRODUCT_ROWS_PER_PAGE;
+
+  allRows.forEach((row, i) => {{ row.style.display = (i >= start && i < end) ? '' : 'none'; }});
+
+  // 합계 행은 항상 표시
+  if (totalRow) totalRow.style.display = '';
+
+  // 페이지네이션 버튼
+  const container = document.getElementById('productPagination');
+  if (totalPages <= 1) {{ container.innerHTML = ''; return; }}
+  let html = '';
+  const maxBtn = 10;
+  let startBtn = Math.max(1, productPage - Math.floor(maxBtn / 2));
+  let endBtn   = Math.min(totalPages, startBtn + maxBtn - 1);
+  if (endBtn - startBtn < maxBtn - 1) startBtn = Math.max(1, endBtn - maxBtn + 1);
+
+  if (startBtn > 1) html += `<button class="page-btn" onclick="goProductPage(1)">1</button><span style="padding:0 4px;color:#aaa">…</span>`;
+  for (let i = startBtn; i <= endBtn; i++) {{
+    html += `<button class="page-btn ${{i === productPage ? 'active' : ''}}" onclick="goProductPage(${{i}})">${{i}}</button>`;
+  }}
+  if (endBtn < totalPages) html += `<span style="padding:0 4px;color:#aaa">…</span><button class="page-btn" onclick="goProductPage(${{totalPages}})">${{totalPages}}</button>`;
+  container.innerHTML = html;
+}}
+
+function goProductPage(page) {{
+  productPage = page;
+  renderProductTable();
+  document.querySelector('.product-section').scrollIntoView({{behavior:'smooth', block:'start'}});
+}}
+
+renderProductTable();
+
+// ── 상품별 매출 엑셀 다운로드 ──
 function downloadProductExcel() {{
   const headers = ['상품코드','상품명','칼라','사이즈','판매단가','판매수량(누적)','실판매금액(누적)'];
   const rows = productData.map(p => [p.code, p.name, p.color, p.size, p.price, p.qty, p.amount]);
