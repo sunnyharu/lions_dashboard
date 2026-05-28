@@ -113,6 +113,46 @@ def fetch_data():
     except Exception:
         pass
 
+    # ── 상품별매출 (누적 집계) ──────────────────────────────
+    products = []
+    try:
+        ws_prod   = sh.worksheet("상품별매출")
+        prod_raw  = ws_prod.get_all_records()
+        agg = {}
+        for row in prod_raw:
+            key = (
+                str(row.get("상품코드", "") or "").strip(),
+                str(row.get("상품명",   "") or "").strip(),
+                str(row.get("칼라명",   "") or "").strip(),
+                str(row.get("사이즈명", "") or "").strip(),
+            )
+            if not key[0] and not key[1]:
+                continue
+            def _int(v):
+                try: return int(float(str(v).replace(",", "")))
+                except: return 0
+            단가 = _int(row.get("판매단가", 0))
+            수량 = _int(row.get("판매수량", 0))
+            금액 = _int(row.get("실판매금액", 0))
+            if key not in agg:
+                agg[key] = {"단가": 단가, "수량": 0, "금액": 0}
+            agg[key]["수량"] += 수량
+            agg[key]["금액"] += 금액
+
+        for (코드, 명, 칼라, 사이즈), v in sorted(agg.items(), key=lambda x: -x[1]["금액"]):
+            products.append({
+                "code":   코드,
+                "name":   명,
+                "color":  칼라,
+                "size":   사이즈,
+                "price":  v["단가"],
+                "qty":    v["수량"],
+                "amount": v["금액"],
+            })
+        print(f"상품별매출 {len(products)}개 SKU 로드")
+    except Exception as e:
+        print(f"상품별매출 로드 오류: {e}")
+
     # ── 경기현황 ──────────────────────────────────────────
     ws_game  = sh.worksheet("경기현황")
     game_raw = ws_game.get_all_records()
@@ -152,10 +192,10 @@ def fetch_data():
             "note":      s.get("note", ""),
         })
 
-    return merged, news, digest
+    return merged, news, digest, products
 
 
-def build_html(data: list, news: list, digest: str) -> str:
+def build_html(data: list, news: list, digest: str, products: list) -> str:
     game_days = [r for r in data if r["result"] and r["result"] != "취소"]
 
     def avg(lst): return int(sum(lst) / len(lst)) if lst else 0
@@ -265,6 +305,31 @@ def build_html(data: list, news: list, digest: str) -> str:
   <td class="num">{fmt(grand_on)}</td>
   <td class="num bold">{fmt(grand_tot)}</td>
 </tr>"""
+
+    # ── 상품별 매출 테이블 HTML ─────────────────────────────
+    total_qty    = sum(p["qty"]    for p in products)
+    total_amount = sum(p["amount"] for p in products)
+
+    product_rows_html = ""
+    for p in products:
+        product_rows_html += f"""
+        <tr>
+          <td>{p['code']}</td>
+          <td>{p['name']}</td>
+          <td>{p['color']}</td>
+          <td>{p['size']}</td>
+          <td class="num">{fmt(p['price'])}</td>
+          <td class="num">{p['qty']:,}</td>
+          <td class="num bold">{fmt(p['amount'])}</td>
+        </tr>"""
+    product_rows_html += f"""
+        <tr class="product-total-row">
+          <td colspan="5">합계</td>
+          <td class="num">{total_qty:,}</td>
+          <td class="num bold">{fmt(total_amount)}</td>
+        </tr>"""
+
+    products_json = json.dumps(products, ensure_ascii=False)
 
     # 뉴스 / 카페 분리
     news_items = sorted(
@@ -488,9 +553,18 @@ def build_html(data: list, news: list, digest: str) -> str:
   .btn-submit:disabled {{ background: #aaa; cursor: not-allowed; }}
   .modal-status {{ font-size: 12px; margin-top: 10px; text-align: center; min-height: 18px; }}
 
+  /* 상품별 매출 섹션 */
+  .product-section {{ padding: 0 32px 20px; }}
+  #productExcelBtn {{
+    padding: 7px 16px; background: #217346; color: white; border: none;
+    border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }}
+  #productExcelBtn:hover {{ background: #185c37; }}
+  .product-total-row {{ background: #f0f4ff; font-weight: 700; }}
+
   @media (max-width: 900px) {{
     .charts {{ grid-template-columns: 1fr; }}
-    .kpi-row, .charts, .table-section, .issue-section {{ padding-left: 16px; padding-right: 16px; }}
+    .kpi-row, .charts, .table-section, .product-section, .issue-section {{ padding-left: 16px; padding-right: 16px; }}
     .issue-layout {{ grid-template-columns: 1fr; }}
   }}
 </style>
@@ -605,6 +679,32 @@ def build_html(data: list, news: list, digest: str) -> str:
   </div>
 </div>
 
+<div class="product-section">
+  <div class="table-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <h3 style="margin-bottom:4px">상품별 누적 판매 실적 (오프라인)</h3>
+        <span style="font-size:11px;color:#aaa">{date_range_label} 누적 기준</span>
+      </div>
+      <button id="productExcelBtn" onclick="downloadProductExcel()">📥 엑셀 다운로드</button>
+    </div>
+    <table id="productTable">
+      <thead>
+        <tr>
+          <th>상품코드</th>
+          <th>상품명</th>
+          <th>칼라</th>
+          <th>사이즈</th>
+          <th style="text-align:right">판매단가</th>
+          <th style="text-align:right">판매수량(누적)</th>
+          <th style="text-align:right">실판매금액(누적)</th>
+        </tr>
+      </thead>
+      <tbody>{product_rows_html}</tbody>
+    </table>
+  </div>
+</div>
+
 <div class="issue-section">
   <div class="issue-section-title">최근 7일간 주요이슈</div>
   <div class="issue-layout">
@@ -712,6 +812,21 @@ renderTable();
 
 const OFF = '#002D72', ON = '#C8102E', TOT = '#6c757d';
 const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
+
+// ── 상품별 매출 엑셀 다운로드 ──
+const productData = {products_json};
+function downloadProductExcel() {{
+  const headers = ['상품코드','상품명','칼라','사이즈','판매단가','판매수량(누적)','실판매금액(누적)'];
+  const rows = productData.map(p => [p.code, p.name, p.color, p.size, p.price, p.qty, p.amount]);
+  const totalQty    = productData.reduce((s, p) => s + p.qty, 0);
+  const totalAmount = productData.reduce((s, p) => s + p.amount, 0);
+  rows.push(['합계', '', '', '', '', totalQty, totalAmount]);
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '상품별매출');
+  XLSX.writeFile(wb, '삼성라이온즈_상품별매출.xlsx');
+}}
 
 // ── 특이사항 노트 플러그인 ──
 const chartNotes = {json.dumps(chart_notes)};
@@ -921,11 +1036,11 @@ async function submitNote() {{
 
 def main():
     print("데이터 조회 중...")
-    data, news, digest = fetch_data()
-    print(f"병합된 데이터: {len(data)}일 / 뉴스이슈: {len(news)}건")
+    data, news, digest, products = fetch_data()
+    print(f"병합된 데이터: {len(data)}일 / 뉴스이슈: {len(news)}건 / 상품SKU: {len(products)}개")
 
     os.makedirs("dashboard", exist_ok=True)
-    html = build_html(data, news, digest)
+    html = build_html(data, news, digest, products)
     with open("dashboard/index.html", "w", encoding="utf-8") as f:
         f.write(html)
     print("dashboard/index.html 생성 완료")
