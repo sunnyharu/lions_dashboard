@@ -113,43 +113,36 @@ def fetch_data():
     except Exception:
         pass
 
-    # ── 상품별매출 (누적 집계) ──────────────────────────────
-    products = []
+    # ── 상품별매출 (row별 수집) ──────────────────────────────
+    raw_products = []
     try:
         ws_prod   = sh.worksheet("상품별매출")
         prod_raw  = ws_prod.get_all_records()
-        agg = {}
         for row in prod_raw:
-            key = (
-                str(row.get("상품코드", "") or "").strip(),
-                str(row.get("상품명",   "") or "").strip(),
-                str(row.get("칼라명",   "") or "").strip(),
-                str(row.get("사이즈명", "") or "").strip(),
-            )
-            if not key[0] and not key[1]:
+            date   = str(row.get("판매일자", "") or "").strip()
+            code   = str(row.get("상품코드", "") or "").strip()
+            name   = str(row.get("상품명",   "") or "").strip()
+            color  = str(row.get("칼라명",   "") or "").strip()
+            size   = str(row.get("사이즈명", "") or "").strip()
+            if not code and not name:
                 continue
             def _int(v):
                 try: return int(float(str(v).replace(",", "")))
                 except: return 0
-            단가 = _int(row.get("판매단가", 0))
-            수량 = _int(row.get("판매수량", 0))
-            금액 = _int(row.get("실판매금액", 0))
-            if key not in agg:
-                agg[key] = {"단가": 단가, "수량": 0, "금액": 0}
-            agg[key]["수량"] += 수량
-            agg[key]["금액"] += 금액
-
-        for (코드, 명, 칼라, 사이즈), v in sorted(agg.items(), key=lambda x: -x[1]["금액"]):
-            products.append({
-                "code":   코드,
-                "name":   명,
-                "color":  칼라,
-                "size":   사이즈,
-                "price":  v["단가"],
-                "qty":    v["수량"],
-                "amount": v["금액"],
+            price  = _int(row.get("판매단가",  0))
+            qty    = _int(row.get("판매수량",  0))
+            amount = _int(row.get("실판매금액", 0))
+            raw_products.append({
+                "date":   date,
+                "code":   code,
+                "name":   name,
+                "color":  color,
+                "size":   size,
+                "price":  price,
+                "qty":    qty,
+                "amount": amount,
             })
-        print(f"상품별매출 {len(products)}개 SKU 로드")
+        print(f"상품별매출 {len(raw_products)}행 로드")
     except Exception as e:
         print(f"상품별매출 로드 오류: {e}")
 
@@ -192,10 +185,10 @@ def fetch_data():
             "note":      s.get("note", ""),
         })
 
-    return merged, news, digest, products
+    return merged, news, digest, raw_products
 
 
-def build_html(data: list, news: list, digest: str, products: list) -> str:
+def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
     game_days = [r for r in data if r["result"] and r["result"] != "취소"]
 
     def avg(lst): return int(sum(lst) / len(lst)) if lst else 0
@@ -306,30 +299,7 @@ def build_html(data: list, news: list, digest: str, products: list) -> str:
   <td class="num bold">{fmt(grand_tot)}</td>
 </tr>"""
 
-    # ── 상품별 매출 테이블 HTML ─────────────────────────────
-    total_qty    = sum(p["qty"]    for p in products)
-    total_amount = sum(p["amount"] for p in products)
-
-    product_rows_html = ""
-    for p in products:
-        product_rows_html += f"""
-        <tr>
-          <td>{p['code']}</td>
-          <td>{p['name']}</td>
-          <td>{p['color']}</td>
-          <td>{p['size']}</td>
-          <td class="num">{fmt(p['price'])}</td>
-          <td class="num">{p['qty']:,}</td>
-          <td class="num bold">{fmt(p['amount'])}</td>
-        </tr>"""
-    product_rows_html += f"""
-        <tr class="product-total-row">
-          <td colspan="5">합계</td>
-          <td class="num">{total_qty:,}</td>
-          <td class="num bold">{fmt(total_amount)}</td>
-        </tr>"""
-
-    products_json = json.dumps(products, ensure_ascii=False)
+    raw_products_json = json.dumps(raw_products, ensure_ascii=False)
 
     # 뉴스 / 카페 분리
     news_items = sorted(
@@ -561,6 +531,23 @@ def build_html(data: list, news: list, digest: str, products: list) -> str:
   }}
   #productExcelBtn:hover {{ background: #185c37; }}
   .product-total-row {{ background: #f0f4ff; font-weight: 700; }}
+  .product-controls {{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }}
+  .product-controls input[type="date"], .product-controls input[type="text"] {{
+    padding:6px 10px; border:1.5px solid #ddd; border-radius:8px; font-size:12px;
+    font-family:inherit; outline:none;
+  }}
+  .product-controls input:focus {{ border-color:#002D72; }}
+  .product-controls .ctrl-btn {{
+    padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; border:none;
+  }}
+  .product-controls .ctrl-btn-primary {{ background:#002D72; color:white; }}
+  .product-controls .ctrl-btn-primary:hover {{ background:#001a4a; }}
+  .product-controls .ctrl-btn-reset {{ background:#f0f0f0; color:#555; }}
+  .product-controls .ctrl-btn-reset:hover {{ background:#e0e0e0; }}
+  .product-guide {{ font-size:11px; color:#888; margin-bottom:12px; }}
+  .drilldown-section {{ padding:0 32px 20px; }}
+  .drilldown-charts {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }}
+  .drilldown-chart-wrap {{ height:220px; position:relative; }}
 
   @media (max-width: 900px) {{
     .charts {{ grid-template-columns: 1fr; }}
@@ -681,28 +668,57 @@ def build_html(data: list, news: list, digest: str, products: list) -> str:
 
 <div class="product-section">
   <div class="table-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div>
         <h3 style="margin-bottom:4px">상품별 누적 판매 실적 (오프라인)</h3>
-        <span style="font-size:11px;color:#aaa">{date_range_label} 누적 기준</span>
+        <span id="productRangeLabel" style="font-size:11px;color:#aaa"></span>
       </div>
       <button id="productExcelBtn" onclick="downloadProductExcel()">📥 엑셀 다운로드</button>
     </div>
+    <div class="product-controls">
+      <input type="date" id="prodStartDate" title="시작일">
+      <span style="font-size:12px;color:#888">~</span>
+      <input type="date" id="prodEndDate" title="종료일">
+      <input type="text" id="prodNameSearch" placeholder="상품명 검색" style="width:160px">
+      <button class="ctrl-btn ctrl-btn-primary" onclick="applyProductFilter()">조회</button>
+      <button class="ctrl-btn ctrl-btn-reset" onclick="resetProductFilter()">초기화</button>
+    </div>
+    <p class="product-guide">💡 기본 화면은 전체 기간 누적 매출 상위 10개 상품입니다. 기간·상품명 필터 후 조회하거나, 엑셀 다운로드로 날짜별 전체 상품 데이터를 확인하세요.</p>
     <table id="productTable">
       <thead>
         <tr>
-          <th>상품코드</th>
-          <th>상품명</th>
-          <th>칼라</th>
-          <th>사이즈</th>
+          <th>상품코드</th><th>상품명</th><th>칼라</th><th>사이즈</th>
           <th style="text-align:right">판매단가</th>
           <th style="text-align:right">판매수량(누적)</th>
           <th style="text-align:right">실판매금액(누적)</th>
+          <th style="text-align:center">트렌드</th>
         </tr>
       </thead>
-      <tbody>{product_rows_html}</tbody>
+      <tbody id="productTbody"></tbody>
     </table>
     <div class="pagination" id="productPagination"></div>
+  </div>
+</div>
+
+<div class="drilldown-section" id="drilldownSection" style="display:none">
+  <div class="table-card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h3 id="drilldownTitle" style="margin-bottom:4px"></h3>
+        <span id="drilldownSub" style="font-size:11px;color:#aaa"></span>
+      </div>
+      <button onclick="closeDrilldown()" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">✕ 닫기</button>
+    </div>
+    <div class="drilldown-charts">
+      <div>
+        <div style="font-size:12px;color:#555;font-weight:600;margin-bottom:8px">일별 실판매금액</div>
+        <div class="drilldown-chart-wrap"><canvas id="drilldownAmountChart"></canvas></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:#555;font-weight:600;margin-bottom:8px">일별 판매수량</div>
+        <div class="drilldown-chart-wrap"><canvas id="drilldownQtyChart"></canvas></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -814,39 +830,113 @@ renderTable();
 const OFF = '#002D72', ON = '#C8102E', TOT = '#6c757d';
 const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
 
-// ── 상품별 매출 페이지네이션 ──
-const productData = {products_json};
+// ── 상품별 매출 ──
+const rawProductData = {raw_products_json};
 const PRODUCT_ROWS_PER_PAGE = 10;
 let productPage = 1;
+let currentProductRows = [];
+let drilldownAmtChart = null;
+let drilldownQtyChart = null;
+
+// 날짜 비교용: "2026.03.16" → "2026-03-16"
+function dotToHyphen(d) {{ return d ? d.replace(/\./g, '-') : ''; }}
+function hyphenToDot(d) {{ return d ? d.replace(/-/g, '.') : ''; }}
+
+function aggregateProducts(rows) {{
+  const agg = {{}};
+  rows.forEach(r => {{
+    const key = r.code + '|' + r.name + '|' + r.color + '|' + r.size;
+    if (!agg[key]) agg[key] = {{code:r.code, name:r.name, color:r.color, size:r.size, price:r.price, qty:0, amount:0}};
+    agg[key].qty    += r.qty;
+    agg[key].amount += r.amount;
+  }});
+  return Object.values(agg).sort((a,b) => b.amount - a.amount);
+}}
+
+function getFilteredRaw() {{
+  const start = document.getElementById('prodStartDate').value;
+  const end   = document.getElementById('prodEndDate').value;
+  const name  = document.getElementById('prodNameSearch').value.trim();
+  return rawProductData.filter(r => {{
+    if (start && dotToHyphen(r.date) < start) return false;
+    if (end   && dotToHyphen(r.date) > end)   return false;
+    if (name  && !r.name.includes(name))       return false;
+    return true;
+  }});
+}}
+
+function applyProductFilter() {{
+  const filtered = getFilteredRaw();
+  currentProductRows = aggregateProducts(filtered);
+  productPage = 1;
+
+  // 기간 레이블 업데이트
+  const start = document.getElementById('prodStartDate').value;
+  const end   = document.getElementById('prodEndDate').value;
+  const name  = document.getElementById('prodNameSearch').value.trim();
+  let label = '';
+  if (start || end) label += (hyphenToDot(start)||'전체') + ' ~ ' + (hyphenToDot(end)||'전체');
+  if (name) label += (label ? ' / ' : '') + '검색: ' + name;
+  document.getElementById('productRangeLabel').textContent = label || '';
+
+  renderProductTable();
+}}
+
+function resetProductFilter() {{
+  document.getElementById('prodStartDate').value = '';
+  document.getElementById('prodEndDate').value   = '';
+  document.getElementById('prodNameSearch').value = '';
+  currentProductRows = aggregateProducts(rawProductData).slice(0, 10);
+  productPage = 1;
+  document.getElementById('productRangeLabel').textContent = '누적 매출 상위 10개 상품';
+  renderProductTable();
+}}
 
 function renderProductTable() {{
-  const allRows  = Array.from(document.querySelectorAll('#productTable tbody tr:not(.product-total-row)'));
-  const totalRow = document.querySelector('#productTable tbody .product-total-row');
-  const total    = allRows.length;
+  const tbody = document.getElementById('productTbody');
+  const total      = currentProductRows.length;
   const totalPages = Math.ceil(total / PRODUCT_ROWS_PER_PAGE);
-  const start    = (productPage - 1) * PRODUCT_ROWS_PER_PAGE;
-  const end      = start + PRODUCT_ROWS_PER_PAGE;
+  const start      = (productPage - 1) * PRODUCT_ROWS_PER_PAGE;
+  const pageRows   = currentProductRows.slice(start, start + PRODUCT_ROWS_PER_PAGE);
 
-  allRows.forEach((row, i) => {{ row.style.display = (i >= start && i < end) ? '' : 'none'; }});
+  // 합계
+  const totalQty    = currentProductRows.reduce((s,p) => s + p.qty, 0);
+  const totalAmount = currentProductRows.reduce((s,p) => s + p.amount, 0);
+  const fmt = n => n ? n.toLocaleString('ko-KR') : '-';
 
-  // 합계 행은 항상 표시
-  if (totalRow) totalRow.style.display = '';
+  let html = '';
+  pageRows.forEach(p => {{
+    html += `<tr style="cursor:pointer" onclick="showDrilldown('${{p.code}}','${{p.name}}','${{p.color}}','${{p.size}}')">
+      <td>${{p.code}}</td><td>${{p.name}}</td><td>${{p.color}}</td><td>${{p.size}}</td>
+      <td class="num">${{fmt(p.price)}}</td>
+      <td class="num">${{p.qty.toLocaleString()}}</td>
+      <td class="num bold">${{fmt(p.amount)}}</td>
+      <td style="text-align:center;font-size:13px;color:#002D72">📈</td>
+    </tr>`;
+  }});
+  // 합계 행
+  html += `<tr class="product-total-row">
+    <td colspan="5">합계 (전체 ${{total}}개 SKU)</td>
+    <td class="num">${{totalQty.toLocaleString()}}</td>
+    <td class="num bold">${{fmt(totalAmount)}}</td>
+    <td></td>
+  </tr>`;
+  tbody.innerHTML = html;
 
-  // 페이지네이션 버튼
+  // 페이지네이션
   const container = document.getElementById('productPagination');
   if (totalPages <= 1) {{ container.innerHTML = ''; return; }}
-  let html = '';
   const maxBtn = 10;
-  let startBtn = Math.max(1, productPage - Math.floor(maxBtn / 2));
+  let startBtn = Math.max(1, productPage - Math.floor(maxBtn/2));
   let endBtn   = Math.min(totalPages, startBtn + maxBtn - 1);
-  if (endBtn - startBtn < maxBtn - 1) startBtn = Math.max(1, endBtn - maxBtn + 1);
-
-  if (startBtn > 1) html += `<button class="page-btn" onclick="goProductPage(1)">1</button><span style="padding:0 4px;color:#aaa">…</span>`;
+  if (endBtn - startBtn < maxBtn-1) startBtn = Math.max(1, endBtn - maxBtn + 1);
+  let phtml = '';
+  if (startBtn > 1) phtml += `<button class="page-btn" onclick="goProductPage(1)">1</button><span style="padding:0 4px;color:#aaa">…</span>`;
   for (let i = startBtn; i <= endBtn; i++) {{
-    html += `<button class="page-btn ${{i === productPage ? 'active' : ''}}" onclick="goProductPage(${{i}})">${{i}}</button>`;
+    phtml += `<button class="page-btn ${{i===productPage?'active':''}}" onclick="goProductPage(${{i}})">${{i}}</button>`;
   }}
-  if (endBtn < totalPages) html += `<span style="padding:0 4px;color:#aaa">…</span><button class="page-btn" onclick="goProductPage(${{totalPages}})">${{totalPages}}</button>`;
-  container.innerHTML = html;
+  if (endBtn < totalPages) phtml += `<span style="padding:0 4px;color:#aaa">…</span><button class="page-btn" onclick="goProductPage(${{totalPages}})">${{totalPages}}</button>`;
+  container.innerHTML = phtml;
 }}
 
 function goProductPage(page) {{
@@ -855,22 +945,75 @@ function goProductPage(page) {{
   document.querySelector('.product-section').scrollIntoView({{behavior:'smooth', block:'start'}});
 }}
 
-renderProductTable();
+// ── 상품 드릴다운 차트 ──
+function showDrilldown(code, name, color, size) {{
+  const filtered = getFilteredRaw().filter(r =>
+    r.code === code && r.name === name && r.color === color && r.size === size
+  );
+  const byDate = {{}};
+  filtered.forEach(r => {{
+    if (!byDate[r.date]) byDate[r.date] = {{qty:0, amount:0}};
+    byDate[r.date].qty    += r.qty;
+    byDate[r.date].amount += r.amount;
+  }});
+  const dates   = Object.keys(byDate).sort();
+  const amounts = dates.map(d => byDate[d].amount);
+  const qtys    = dates.map(d => byDate[d].qty);
+  const labels  = dates.map(d => d.slice(5));
 
-// ── 상품별 매출 엑셀 다운로드 ──
-const productDateRange = '{date_range_label}';
+  document.getElementById('drilldownTitle').textContent = `${{name}} (${{color}} / ${{size}})`;
+  document.getElementById('drilldownSub').textContent   = `${{code}} · 조회 기간 내 ${{dates.length}}일 판매`;
+  document.getElementById('drilldownSection').style.display = 'block';
+  document.getElementById('drilldownSection').scrollIntoView({{behavior:'smooth', block:'start'}});
+
+  if (drilldownAmtChart) drilldownAmtChart.destroy();
+  if (drilldownQtyChart) drilldownQtyChart.destroy();
+
+  drilldownAmtChart = new Chart(document.getElementById('drilldownAmountChart'), {{
+    type: 'line',
+    data: {{
+      labels,
+      datasets: [{{ label:'실판매금액', data:amounts,
+        borderColor:'#002D72', backgroundColor:'rgba(0,45,114,0.1)',
+        fill:true, tension:0.3, pointRadius:3 }}]
+    }},
+    options: {{ responsive:true, maintainAspectRatio:false,
+      scales:{{ y:{{ ticks:{{ callback: v => v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString() }} }} }} }}
+  }});
+
+  drilldownQtyChart = new Chart(document.getElementById('drilldownQtyChart'), {{
+    type: 'bar',
+    data: {{
+      labels,
+      datasets: [{{ label:'판매수량', data:qtys, backgroundColor:'rgba(200,16,46,0.7)' }}]
+    }},
+    options: {{ responsive:true, maintainAspectRatio:false }}
+  }});
+}}
+
+function closeDrilldown() {{
+  document.getElementById('drilldownSection').style.display = 'none';
+  if (drilldownAmtChart) {{ drilldownAmtChart.destroy(); drilldownAmtChart = null; }}
+  if (drilldownQtyChart) {{ drilldownQtyChart.destroy(); drilldownQtyChart = null; }}
+}}
+
+// ── 상품별 매출 엑셀 다운로드 (날짜별 전체) ──
 function downloadProductExcel() {{
-  const headers = ['기준기간','상품코드','상품명','칼라','사이즈','판매단가','판매수량(누적)','실판매금액(누적)'];
-  const rows = productData.map(p => [productDateRange, p.code, p.name, p.color, p.size, p.price, p.qty, p.amount]);
-  const totalQty    = productData.reduce((s, p) => s + p.qty, 0);
-  const totalAmount = productData.reduce((s, p) => s + p.amount, 0);
-  rows.push(['합계', '', '', '', '', '', totalQty, totalAmount]);
-
+  const headers = ['판매일자','상품코드','상품명','칼라','사이즈','판매단가','판매수량','실판매금액'];
+  const rows = rawProductData
+    .slice()
+    .sort((a,b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name))
+    .map(r => [r.date, r.code, r.name, r.color, r.size, r.price, r.qty, r.amount]);
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '상품별매출');
-  XLSX.writeFile(wb, '삼성라이온즈_상품별매출.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, '상품별매출_날짜별');
+  XLSX.writeFile(wb, '삼성라이온즈_상품별매출_날짜별전체.xlsx');
 }}
+
+// 초기 렌더링: 상위 10개
+currentProductRows = aggregateProducts(rawProductData).slice(0, 10);
+document.getElementById('productRangeLabel').textContent = '누적 매출 상위 10개 상품';
+renderProductTable();
 
 // ── 특이사항 노트 플러그인 ──
 const chartNotes = {json.dumps(chart_notes)};
@@ -1080,11 +1223,11 @@ async function submitNote() {{
 
 def main():
     print("데이터 조회 중...")
-    data, news, digest, products = fetch_data()
-    print(f"병합된 데이터: {len(data)}일 / 뉴스이슈: {len(news)}건 / 상품SKU: {len(products)}개")
+    data, news, digest, raw_products = fetch_data()
+    print(f"병합된 데이터: {len(data)}일 / 뉴스이슈: {len(news)}건 / 상품데이터: {len(raw_products)}행")
 
     os.makedirs("dashboard", exist_ok=True)
-    html = build_html(data, news, digest, products)
+    html = build_html(data, news, digest, raw_products)
     with open("dashboard/index.html", "w", encoding="utf-8") as f:
         f.write(html)
     print("dashboard/index.html 생성 완료")
