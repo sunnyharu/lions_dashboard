@@ -858,12 +858,13 @@ function goProductPage(page) {{
 renderProductTable();
 
 // ── 상품별 매출 엑셀 다운로드 ──
+const productDateRange = '{date_range_label}';
 function downloadProductExcel() {{
-  const headers = ['상품코드','상품명','칼라','사이즈','판매단가','판매수량(누적)','실판매금액(누적)'];
-  const rows = productData.map(p => [p.code, p.name, p.color, p.size, p.price, p.qty, p.amount]);
+  const headers = ['기준기간','상품코드','상품명','칼라','사이즈','판매단가','판매수량(누적)','실판매금액(누적)'];
+  const rows = productData.map(p => [productDateRange, p.code, p.name, p.color, p.size, p.price, p.qty, p.amount]);
   const totalQty    = productData.reduce((s, p) => s + p.qty, 0);
   const totalAmount = productData.reduce((s, p) => s + p.amount, 0);
-  rows.push(['합계', '', '', '', '', totalQty, totalAmount]);
+  rows.push(['합계', '', '', '', '', '', totalQty, totalAmount]);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   const wb = XLSX.utils.book_new();
