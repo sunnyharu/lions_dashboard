@@ -8,6 +8,7 @@
 import asyncio
 import json
 import os
+import time
 import requests
 from datetime import datetime, timedelta
 
@@ -60,8 +61,18 @@ def upload_to_sheets(rows: list):
         print("업로드할 데이터 없음")
         return
 
-    client = get_gspread_client()
-    sh     = client.open_by_key(SPREADSHEET_ID)
+    # Google Sheets API 503 등 일시 오류 시 최대 3회 재시도
+    for attempt in range(3):
+        try:
+            client = get_gspread_client()
+            sh     = client.open_by_key(SPREADSHEET_ID)
+            break
+        except Exception as e:
+            if attempt < 2:
+                print(f"Sheets 연결 오류 (재시도 {attempt+1}/3): {e}")
+                time.sleep(10)
+            else:
+                raise
 
     try:
         ws = sh.worksheet(SHEET_NAME)

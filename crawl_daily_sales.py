@@ -8,6 +8,7 @@ import asyncio
 import json
 import os
 import getpass
+import time
 import requests
 from datetime import datetime, timedelta
 
@@ -61,9 +62,19 @@ def normalize_date(s: str) -> str:
 
 
 def upload_to_sheets(rows: list):
-    client = get_gspread_client()
-    sh = client.open_by_key(SPREADSHEET_ID)
-    ws = sh.worksheet(SHEET_NAME)
+    # Google Sheets API 503 등 일시 오류 시 최대 3회 재시도
+    for attempt in range(3):
+        try:
+            client = get_gspread_client()
+            sh = client.open_by_key(SPREADSHEET_ID)
+            ws = sh.worksheet(SHEET_NAME)
+            break
+        except Exception as e:
+            if attempt < 2:
+                print(f"Sheets 연결 오류 (재시도 {attempt+1}/3): {e}")
+                time.sleep(10)
+            else:
+                raise
 
     existing = ws.get_all_values()
     if not existing:
