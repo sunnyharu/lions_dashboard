@@ -80,6 +80,7 @@ jobs:
           echo "last_run.txt: $(cat last_run.txt)"
           git add last_run.txt
           git diff --cached --quiet || git commit -m "chore: 매장매출 수집 완료 $(date +'%Y-%m-%d')"
+          git pull --rebase origin main
           git push
 
       - name: 디버그 스크린샷 업로드
