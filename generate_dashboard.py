@@ -217,7 +217,7 @@ def fetch_data():
     return merged, news, digest, raw_products_off, raw_products_on
 
 
-def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_products_on: list) -> str:
+def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_products_on: list, apps_script_url: str = "") -> str:
     game_days = [r for r in data if r["result"] and r["result"] != "취소"]
 
     def avg(lst): return int(sum(lst) / len(lst)) if lst else 0
@@ -706,7 +706,10 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
         <span id="productRangeLabel" style="font-size:11px;color:#aaa"></span>
         <span style="font-size:11px;color:#bbb;margin-left:8px">※ 온라인 판매수량·금액은 취소 미반영</span>
       </div>
-      <button id="productExcelBtn" onclick="downloadProductExcel()">📥 엑셀 다운로드</button>
+      <div style="display:flex;gap:8px">
+        <button id="productExcelBtn" onclick="downloadProductExcel()">📥 엑셀 다운로드</button>
+        {'<button onclick="openUploadModal()" style="background:#C8102E;color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">📤 온라인 실적 업로드</button>' if apps_script_url else ''}
+      </div>
     </div>
     <div class="product-controls">
       <input type="date" id="prodStartDate" title="시작일">
@@ -760,6 +763,26 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
         <div class="drilldown-chart-wrap"><canvas id="drilldownAmountChart"></canvas></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- 업로드 모달 -->
+<div class="drilldown-overlay" id="uploadModal" onclick="handleUploadOverlayClick(event)" {'style="display:none"' if not apps_script_url else ''}>
+  <div class="drilldown-modal" style="max-width:480px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 style="margin:0">온라인 실적 업로드</h3>
+      <button onclick="closeUploadModal()" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">✕ 닫기</button>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;color:#555;font-weight:600;display:block;margin-bottom:6px">엑셀 파일 선택</label>
+      <input type="file" id="uploadFileInput" accept=".xlsx,.xls,.csv" style="font-size:13px;width:100%">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-size:12px;color:#555;font-weight:600;display:block;margin-bottom:6px">비밀번호</label>
+      <input type="password" id="uploadKeyInput" placeholder="업로드 비밀번호 입력" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
+    </div>
+    <div id="uploadStatus" style="font-size:12px;color:#888;margin-bottom:14px;min-height:18px"></div>
+    <button onclick="submitUpload()" style="width:100%;background:#002D72;color:#fff;border:none;border-radius:8px;padding:10px;cursor:pointer;font-size:14px;font-weight:700;">업로드</button>
   </div>
 </div>
 
@@ -1129,6 +1152,86 @@ function handleOverlayClick(e) {{
   if (e.target === document.getElementById('drilldownSection')) closeDrilldown();
 }}
 
+// ── 온라인 실적 업로드 ──
+const APPS_SCRIPT_URL = '{apps_script_url}';
+
+function openUploadModal() {{
+  document.getElementById('uploadModal').classList.add('open');
+  document.getElementById('uploadStatus').textContent = '';
+  document.getElementById('uploadFileInput').value = '';
+}}
+function closeUploadModal() {{
+  document.getElementById('uploadModal').classList.remove('open');
+}}
+function handleUploadOverlayClick(e) {{
+  if (e.target === document.getElementById('uploadModal')) closeUploadModal();
+}}
+
+async function submitUpload() {{
+  const fileInput = document.getElementById('uploadFileInput');
+  const key = document.getElementById('uploadKeyInput').value.trim();
+  const status = document.getElementById('uploadStatus');
+
+  if (!fileInput.files.length) {{ status.textContent = '❌ 파일을 선택해주세요.'; return; }}
+  if (!key) {{ status.textContent = '❌ 비밀번호를 입력해주세요.'; return; }}
+
+  status.textContent = '⏳ 파일 파싱 중...';
+  const file = fileInput.files[0];
+  const ab = await file.arrayBuffer();
+  const wb = XLSX.read(ab, {{ type: 'array' }});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const raw = XLSX.utils.sheet_to_json(ws, {{ defval: '' }});
+
+  if (!raw.length) {{ status.textContent = '❌ 데이터가 없습니다.'; return; }}
+
+  // 컬럼 매핑 (CSV헤더 → 시트헤더)
+  const COL_MAP = {{
+    '판매일':   '판매일자', '판매일자': '판매일자',
+    '상품ID':   '상품ID',
+    '상품명':   '상품명',
+    '바코드':   '바코드',
+    'skucode':  'skucode', 'SKUcode': 'skucode',
+    '사이즈':   '사이즈',
+    '선수명':   '선수명',
+    '판매가':   '판매단가', '판매단가': '판매단가',
+    '결제상품수': '판매수량', '판매수량': '판매수량',
+    '상품결제금액': '실판매금액', '실판매금액': '실판매금액',
+  }};
+  const HEADER = ['판매일자','상품ID','상품명','바코드','skucode','사이즈','선수명','판매단가','판매수량','실판매금액'];
+
+  const rows = raw.map(r => {{
+    const mapped = {{}};
+    Object.entries(r).forEach(([k, v]) => {{
+      const target = COL_MAP[k.trim()];
+      if (target) mapped[target] = String(v).trim();
+    }});
+    return mapped;
+  }}).filter(r => r['판매일자']);
+
+  if (!rows.length) {{ status.textContent = '❌ 판매일자 컬럼을 찾을 수 없습니다.'; return; }}
+
+  const dates = [...new Set(rows.map(r => r['판매일자']))];
+  status.textContent = `⏳ ${{rows.length}}행 (${{dates.length}}일) 업로드 중...`;
+
+  try {{
+    const resp = await fetch(APPS_SCRIPT_URL, {{
+      method: 'POST',
+      body: JSON.stringify({{ key, rows }}),
+    }});
+    const result = await resp.json();
+    if (result.ok) {{
+      status.style.color = '#1a7f37';
+      status.textContent = `✅ ${{result.inserted}}행 업로드 완료! 대시보드 재생성 중...`;
+    }} else {{
+      status.style.color = '#C8102E';
+      status.textContent = '❌ ' + result.error;
+    }}
+  }} catch(err) {{
+    status.style.color = '#C8102E';
+    status.textContent = '❌ 업로드 실패: ' + err.message;
+  }}
+}}
+
 // ── 엑셀 다운로드 (OFF + ON 날짜별 전체) ──
 function downloadProductExcel() {{
   const f = getFilters();
@@ -1363,7 +1466,8 @@ def main():
     print(f"병합된 데이터: {len(data)}일 / 뉴스이슈: {len(news)}건 / OFF: {len(raw_products_off)}행 / ON: {len(raw_products_on)}행")
 
     os.makedirs("dashboard", exist_ok=True)
-    html = build_html(data, news, digest, raw_products_off, raw_products_on)
+    apps_script_url = os.environ.get("APPS_SCRIPT_URL", "")
+    html = build_html(data, news, digest, raw_products_off, raw_products_on, apps_script_url)
     with open("dashboard/index.html", "w", encoding="utf-8") as f:
         f.write(html)
     print("dashboard/index.html 생성 완료")
