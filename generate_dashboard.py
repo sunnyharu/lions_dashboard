@@ -123,13 +123,17 @@ def fetch_data():
         try: return str(int(float(s)))  # "8804775462283.0" → "8804775462283"
         except: return s
 
+    def _norm_date(d):
+        # 2026.05.20 → 2026-05-20 으로 통일
+        return str(d).strip().replace(".", "-")
+
     # ── 상품별매출(off) ───────────────────────────────────
     raw_products_off = []
     try:
         ws_off  = sh.worksheet("상품별매출(off)")
         off_raw = ws_off.get_all_records()
         for row in off_raw:
-            date    = str(row.get("판매일자",   "") or "").strip()
+            date    = _norm_date(row.get("판매일자", "") or "")
             barcode = _barcode(row.get("추가바코드1",""))
             name    = str(row.get("상품명",     "") or "").strip()
             color   = str(row.get("칼라명",     "") or "").strip()
@@ -153,7 +157,7 @@ def fetch_data():
         ws_on  = sh.worksheet("상품별매출(on)")
         on_raw = ws_on.get_all_records()
         for row in on_raw:
-            date    = str(row.get("판매일자", "") or "").strip()
+            date    = _norm_date(row.get("판매일자", "") or "")
             barcode = _barcode(row.get("바코드",""))
             name    = str(row.get("상품명",   "") or "").strip()
             size    = str(row.get("사이즈",   "") or "").strip()
@@ -569,7 +573,9 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   .product-controls .ctrl-btn-reset {{ background:#f0f0f0; color:#555; }}
   .product-controls .ctrl-btn-reset:hover {{ background:#e0e0e0; }}
   .product-guide {{ font-size:11px; color:#888; margin-bottom:12px; }}
-  .drilldown-section {{ padding:0 32px 20px; }}
+  .drilldown-overlay {{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center; }}
+  .drilldown-overlay.open {{ display:flex; }}
+  .drilldown-modal {{ background:#fff; border-radius:14px; padding:28px; width:95%; max-width:1200px; max-height:85vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,0.2); position:relative; }}
   .drilldown-charts {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }}
   .drilldown-chart-wrap {{ height:220px; position:relative; }}
 
@@ -698,6 +704,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       <div>
         <h3 style="margin-bottom:4px">상품별 누적 판매 실적 (온/오프 통합)</h3>
         <span id="productRangeLabel" style="font-size:11px;color:#aaa"></span>
+        <span style="font-size:11px;color:#bbb;margin-left:8px">※ 온라인 판매수량·금액은 취소 미반영</span>
       </div>
       <button id="productExcelBtn" onclick="downloadProductExcel()">📥 엑셀 다운로드</button>
     </div>
@@ -710,17 +717,18 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       <button class="ctrl-btn ctrl-btn-primary" onclick="applyProductFilter()">조회</button>
       <button class="ctrl-btn ctrl-btn-reset" onclick="resetProductFilter()">초기화</button>
     </div>
-    <p class="product-guide">💡 기본 화면은 전체 기간 온+오프 합산 매출 상위 10개 상품입니다. 기간·상품명·바코드 필터 후 조회하거나, 엑셀 다운로드로 날짜별 전체 데이터를 확인하세요.</p>
+    <p class="product-guide">💡 기간·상품명·바코드 필터 후 조회하거나, 엑셀 다운로드로 날짜별 전체 데이터를 확인하세요.</p>
     <table id="productTable" style="font-size:12px">
       <thead>
         <tr>
           <th>바코드</th>
-          <th>OFF상품명</th><th>ON상품명</th>
+          <th>상품명</th>
           <th>칼라</th><th>사이즈</th><th>선수명</th>
           <th style="text-align:right">판매단가</th>
           <th style="text-align:right">OFF수량</th>
-          <th style="text-align:right">OFF금액</th>
           <th style="text-align:right">ON수량</th>
+          <th style="text-align:right">합계수량</th>
+          <th style="text-align:right">OFF금액</th>
           <th style="text-align:right">ON금액</th>
           <th style="text-align:right">합계금액</th>
           <th style="text-align:center">트렌드</th>
@@ -732,23 +740,24 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   </div>
 </div>
 
-<div class="drilldown-section" id="drilldownSection" style="display:none">
-  <div class="table-card">
-    <div style="display:flex;justify-content:space-between;align-items:center">
+<div class="drilldown-overlay" id="drilldownSection" onclick="handleOverlayClick(event)">
+  <div class="drilldown-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div>
         <h3 id="drilldownTitle" style="margin-bottom:4px"></h3>
         <span id="drilldownSub" style="font-size:11px;color:#aaa"></span>
       </div>
       <button onclick="closeDrilldown()" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">✕ 닫기</button>
     </div>
+    <div id="drilldownStats" style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap"></div>
     <div class="drilldown-charts">
-      <div>
-        <div style="font-size:12px;color:#555;font-weight:600;margin-bottom:8px">일별 실판매금액</div>
-        <div class="drilldown-chart-wrap"><canvas id="drilldownAmountChart"></canvas></div>
-      </div>
       <div>
         <div style="font-size:12px;color:#555;font-weight:600;margin-bottom:8px">일별 판매수량</div>
         <div class="drilldown-chart-wrap"><canvas id="drilldownQtyChart"></canvas></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:#555;font-weight:600;margin-bottom:8px">일별 실판매금액</div>
+        <div class="drilldown-chart-wrap"><canvas id="drilldownAmountChart"></canvas></div>
       </div>
     </div>
   </div>
@@ -948,9 +957,9 @@ function resetProductFilter() {{
   document.getElementById('prodEndDate').value    = '';
   document.getElementById('prodNameSearch').value = '';
   document.getElementById('prodCodeSearch').value = '';
-  currentProductRows = mergeProducts(rawOffData, rawOnData).slice(0, 10);
+  currentProductRows = mergeProducts(rawOffData, rawOnData);
   productPage = 1;
-  document.getElementById('productRangeLabel').textContent = '온+오프 합산 매출 상위 10개';
+  document.getElementById('productRangeLabel').textContent = '전체 기간 합산';
   renderProductTable();
 }}
 
@@ -968,26 +977,31 @@ function renderProductTable() {{
   const totOnAmt  = currentProductRows.reduce((s,p)=>s+p.on_amount,0);
 
   let html = '';
-  pageRows.forEach(p => {{
+  pageRows.forEach((p, idx) => {{
     const total_amt = p.off_amount + p.on_amount;
+    const opts = [p.color,p.size,p.player].filter(v=>v&&v!=='-').join(' / ');
+    window.__ddOpts = window.__ddOpts || {{}};
+    window.__ddOpts[p.barcode] = opts;
     html += `<tr style="cursor:pointer" onclick="showDrilldown('${{p.barcode.replace(/'/g,"\\'")}}','${{(p.off_name||p.on_name).replace(/'/g,"\\'")}}')">
       <td style="font-size:11px;color:#888">${{p.barcode}}</td>
-      <td>${{p.off_name}}</td><td>${{p.on_name}}</td>
+      <td><span style="font-size:10px;color:#888">[OFF]</span> <span style="font-size:11px">${{p.off_name}}</span><br><span style="font-size:10px;color:#888">[ON]</span> <span style="font-size:11px">${{p.on_name}}</span></td>
       <td>${{p.color}}</td><td>${{p.size}}</td><td>${{p.player}}</td>
       <td class="num">${{fmt(p.price)}}</td>
       <td class="num">${{fmt(p.off_qty)}}</td>
-      <td class="num">${{fmt(p.off_amount)}}</td>
       <td class="num">${{fmt(p.on_qty)}}</td>
+      <td class="num bold">${{fmt(p.off_qty + p.on_qty)}}</td>
+      <td class="num">${{fmt(p.off_amount)}}</td>
       <td class="num">${{fmt(p.on_amount)}}</td>
       <td class="num bold">${{fmt(total_amt)}}</td>
       <td style="text-align:center;color:#002D72">📈</td>
     </tr>`;
   }});
   html += `<tr class="product-total-row">
-    <td colspan="7">합계 (전체 ${{total}}개 SKU)</td>
+    <td colspan="6">합계 (전체 ${{total}}개 SKU)</td>
     <td class="num">${{fmt(totOffQty)}}</td>
-    <td class="num">${{fmt(totOffAmt)}}</td>
     <td class="num">${{fmt(totOnQty)}}</td>
+    <td class="num bold">${{fmt(totOffQty+totOnQty)}}</td>
+    <td class="num">${{fmt(totOffAmt)}}</td>
     <td class="num">${{fmt(totOnAmt)}}</td>
     <td class="num bold">${{fmt(totOffAmt+totOnAmt)}}</td>
     <td></td>
@@ -1017,6 +1031,7 @@ function goProductPage(page) {{
 
 // ── 드릴다운: OFF/ON 별도 라인 ──
 function showDrilldown(barcode, label) {{
+  const opts = (window.__ddOpts && window.__ddOpts[barcode]) || '';
   const f = getFilters();
   const offRows = filterRows(rawOffData, f).filter(r => r.barcode === barcode);
   const onRows  = filterRows(rawOnData,  f).filter(r => r.barcode === barcode);
@@ -1035,20 +1050,43 @@ function showDrilldown(barcode, label) {{
 
   const allDates = [...new Set([...Object.keys(offByDate), ...Object.keys(onByDate)])].sort();
   const labels   = allDates.map(d => d.slice(5));
-  const offAmts  = allDates.map(d => (offByDate[d]||{{amount:0}}).amount);
-  const onAmts   = allDates.map(d => (onByDate[d] ||{{amount:0}}).amount);
-  const offQtys  = allDates.map(d => (offByDate[d]||{{qty:0}}).qty);
-  const onQtys   = allDates.map(d => (onByDate[d] ||{{qty:0}}).qty);
+  const offAmts  = allDates.map(d => offByDate[d] ? offByDate[d].amount : null);
+  const onAmts   = allDates.map(d => onByDate[d]  ? onByDate[d].amount  : null);
+  const offQtys  = allDates.map(d => offByDate[d] ? offByDate[d].qty    : null);
+  const onQtys   = allDates.map(d => onByDate[d]  ? onByDate[d].qty     : null);
 
-  document.getElementById('drilldownTitle').textContent = label;
+  const totOffQty = offQtys.reduce((s,v)=>s+v,0);
+  const totOnQty  = onQtys.reduce((s,v)=>s+v,0);
+  const totOffAmt = offAmts.reduce((s,v)=>s+v,0);
+  const totOnAmt  = onAmts.reduce((s,v)=>s+v,0);
+  const fmt = n => n.toLocaleString('ko-KR');
+  const pct = (n, total) => total > 0 ? (n/total*100).toFixed(1)+'%' : '-';
+  const statCard = (label, val, color, sub='') =>
+    `<div style="background:#f8f9fa;border-radius:10px;padding:10px 18px;min-width:130px">
+      <div style="font-size:11px;color:#888;margin-bottom:3px">${{label}}</div>
+      <div style="font-size:16px;font-weight:700;color:${{color}}">${{val}}</div>
+      ${{sub ? `<div style="font-size:11px;color:#aaa;margin-top:2px">${{sub}}</div>` : ''}}
+    </div>`;
+  const totQty = totOffQty + totOnQty;
+  const totAmt = totOffAmt + totOnAmt;
+  document.getElementById('drilldownStats').innerHTML =
+    statCard('OFF 판매수량', fmt(totOffQty)+'개', '#002D72', '구성비 '+pct(totOffQty, totQty)) +
+    statCard('ON 판매수량',  fmt(totOnQty)+'개',  '#C8102E', '구성비 '+pct(totOnQty,  totQty)) +
+    statCard('합계수량', fmt(totQty)+'개', '#333') +
+    statCard('OFF 판매금액', fmt(totOffAmt)+'원', '#002D72', '구성비 '+pct(totOffAmt, totAmt)) +
+    statCard('ON 판매금액',  fmt(totOnAmt)+'원',  '#C8102E', '구성비 '+pct(totOnAmt,  totAmt)) +
+    statCard('합계금액', fmt(totAmt)+'원', '#333') +
+    ``;
+
+  document.getElementById('drilldownTitle').innerHTML =
+    `${{label}}<span style="font-size:13px;font-weight:400;color:#666;margin-left:8px">${{opts}}</span>`;
   document.getElementById('drilldownSub').textContent   = `${{barcode}} · ${{allDates.length}}일 판매`;
-  document.getElementById('drilldownSection').style.display = 'block';
-  document.getElementById('drilldownSection').scrollIntoView({{behavior:'smooth', block:'start'}});
+  document.getElementById('drilldownSection').classList.add('open');
 
   if (drilldownAmtChart) drilldownAmtChart.destroy();
   if (drilldownQtyChart) drilldownQtyChart.destroy();
 
-  const amtOpts = {{ responsive:true, maintainAspectRatio:false,
+  const amtOpts = {{ responsive:true, maintainAspectRatio:false, spanGaps:true,
     plugins:{{ legend:{{ position:'bottom' }} }},
     scales:{{ y:{{ ticks:{{ callback: v => v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString() }} }} }} }};
 
@@ -1060,26 +1098,35 @@ function showDrilldown(barcode, label) {{
          fill:false, tension:0.3, pointRadius:3, borderWidth:2 }},
       {{ label:'ON 실판매금액',  data:onAmts,
          borderColor:ON,  backgroundColor:'rgba(200,16,46,0.08)',
-         fill:false, tension:0.3, pointRadius:3, borderWidth:2, borderDash:[4,3] }},
+         fill:false, tension:0.3, pointRadius:3, borderWidth:2, }},
     ]}},
     options: amtOpts,
   }});
 
   drilldownQtyChart = new Chart(document.getElementById('drilldownQtyChart'), {{
-    type: 'bar',
+    type: 'line',
     data: {{ labels, datasets: [
-      {{ label:'OFF 판매수량', data:offQtys, backgroundColor:alpha(OFF,.75) }},
-      {{ label:'ON 판매수량',  data:onQtys,  backgroundColor:alpha(ON,.65)  }},
+      {{ label:'OFF 판매수량', data:offQtys,
+         borderColor:OFF, backgroundColor:'rgba(0,45,114,0.08)',
+         fill:false, tension:0.3, pointRadius:3, borderWidth:2 }},
+      {{ label:'ON 판매수량',  data:onQtys,
+         borderColor:ON,  backgroundColor:'rgba(200,16,46,0.08)',
+         fill:false, tension:0.3, pointRadius:3, borderWidth:2, }},
     ]}},
-    options: {{ responsive:true, maintainAspectRatio:false,
-      plugins:{{ legend:{{ position:'bottom' }} }} }},
+    options: {{ responsive:true, maintainAspectRatio:false, spanGaps:true,
+      plugins:{{ legend:{{ position:'bottom' }} }},
+      scales:{{ y:{{ ticks:{{ callback: v => v.toLocaleString() }} }} }} }},
   }});
 }}
 
 function closeDrilldown() {{
-  document.getElementById('drilldownSection').style.display = 'none';
+  document.getElementById('drilldownSection').classList.remove('open');
   if (drilldownAmtChart) {{ drilldownAmtChart.destroy(); drilldownAmtChart = null; }}
   if (drilldownQtyChart) {{ drilldownQtyChart.destroy(); drilldownQtyChart = null; }}
+}}
+
+function handleOverlayClick(e) {{
+  if (e.target === document.getElementById('drilldownSection')) closeDrilldown();
 }}
 
 // ── 엑셀 다운로드 (OFF + ON 날짜별 전체) ──
@@ -1099,9 +1146,9 @@ function downloadProductExcel() {{
   XLSX.writeFile(wb, '삼성라이온즈_상품별매출_온오프.xlsx');
 }}
 
-// 초기 렌더링: 상위 10개
-currentProductRows = mergeProducts(rawOffData, rawOnData).slice(0, 10);
-document.getElementById('productRangeLabel').textContent = '온+오프 합산 매출 상위 10개';
+// 초기 렌더링: 전체
+currentProductRows = mergeProducts(rawOffData, rawOnData);
+document.getElementById('productRangeLabel').textContent = '전체 기간 합산';
 renderProductTable();
 
 // ── 특이사항 노트 플러그인 ──
