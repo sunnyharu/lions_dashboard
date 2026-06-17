@@ -964,9 +964,10 @@ function extractColorFromName(name) {{
   return '';
 }}
 
+const isFree = v => !v || v==='-' || v.trim().toLowerCase()==='free' || v.trim()==='공통';
+
 function mergeProducts(offRows, onRows) {{
   const map = {{}};
-  const isFree = v => !v || v==='-' || v.trim().toLowerCase()==='free' || v.trim()==='공통';
 
   offRows.forEach(r => {{
     if (!r.barcode) return;
