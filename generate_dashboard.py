@@ -1467,7 +1467,7 @@ def main():
     print(f"병합된 데이터: {len(data)}일 / 뉴스이슈: {len(news)}건 / OFF: {len(raw_products_off)}행 / ON: {len(raw_products_on)}행")
 
     os.makedirs("dashboard", exist_ok=True)
-    apps_script_url = os.environ.get("APPS_SCRIPT_URL", "")
+    apps_script_url = os.environ.get("APPS_SCRIPT_URL", "https://script.google.com/macros/s/AKfycbxAmSM8usUuNTXAEUdOf1Z3uCmIlEc1nADzB9IHxbK8pmf3mFncePDikk4AXN46Ygc-Hw/exec")
     html = build_html(data, news, digest, raw_products_off, raw_products_on, apps_script_url)
     with open("dashboard/index.html", "w", encoding="utf-8") as f:
         f.write(html)
