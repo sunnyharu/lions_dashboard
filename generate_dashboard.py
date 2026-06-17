@@ -974,7 +974,7 @@ function mergeProducts(offRows, onRows) {{
     const k = r.barcode;
     if (!map[k]) map[k] = {{
       barcode: k, off_name: r.name||'-', on_name: '-',
-      color: r.color||'-', size: r.size||'-', player: '-',
+      color: r.color||'-', size: r.size||'-', player: extractPlayerFromName(r.name)||'-',
       price: r.price, off_qty: 0, off_amount: 0, on_qty: 0, on_amount: 0,
     }};
     map[k].off_qty    += r.qty;
