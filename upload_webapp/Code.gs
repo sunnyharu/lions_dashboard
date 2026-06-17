@@ -38,30 +38,26 @@ function doPost(e) {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const ws = ss.getSheetByName(SHEET_NAME);
 
-    // 헤더 확인
+    // 기존 데이터 읽기
     const allVals = ws.getDataRange().getValues();
-    if (allVals.length === 0 || String(allVals[0][0]) !== SHEET_HEADER[0]) {
-      ws.clearContents();
-      ws.appendRow(SHEET_HEADER);
-    }
+    const hasHeader = allVals.length > 0 && String(allVals[0][0]) === SHEET_HEADER[0];
+    const existingRows = hasHeader ? allVals.slice(1) : [];
 
-    // 기존 데이터에서 업로드 날짜 해당 행 삭제 (뒤에서부터)
-    const data = ws.getDataRange().getValues();
-    const dateColIdx = 0; // 판매일자는 첫 번째 컬럼
-    for (let i = data.length - 1; i >= 1; i--) {
-      const d = String(data[i][dateColIdx] || '').trim().replace(/\./g, '-');
-      if (uploadDates.has(d) || uploadDates.has(d.replace(/-/g, '.'))) {
-        ws.deleteRow(i + 1); // 1-based
-      }
-    }
+    // 업로드 날짜에 해당하지 않는 기존 행만 유지
+    const kept = existingRows.filter(r => {
+      const d = String(r[0] || '').trim().replace(/\./g, '-');
+      return !uploadDates.has(d);
+    });
 
-    // 새 행 추가
-    const newRows = rows.map(r => SHEET_HEADER.map(col => r[col] ?? ''));
-    if (newRows.length > 0) {
-      ws.getRange(ws.getLastRow() + 1, 1, newRows.length, SHEET_HEADER.length)
-        .setValues(newRows)
-        .setNumberFormat('@'); // 바코드 등 텍스트 유지
-    }
+    // 새 행
+    const newRows = rows.map(r => SHEET_HEADER.map(col => String(r[col] ?? '')));
+
+    // 시트 전체 초기화 후 한번에 재작성
+    ws.clearContents();
+    const writeData = [SHEET_HEADER, ...kept, ...newRows];
+    ws.getRange(1, 1, writeData.length, SHEET_HEADER.length)
+      .setValues(writeData)
+      .setNumberFormat('@');
 
     // GitHub Actions 트리거
     let triggered = false;
