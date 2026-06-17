@@ -117,6 +117,12 @@ def fetch_data():
         try: return int(float(str(v).replace(",", "")))
         except: return 0
 
+    def _barcode(v):
+        s = str(v).strip()
+        if not s or s in ("", "None", "nan"): return ""
+        try: return str(int(float(s)))  # "8804775462283.0" → "8804775462283"
+        except: return s
+
     # ── 상품별매출(off) ───────────────────────────────────
     raw_products_off = []
     try:
@@ -124,7 +130,7 @@ def fetch_data():
         off_raw = ws_off.get_all_records()
         for row in off_raw:
             date    = str(row.get("판매일자",   "") or "").strip()
-            barcode = str(row.get("추가바코드1","") or "").strip()
+            barcode = _barcode(row.get("추가바코드1",""))
             name    = str(row.get("상품명",     "") or "").strip()
             color   = str(row.get("칼라명",     "") or "").strip()
             size    = str(row.get("사이즈명",   "") or "").strip()
@@ -148,7 +154,7 @@ def fetch_data():
         on_raw = ws_on.get_all_records()
         for row in on_raw:
             date    = str(row.get("판매일자", "") or "").strip()
-            barcode = str(row.get("바코드",   "") or "").strip()
+            barcode = _barcode(row.get("바코드",""))
             name    = str(row.get("상품명",   "") or "").strip()
             size    = str(row.get("사이즈",   "") or "").strip()
             player  = str(row.get("선수명",   "") or "").strip()
