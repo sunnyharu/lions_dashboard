@@ -927,6 +927,19 @@ function filterRows(rows, f, nameKey='name', barcodeKey='barcode') {{
   }});
 }}
 
+const PLAYER_KEYWORDS = ['구자욱','오승환','최형우','박승규','디아즈','김영웅','원태인','강민호',
+  '류지혁','이재현','전준우','김지찬','김성윤','김재윤','김태훈','김헌곤','매닝','미야지',
+  '박세혁','배찬승','백정현','심재훈','양창섭','이성규','이승현','이호성','임기영','장찬희',
+  '최원태','최지광','함수호','후라도'];
+
+function extractPlayerFromName(name) {{
+  if (!name) return '';
+  for (const p of PLAYER_KEYWORDS) {{
+    if (name.includes(p)) return p;
+  }}
+  return '';
+}}
+
 const COLOR_KEYWORDS = ['NAVY','BLUE','WHITE','BLACK','RED','PINK','GRAY','GREY','GREEN',
   'YELLOW','ORANGE','PURPLE','BROWN','BEIGE','IVORY','KHAKI','MINT','WINE',
   'SKY BLUE','MELANGE GREY','LIGHT GREY','CHARCOAL','CREAM','GOLD','SILVER',
@@ -970,20 +983,23 @@ function mergeProducts(offRows, onRows) {{
     if (!r.barcode) return;
     const k = r.barcode;
     if (!map[k]) {{
-      const nameColor = extractColorFromName(r.name);
+      const nameColor  = extractColorFromName(r.name);
+      const namePlayer = isFree(r.player) ? extractPlayerFromName(r.name) : r.player;
       map[k] = {{
         barcode: k, off_name: '-', on_name: r.name||'-',
-        color: nameColor||'-', size: r.size||'-', player: r.player||'-',
+        color: nameColor||'-', size: r.size||'-', player: namePlayer||'-',
         price: r.price, off_qty: 0, off_amount: 0, on_qty: 0, on_amount: 0,
       }};
     }} else {{
-      if (r.name)   map[k].on_name = r.name;
-      if (r.player) map[k].player  = r.player;
+      if (r.name) map[k].on_name = r.name;
       // OFF 사이즈가 free/공통이고 ON에 실제 사이즈 있으면 ON 우선
       if (isFree(map[k].size) && !isFree(r.size)) map[k].size = r.size;
       // OFF 색상이 free/공통이고 ON에 실제 색상 있으면 ON 우선
       const onColor = isFree(r.color) ? extractColorFromName(r.name) : r.color;
       if (isFree(map[k].color) && onColor) map[k].color = onColor;
+      // OFF 선수명 없고 ON에 선수명 있으면 ON 우선 (필드 또는 상품명 추출)
+      const onPlayer = isFree(r.player) ? extractPlayerFromName(r.name) : r.player;
+      if (isFree(map[k].player) && onPlayer) map[k].player = onPlayer;
       if (!map[k].price) map[k].price = r.price;
     }}
     map[k].on_qty    += r.qty;
