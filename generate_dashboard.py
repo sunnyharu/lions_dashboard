@@ -248,15 +248,10 @@ def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
     ha_month_labels  = [m[5:].lstrip("0") + "월" for m in ha_months]
     res_month_labels = [m[5:].lstrip("0") + "월" for m in res_months]
 
-    home_off_data = [monthly_ha_sum[m]["홈"]["off"]    for m in ha_months]
-    home_on_data  = [monthly_ha_sum[m]["홈"]["on"]     for m in ha_months]
-    away_off_data = [monthly_ha_sum[m]["어웨이"]["off"] for m in ha_months]
-    away_on_data  = [monthly_ha_sum[m]["어웨이"]["on"]  for m in ha_months]
-
-    win_off_data  = [monthly_res_sum[m]["승"]["off"] for m in res_months]
-    win_on_data   = [monthly_res_sum[m]["승"]["on"]  for m in res_months]
-    lose_off_data = [monthly_res_sum[m]["패"]["off"] for m in res_months]
-    lose_on_data  = [monthly_res_sum[m]["패"]["on"]  for m in res_months]
+    home_total = [monthly_ha_sum[m]["홈"]["off"]    + monthly_ha_sum[m]["홈"]["on"]    for m in ha_months]
+    away_total = [monthly_ha_sum[m]["어웨이"]["off"] + monthly_ha_sum[m]["어웨이"]["on"] for m in ha_months]
+    win_total  = [monthly_res_sum[m]["승"]["off"] + monthly_res_sum[m]["승"]["on"] for m in res_months]
+    lose_total = [monthly_res_sum[m]["패"]["off"] + monthly_res_sum[m]["패"]["on"] for m in res_months]
 
     # ── 월별 요약 데이터 계산 ────────────────────────────────
     monthly_summary = defaultdict(lambda: {"off": 0, "on": 0})
@@ -401,8 +396,9 @@ def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
   .kpi .value .unit {{ font-size: 13px; font-weight: 400; color: #888; margin-left: 3px; }}
   .kpi .sub   {{ font-size: 11px; color: #aaa; margin-top: 4px; }}
 
-  /* 차트 그리드 */
-  .charts {{ display: grid; grid-template-columns: 2fr 1fr 1fr; grid-auto-rows: 320px; gap: 16px; padding: 20px 32px; }}
+  /* 차트 */
+  .charts-top {{ padding: 20px 32px 0; }}
+  .charts-bottom {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px 32px 0; }}
   .chart-card {{
     background: white; border-radius: 12px; padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
@@ -547,8 +543,8 @@ def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
   .drilldown-chart-wrap {{ height:220px; position:relative; }}
 
   @media (max-width: 900px) {{
-    .charts {{ grid-template-columns: 1fr; }}
-    .kpi-row, .charts, .table-section, .product-section, .issue-section {{ padding-left: 16px; padding-right: 16px; }}
+    .charts-bottom {{ grid-template-columns: 1fr; }}
+    .kpi-row, .charts-top, .charts-bottom, .table-section, .product-section, .issue-section {{ padding-left: 16px; padding-right: 16px; }}
     .issue-layout {{ grid-template-columns: 1fr; }}
   }}
 </style>
@@ -593,8 +589,8 @@ def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
   </div>
 </div>
 
-<div class="charts">
-  <div class="chart-card">
+<div class="charts-top">
+  <div class="chart-card" style="height:320px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
       <h3 style="margin-bottom:0">날짜별 거래액 추이</h3>
       <button onclick="openNoteModal()" title="특이사항 입력"
@@ -606,15 +602,17 @@ def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
       <canvas id="trendChart"></canvas>
     </div>
   </div>
-  <div class="chart-card side">
+</div>
+<div class="charts-bottom">
+  <div class="chart-card" style="height:280px">
     <h3>홈 / 어웨이 월별 거래액</h3>
-    <div class="chart-wrap">
+    <div style="position:relative;width:100%;height:calc(100% - 36px)">
       <canvas id="haChart"></canvas>
     </div>
   </div>
-  <div class="chart-card side">
+  <div class="chart-card" style="height:280px">
     <h3>경기 결과별 월별 거래액</h3>
-    <div class="chart-wrap">
+    <div style="position:relative;width:100%;height:calc(100% - 36px)">
       <canvas id="resultChart"></canvas>
     </div>
   </div>
@@ -1106,65 +1104,47 @@ const topLabelPlugin = {{
   }}
 }};
 
-const lineOpts = () => ({{
+const barSideOpts = () => ({{
   responsive: true,
   maintainAspectRatio: false,
-  plugins: {{ legend: {{ position: 'bottom', labels: {{ boxWidth: 10, font: {{ size: 11 }} }} }} }},
+  plugins: {{ legend: {{ position: 'bottom', labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }} }},
   scales: {{
     y: {{
       min: 0,
       ticks: {{ callback: v => v >= 1e6 ? (v/1e6).toFixed(0)+'M' : v.toLocaleString(), font: {{ size: 10 }} }},
       grid: {{ color: '#f0f0f0' }},
     }},
-    x: {{ ticks: {{ font: {{ size: 11 }} }} }}
+    x: {{ ticks: {{ font: {{ size: 12 }} }} }}
   }},
-  layout: {{ padding: {{ top: 8, bottom: 0 }} }}
+  layout: {{ padding: {{ top: 16 }} }}
 }});
 
-// ── 홈/어웨이 월별 합산 라인 ──
+// ── 홈/어웨이 월별 합산 막대 ──
 new Chart(document.getElementById('haChart'), {{
-  type: 'line',
+  type: 'bar',
+  plugins: [topLabelPlugin],
   data: {{
     labels: {json.dumps(ha_month_labels)},
     datasets: [
-      {{ label: '홈 OFF', data: {json.dumps(home_off_data)},
-         borderColor: OFF, backgroundColor: alpha(OFF, .15),
-         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false }},
-      {{ label: '홈 ON',  data: {json.dumps(home_on_data)},
-         borderColor: ON, backgroundColor: alpha(ON, .1),
-         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false }},
-      {{ label: '어웨이 OFF', data: {json.dumps(away_off_data)},
-         borderColor: OFF, backgroundColor: alpha(OFF, .05),
-         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false, borderDash: [5,3] }},
-      {{ label: '어웨이 ON',  data: {json.dumps(away_on_data)},
-         borderColor: ON, backgroundColor: alpha(ON, .05),
-         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false, borderDash: [5,3] }},
+      {{ label: '홈',    data: {json.dumps(home_total)}, backgroundColor: alpha(OFF, .85) }},
+      {{ label: '어웨이', data: {json.dumps(away_total)}, backgroundColor: alpha(ON,  .75) }},
     ]
   }},
-  options: lineOpts(),
+  options: barSideOpts(),
 }});
 
-// ── 결과별 월별 합산 라인 ──
+// ── 결과별 월별 합산 막대 ──
 new Chart(document.getElementById('resultChart'), {{
-  type: 'line',
+  type: 'bar',
+  plugins: [topLabelPlugin],
   data: {{
     labels: {json.dumps(res_month_labels)},
     datasets: [
-      {{ label: '승 OFF', data: {json.dumps(win_off_data)},
-         borderColor: '#2e7d32', backgroundColor: 'rgba(46,125,50,.1)',
-         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false }},
-      {{ label: '승 ON',  data: {json.dumps(win_on_data)},
-         borderColor: '#81c784', backgroundColor: 'rgba(129,199,132,.1)',
-         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false }},
-      {{ label: '패 OFF', data: {json.dumps(lose_off_data)},
-         borderColor: '#c62828', backgroundColor: 'rgba(198,40,40,.1)',
-         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false, borderDash: [5,3] }},
-      {{ label: '패 ON',  data: {json.dumps(lose_on_data)},
-         borderColor: '#ef9a9a', backgroundColor: 'rgba(239,154,154,.1)',
-         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false, borderDash: [5,3] }},
+      {{ label: '승', data: {json.dumps(win_total)},  backgroundColor: 'rgba(46,125,50,.8)' }},
+      {{ label: '패', data: {json.dumps(lose_total)}, backgroundColor: 'rgba(198,40,40,.7)' }},
     ]
   }},
-  options: lineOpts(),
+  options: barSideOpts(),
 }});
 
 // ── 특이사항 입력 모달 ──
