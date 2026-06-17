@@ -39,7 +39,7 @@ DATE_SHEET = yesterday.strftime("%Y.%m.%d") # 2026.05.20
 LOGIN_URL = "https://playmd.xmd.co.kr/"
 API_URL   = "https://playmd.xmd.co.kr/api/xagt/xagt5000q_ver2_s01"
 
-SHEET_HEADER = ["판매일자", "상품코드", "상품명", "칼라명", "사이즈명", "자사바코드", "판매단가", "판매수량", "실판매금액"]
+SHEET_HEADER = ["판매일자", "상품코드", "상품명", "칼라명", "사이즈명", "자사바코드", "추가바코드1", "판매단가", "판매수량", "실판매금액"]
 
 
 # ── Google Sheets ────────────────────────────────────
@@ -83,10 +83,13 @@ def upload_to_sheets(rows: list):
 
     existing = ws.get_all_values()
 
-    # 헤더 없거나 잘못됐으면 복구
-    if not existing or existing[0] != SHEET_HEADER:
-        ws.insert_row(SHEET_HEADER, 1)
-        print("헤더 복구 완료")
+    # 헤더 없으면 추가, 다르면 1행 업데이트 (insert 하면 데이터 밀림)
+    if not existing:
+        ws.append_row(SHEET_HEADER)
+        existing = [SHEET_HEADER]
+    elif existing[0] != SHEET_HEADER:
+        ws.update([SHEET_HEADER], "A1")
+        print("헤더 업데이트 완료")
         existing = ws.get_all_values()
 
     existing_dates = {r[0].strip() for r in existing[1:] if r}
@@ -143,7 +146,7 @@ def fetch_product_data(cookies: dict) -> list:
         "viewSetInfo":           False,
         "viewSetInfoDisabled":   False,
         "viewSetSalse":          False,
-        "viewSubBarcode1":       False,
+        "viewSubBarcode1":       True,
         "viewSubBarcode2":       False,
         "viewTAXFREEInfo":       False,
         "ACSTNAME":  "",
@@ -217,8 +220,9 @@ def aggregate(data: list) -> list:
         "상품명":    ["GODNM",  "ITEMNM", "PRODNM"],
         "칼라명":    ["CRNM",   "COLORNM","CLRNM"],
         "사이즈명":  ["SZNM",   "SIZENM", "SIZNM"],
-        "자사바코드":["BARNO1", "BARCD",  "BARCODE", "MAINBARCD"],
-        "판매단가":  ["SALPR",  "SCHPR",  "PRICE",  "GODPR",  "SALUPRC", "SAPRC", "SLPRC"],
+        "자사바코드":  ["BARNO1", "BARCD",   "BARCODE",  "MAINBARCD"],
+        "추가바코드1": ["CBARNO1"],
+        "판매단가":    ["SALPR",  "SCHPR",   "PRICE",   "GODPR",  "SALUPRC", "SAPRC", "SLPRC"],
         "판매수량":  ["SALQT",  "QTY",    "SALQTY", "SALQTA"],
         "실판매금액":["RSALAMT","SALAMT", "NETAMT", "RSLAMT", "ACSLAMT", "NETSLAMT", "SLAMTI", "ACSALAMT"],
     }
@@ -239,7 +243,7 @@ def aggregate(data: list) -> list:
         else:
             print(f"  {col} → 키 없음 (후보: {candidates})")
 
-    # 집계 (상품코드+상품명+칼라명+사이즈명+자사바코드+판매단가 기준)
+    # 집계 (상품코드+상품명+칼라명+사이즈명+자사바코드 기준)
     agg = {}
     for row in data:
         if not isinstance(row, dict):
@@ -252,22 +256,25 @@ def aggregate(data: list) -> list:
             str(row.get(col_keys.get("사이즈명",  ""), "") or "").strip(),
             str(row.get(col_keys.get("자사바코드",""), "") or "").strip(),
         )
-        단가_raw = row.get(col_keys.get("판매단가", ""), 0) or 0
-        수량_raw = row.get(col_keys.get("판매수량", ""), 0) or 0
-        금액_raw = row.get(col_keys.get("실판매금액", ""), 0) or 0
+        단가_raw   = row.get(col_keys.get("판매단가",   ""), 0) or 0
+        수량_raw   = row.get(col_keys.get("판매수량",   ""), 0) or 0
+        금액_raw   = row.get(col_keys.get("실판매금액", ""), 0) or 0
+        추가바코드 = str(row.get(col_keys.get("추가바코드1", ""), "") or "").strip()
 
         def to_int(v):
             try: return int(float(str(v).replace(",", "").strip()))
             except: return 0
 
         if key not in agg:
-            agg[key] = {"단가": to_int(단가_raw), "수량": 0, "금액": 0}
+            agg[key] = {"단가": to_int(단가_raw), "수량": 0, "금액": 0, "추가바코드1": 추가바코드}
+        elif not agg[key]["추가바코드1"] and 추가바코드:
+            agg[key]["추가바코드1"] = 추가바코드
         agg[key]["수량"] += to_int(수량_raw)
         agg[key]["금액"] += to_int(금액_raw)
 
     rows = []
     for (코드, 명, 칼라, 사이즈, 바코드), v in sorted(agg.items(), key=lambda x: -x[1]["금액"]):
-        rows.append([DATE_SHEET, 코드, 명, 칼라, 사이즈, 바코드, v["단가"], v["수량"], v["금액"]])
+        rows.append([DATE_SHEET, 코드, 명, 칼라, 사이즈, 바코드, v["추가바코드1"], v["단가"], v["수량"], v["금액"]])
 
     print(f"집계 결과: {len(rows)}개 상품 SKU")
     return rows
