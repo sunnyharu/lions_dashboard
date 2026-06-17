@@ -225,41 +225,38 @@ def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
     chart_total  = [r["total"] for r in data]
     chart_notes  = [r.get("note", "") for r in data]
 
-    # 월별 홈/어웨이 평균
+    # 월별 홈/어웨이·결과별 합산
     from collections import defaultdict
     def month_label(d): return d[:4] + "." + d[5:7]  # "2026.04"
 
-    monthly_ha  = defaultdict(lambda: defaultdict(list))
-    monthly_res = defaultdict(lambda: defaultdict(list))
+    monthly_ha_sum  = defaultdict(lambda: {"홈": {"off": 0, "on": 0}, "어웨이": {"off": 0, "on": 0}})
+    monthly_res_sum = defaultdict(lambda: {"승": {"off": 0, "on": 0}, "패": {"off": 0, "on": 0}})
     for r in game_days:
-        m = month_label(r["date"])
+        m  = month_label(r["date"])
         ha = r["home_away"]
         rs = r["result"]
-        if ha:
-            if r["off"]: monthly_ha[m][ha + "_off"].append(r["off"])
-            if r["on"]:  monthly_ha[m][ha + "_on"].append(r["on"])
+        if ha in ["홈", "어웨이"]:
+            monthly_ha_sum[m][ha]["off"] += r["off"]
+            monthly_ha_sum[m][ha]["on"]  += r["on"]
         if rs in ["승", "패"]:
-            if r["off"]: monthly_res[m][rs + "_off"].append(r["off"])
-            if r["on"]:  monthly_res[m][rs + "_on"].append(r["on"])
+            monthly_res_sum[m][rs]["off"] += r["off"]
+            monthly_res_sum[m][rs]["on"]  += r["on"]
 
-    ha_months  = sorted(monthly_ha.keys())
-    res_months = sorted(monthly_res.keys())
+    ha_months  = sorted(monthly_ha_sum.keys())
+    res_months = sorted(monthly_res_sum.keys())
 
-    ha_labels, ha_off_data, ha_on_data = [], [], []
-    for ha in ["홈", "어웨이"]:
-        for m in ha_months:
-            ml = m[5:].lstrip("0") + "월"
-            ha_labels.append(f"{ha} {ml}")
-            ha_off_data.append(avg(monthly_ha[m].get(ha + "_off", [])))
-            ha_on_data.append(avg(monthly_ha[m].get(ha + "_on",  [])))
+    ha_month_labels  = [m[5:].lstrip("0") + "월" for m in ha_months]
+    res_month_labels = [m[5:].lstrip("0") + "월" for m in res_months]
 
-    res_labels, res_off_data, res_on_data = [], [], []
-    for rs in ["승", "패"]:
-        for m in res_months:
-            ml = m[5:].lstrip("0") + "월"
-            res_labels.append(f"{rs} {ml}")
-            res_off_data.append(avg(monthly_res[m].get(rs + "_off", [])))
-            res_on_data.append(avg(monthly_res[m].get(rs + "_on",  [])))
+    home_off_data = [monthly_ha_sum[m]["홈"]["off"]    for m in ha_months]
+    home_on_data  = [monthly_ha_sum[m]["홈"]["on"]     for m in ha_months]
+    away_off_data = [monthly_ha_sum[m]["어웨이"]["off"] for m in ha_months]
+    away_on_data  = [monthly_ha_sum[m]["어웨이"]["on"]  for m in ha_months]
+
+    win_off_data  = [monthly_res_sum[m]["승"]["off"] for m in res_months]
+    win_on_data   = [monthly_res_sum[m]["승"]["on"]  for m in res_months]
+    lose_off_data = [monthly_res_sum[m]["패"]["off"] for m in res_months]
+    lose_on_data  = [monthly_res_sum[m]["패"]["on"]  for m in res_months]
 
     # ── 월별 요약 데이터 계산 ────────────────────────────────
     monthly_summary = defaultdict(lambda: {"off": 0, "on": 0})
@@ -610,13 +607,13 @@ def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
     </div>
   </div>
   <div class="chart-card side">
-    <h3>홈 / 어웨이 평균 거래액</h3>
+    <h3>홈 / 어웨이 월별 거래액</h3>
     <div class="chart-wrap">
       <canvas id="haChart"></canvas>
     </div>
   </div>
   <div class="chart-card side">
-    <h3>경기 결과별 평균 거래액</h3>
+    <h3>경기 결과별 월별 거래액</h3>
     <div class="chart-wrap">
       <canvas id="resultChart"></canvas>
     </div>
@@ -1109,47 +1106,65 @@ const topLabelPlugin = {{
   }}
 }};
 
-const sideOpts = () => ({{
+const lineOpts = () => ({{
   responsive: true,
   maintainAspectRatio: false,
-  plugins: {{ legend: {{ position: 'bottom' }} }},
+  plugins: {{ legend: {{ position: 'bottom', labels: {{ boxWidth: 10, font: {{ size: 11 }} }} }} }},
   scales: {{
     y: {{
       min: 0,
-      ticks: {{ display: false }},
-      grid: {{ display: false }},
-      border: {{ display: false }},
-    }}
+      ticks: {{ callback: v => v >= 1e6 ? (v/1e6).toFixed(0)+'M' : v.toLocaleString(), font: {{ size: 10 }} }},
+      grid: {{ color: '#f0f0f0' }},
+    }},
+    x: {{ ticks: {{ font: {{ size: 11 }} }} }}
   }},
-  layout: {{ padding: {{ top: 24, bottom: 0 }} }}
+  layout: {{ padding: {{ top: 8, bottom: 0 }} }}
 }});
 
-// ── 홈/어웨이 월별 ──
+// ── 홈/어웨이 월별 합산 라인 ──
 new Chart(document.getElementById('haChart'), {{
-  type: 'bar',
-  plugins: [topLabelPlugin],
+  type: 'line',
   data: {{
-    labels: {json.dumps(ha_labels)},
+    labels: {json.dumps(ha_month_labels)},
     datasets: [
-      {{ label: 'OFF거래액', data: {json.dumps(ha_off_data)}, backgroundColor: alpha(OFF, .8) }},
-      {{ label: 'ON거래액',  data: {json.dumps(ha_on_data)},  backgroundColor: alpha(ON,  .8) }},
+      {{ label: '홈 OFF', data: {json.dumps(home_off_data)},
+         borderColor: OFF, backgroundColor: alpha(OFF, .15),
+         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false }},
+      {{ label: '홈 ON',  data: {json.dumps(home_on_data)},
+         borderColor: ON, backgroundColor: alpha(ON, .1),
+         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false }},
+      {{ label: '어웨이 OFF', data: {json.dumps(away_off_data)},
+         borderColor: OFF, backgroundColor: alpha(OFF, .05),
+         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false, borderDash: [5,3] }},
+      {{ label: '어웨이 ON',  data: {json.dumps(away_on_data)},
+         borderColor: ON, backgroundColor: alpha(ON, .05),
+         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false, borderDash: [5,3] }},
     ]
   }},
-  options: sideOpts(),
+  options: lineOpts(),
 }});
 
-// ── 결과별 월별 ──
+// ── 결과별 월별 합산 라인 ──
 new Chart(document.getElementById('resultChart'), {{
-  type: 'bar',
-  plugins: [topLabelPlugin],
+  type: 'line',
   data: {{
-    labels: {json.dumps(res_labels)},
+    labels: {json.dumps(res_month_labels)},
     datasets: [
-      {{ label: 'OFF거래액', data: {json.dumps(res_off_data)}, backgroundColor: alpha(OFF, .8) }},
-      {{ label: 'ON거래액',  data: {json.dumps(res_on_data)},  backgroundColor: alpha(ON,  .8) }},
+      {{ label: '승 OFF', data: {json.dumps(win_off_data)},
+         borderColor: '#2e7d32', backgroundColor: 'rgba(46,125,50,.1)',
+         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false }},
+      {{ label: '승 ON',  data: {json.dumps(win_on_data)},
+         borderColor: '#81c784', backgroundColor: 'rgba(129,199,132,.1)',
+         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false }},
+      {{ label: '패 OFF', data: {json.dumps(lose_off_data)},
+         borderColor: '#c62828', backgroundColor: 'rgba(198,40,40,.1)',
+         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false, borderDash: [5,3] }},
+      {{ label: '패 ON',  data: {json.dumps(lose_on_data)},
+         borderColor: '#ef9a9a', backgroundColor: 'rgba(239,154,154,.1)',
+         borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false, borderDash: [5,3] }},
     ]
   }},
-  options: sideOpts(),
+  options: lineOpts(),
 }});
 
 // ── 특이사항 입력 모달 ──
