@@ -927,6 +927,30 @@ function filterRows(rows, f, nameKey='name', barcodeKey='barcode') {{
   }});
 }}
 
+const COLOR_KEYWORDS = ['NAVY','BLUE','WHITE','BLACK','RED','PINK','GRAY','GREY','GREEN',
+  'YELLOW','ORANGE','PURPLE','BROWN','BEIGE','IVORY','KHAKI','MINT','WINE',
+  'SKY BLUE','MELANGE GREY','LIGHT GREY','CHARCOAL','CREAM','GOLD','SILVER',
+  '블루','화이트','블랙','네이비','레드','핑크','그레이','그린','민트','베이지','아이보리'];
+
+function extractColorFromName(name) {{
+  if (!name) return '';
+  // 괄호 안 색상 추출: (NAVY), (SKY BLUE) 등
+  const m = name.match(/\(([A-Z가-힣][A-Z가-힣 ]*)\)/);
+  if (m) {{
+    const candidate = m[1].trim();
+    // 색상 키워드 포함 여부 확인 (사람이름·이벤트문구 제외)
+    if (COLOR_KEYWORDS.some(c => candidate.toUpperCase().includes(c.toUpperCase()))) {{
+      return candidate;
+    }}
+  }}
+  // 상품명 내 색상 키워드 직접 추출
+  for (const c of COLOR_KEYWORDS) {{
+    const re = new RegExp('\\\\b' + c + '\\\\b', 'i');
+    if (re.test(name)) return c.toUpperCase();
+  }}
+  return '';
+}}
+
 function mergeProducts(offRows, onRows) {{
   const map = {{}};
   const isFree = v => !v || v==='-' || v.trim().toLowerCase()==='free' || v.trim()==='공통';
@@ -946,9 +970,10 @@ function mergeProducts(offRows, onRows) {{
     if (!r.barcode) return;
     const k = r.barcode;
     if (!map[k]) {{
+      const nameColor = extractColorFromName(r.name);
       map[k] = {{
         barcode: k, off_name: '-', on_name: r.name||'-',
-        color: '-', size: r.size||'-', player: r.player||'-',
+        color: nameColor||'-', size: r.size||'-', player: r.player||'-',
         price: r.price, off_qty: 0, off_amount: 0, on_qty: 0, on_amount: 0,
       }};
     }} else {{
@@ -957,7 +982,8 @@ function mergeProducts(offRows, onRows) {{
       // OFF 사이즈가 free/공통이고 ON에 실제 사이즈 있으면 ON 우선
       if (isFree(map[k].size) && !isFree(r.size)) map[k].size = r.size;
       // OFF 색상이 free/공통이고 ON에 실제 색상 있으면 ON 우선
-      if (isFree(map[k].color) && !isFree(r.color)) map[k].color = r.color;
+      const onColor = isFree(r.color) ? extractColorFromName(r.name) : r.color;
+      if (isFree(map[k].color) && onColor) map[k].color = onColor;
       if (!map[k].price) map[k].price = r.price;
     }}
     map[k].on_qty    += r.qty;
