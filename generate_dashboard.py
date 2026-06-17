@@ -929,6 +929,8 @@ function filterRows(rows, f, nameKey='name', barcodeKey='barcode') {{
 
 function mergeProducts(offRows, onRows) {{
   const map = {{}};
+  const isFree = v => !v || v==='-' || v.trim().toLowerCase()==='free' || v.trim()==='공통';
+
   offRows.forEach(r => {{
     if (!r.barcode) return;
     const k = r.barcode;
@@ -952,7 +954,10 @@ function mergeProducts(offRows, onRows) {{
     }} else {{
       if (r.name)   map[k].on_name = r.name;
       if (r.player) map[k].player  = r.player;
-      if (!map[k].size || map[k].size==='-') map[k].size = r.size||'-';
+      // OFF 사이즈가 free/공통이고 ON에 실제 사이즈 있으면 ON 우선
+      if (isFree(map[k].size) && !isFree(r.size)) map[k].size = r.size;
+      // OFF 색상이 free/공통이고 ON에 실제 색상 있으면 ON 우선
+      if (isFree(map[k].color) && !isFree(r.color)) map[k].color = r.color;
       if (!map[k].price) map[k].price = r.price;
     }}
     map[k].on_qty    += r.qty;
