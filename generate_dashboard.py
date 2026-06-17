@@ -1097,7 +1097,7 @@ const topLabelPlugin = {{
         ctx.font = 'bold 11px sans-serif';
         ctx.fillStyle = '#444';
         ctx.textAlign = 'center';
-        ctx.fillText(Math.round(v / 1e6) + '백만', bar.x, bar.y - 5);
+        ctx.fillText(Math.round(v / 1e6).toLocaleString('ko-KR') + '백만', bar.x, bar.y - 5);
         ctx.restore();
       }});
     }});

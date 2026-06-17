@@ -204,7 +204,7 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.06.17 00:40</span>
+  <span class="updated">최종 업데이트: 2026.06.17 10:40</span>
 </div>
 
 <div class="kpi-row">
@@ -1929,7 +1929,7 @@ const topLabelPlugin = {
         ctx.font = 'bold 11px sans-serif';
         ctx.fillStyle = '#444';
         ctx.textAlign = 'center';
-        ctx.fillText(Math.round(v / 1e6) + '백만', bar.x, bar.y - 5);
+        ctx.fillText(Math.round(v / 1e6).toLocaleString('ko-KR') + '백만', bar.x, bar.y - 5);
         ctx.restore();
       });
     });
