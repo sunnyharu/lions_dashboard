@@ -37,14 +37,19 @@
   /* KPI */
   .kpi-row { display: flex; gap: 16px; padding: 24px 32px 0; flex-wrap: wrap; }
   .kpi {
-    flex: 1; min-width: 160px; background: white;
+    flex: 1; min-width: 140px; background: white;
     border-radius: 12px; padding: 20px 24px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
   }
+  .kpi.wide { flex: 2; min-width: 200px; }
+  .kpi.narrow { flex: 0.7; min-width: 110px; }
   .kpi .label { font-size: 12px; color: #888; margin-bottom: 8px; }
-  .kpi .value { font-size: 24px; font-weight: 700; color: #002D72; }
+  .kpi .value {
+    font-size: 22px; font-weight: 700; color: #002D72;
+    display: flex; align-items: baseline; gap: 3px; white-space: nowrap;
+  }
   .kpi .value.red { color: #C8102E; }
-  .kpi .value .unit { font-size: 13px; font-weight: 400; color: #888; margin-left: 3px; }
+  .kpi .value .unit { font-size: 13px; font-weight: 400; color: #888; }
   .kpi .sub   { font-size: 11px; color: #aaa; margin-top: 4px; }
 
   /* 차트 */
@@ -204,39 +209,39 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.06.17 01:45</span>
+  <span class="updated">최종 업데이트: 2026.06.17 10:51</span>
 </div>
 
 <div class="kpi-row">
-  <div class="kpi">
+  <div class="kpi wide">
     <div class="label">OFF 거래액 (누계)</div>
     <div class="value"><span id="kpi-off">5,247,471,891</span><span class="unit">원</span></div>
     <div class="sub">2026.03.16 ~ 2026.06.16</div>
   </div>
-  <div class="kpi">
+  <div class="kpi wide">
     <div class="label">ON 거래액 (누계)</div>
     <div class="value"><span id="kpi-on">3,953,355,960</span><span class="unit">원</span></div>
     <div class="sub">2026.03.16 ~ 2026.06.16</div>
   </div>
-  <div class="kpi">
+  <div class="kpi wide">
     <div class="label">총 거래액 (누계)</div>
     <div class="value red"><span id="kpi-total">9,200,827,851</span><span class="unit">원</span></div>
     <div class="sub">2026.03.16 ~ 2026.06.16</div>
   </div>
-  <div class="kpi">
+  <div class="kpi narrow">
     <div class="label">경기 수</div>
     <div class="value">67</div>
     <div class="sub">홈 35 · 어웨이 32</div>
   </div>
-  <div class="kpi">
+  <div class="kpi narrow">
     <div class="label">승률</div>
     <div class="value">58%</div>
     <div class="sub">37승 27패</div>
   </div>
-  <div class="kpi">
+  <div class="kpi narrow">
     <div class="label">홈 평균 관중</div>
     <div class="value">23,116<span class="unit">명</span></div>
-    <div class="sub">평균 점유율 96.3% (수용 24,000명)</div>
+    <div class="sub">점유율 96.3%</div>
   </div>
 </div>
 
