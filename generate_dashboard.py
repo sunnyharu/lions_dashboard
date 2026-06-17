@@ -708,6 +708,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       </div>
       <div style="display:flex;gap:8px">
         <button id="productExcelBtn" onclick="downloadProductExcel()">📥 엑셀 다운로드</button>
+        <button onclick="window.open('https://melonredash.melon.com/public/dashboards/tair5sIPcBqfUx1kHjmzWpA23RHeziMobBkoeBUt?org_slug=default','_blank')" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">📊 온라인 실적 조회</button>
         {'<button onclick="openUploadModal()" style="background:#C8102E;color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">📤 온라인 실적 업로드</button>' if apps_script_url else ''}
       </div>
     </div>
