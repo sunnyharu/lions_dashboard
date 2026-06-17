@@ -1285,12 +1285,31 @@ function downloadProductExcel() {{
   const f = getFilters();
   const offRows = filterRows(rawOffData, f);
   const onRows  = filterRows(rawOnData,  f);
+
+  // mergeProducts로 바코드별 옵션값 확보
+  const merged = {{}};
+  mergeProducts(offRows, onRows).forEach(p => {{ merged[p.barcode] = p; }});
+
   const offSheet = [['판매일자','바코드','OFF상품명','칼라','사이즈','판매단가','판매수량','실판매금액'],
     ...offRows.sort((a,b)=>a.date.localeCompare(b.date))
-      .map(r=>[r.date,r.barcode,r.name,r.color,r.size,r.price,r.qty,r.amount])];
-  const onSheet  = [['판매일자','바코드','ON상품명','사이즈','선수명','판매단가','판매수량','실판매금액'],
+      .map(r => {{
+        const m = merged[r.barcode] || {{}};
+        return [r.date, r.barcode, r.name,
+          m.color||r.color, m.size||r.size,
+          r.price, r.qty, r.amount];
+      }})];
+
+  const onSheet = [['판매일자','바코드','ON상품명','칼라','사이즈','선수명','판매단가','판매수량','실판매금액'],
     ...onRows.sort((a,b)=>a.date.localeCompare(b.date))
-      .map(r=>[r.date,r.barcode,r.name,r.size,r.player,r.price,r.qty,r.amount])];
+      .map(r => {{
+        const m = merged[r.barcode] || {{}};
+        return [r.date, r.barcode, r.name,
+          m.color || extractColorFromName(r.name),
+          m.size  || r.size,
+          m.player|| extractPlayerFromName(r.name) || r.player,
+          r.price, r.qty, r.amount];
+      }})];
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(offSheet), '오프라인');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(onSheet),  '온라인');
