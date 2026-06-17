@@ -1056,7 +1056,7 @@ function renderProductTable() {{
     html += `<tr style="cursor:pointer" onclick="showDrilldown('${{p.barcode.replace(/'/g,"\\'")}}','${{(p.off_name||p.on_name).replace(/'/g,"\\'")}}')">
       <td style="font-size:11px;color:#888">${{p.barcode}}</td>
       <td><span style="font-size:10px;color:#888;display:inline-block;width:30px">[OFF]</span><span style="font-size:11px">${{p.off_name}}</span><br><span style="font-size:10px;color:#888;display:inline-block;width:30px">[ON]</span><span style="font-size:11px">${{p.on_name}}</span></td>
-      <td>${{p.color}}</td><td>${{p.size}}</td><td>${{p.player}}</td>
+      <td>${{isFree(p.color)?'-':p.color}}</td><td>${{isFree(p.size)?'-':p.size}}</td><td>${{isFree(p.player)?'-':p.player}}</td>
       <td class="num">${{fmt(p.price)}}</td>
       <td class="num">${{fmt(p.off_qty)}}</td>
       <td class="num">${{fmt(p.on_qty)}}</td>
