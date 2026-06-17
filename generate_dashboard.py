@@ -386,14 +386,19 @@ def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
   /* KPI */
   .kpi-row {{ display: flex; gap: 16px; padding: 24px 32px 0; flex-wrap: wrap; }}
   .kpi {{
-    flex: 1; min-width: 160px; background: white;
+    flex: 1; min-width: 140px; background: white;
     border-radius: 12px; padding: 20px 24px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
   }}
+  .kpi.wide {{ flex: 2; min-width: 200px; }}
+  .kpi.narrow {{ flex: 0.7; min-width: 110px; }}
   .kpi .label {{ font-size: 12px; color: #888; margin-bottom: 8px; }}
-  .kpi .value {{ font-size: 24px; font-weight: 700; color: #002D72; }}
+  .kpi .value {{
+    font-size: 22px; font-weight: 700; color: #002D72;
+    display: flex; align-items: baseline; gap: 3px; white-space: nowrap;
+  }}
   .kpi .value.red {{ color: #C8102E; }}
-  .kpi .value .unit {{ font-size: 13px; font-weight: 400; color: #888; margin-left: 3px; }}
+  .kpi .value .unit {{ font-size: 13px; font-weight: 400; color: #888; }}
   .kpi .sub   {{ font-size: 11px; color: #aaa; margin-top: 4px; }}
 
   /* 차트 */
@@ -557,35 +562,35 @@ def build_html(data: list, news: list, digest: str, raw_products: list) -> str:
 </div>
 
 <div class="kpi-row">
-  <div class="kpi">
+  <div class="kpi wide">
     <div class="label">OFF 거래액 (누계)</div>
     <div class="value"><span id="kpi-off">{fmt(total_off)}</span><span class="unit">원</span></div>
     <div class="sub">{date_range_label}</div>
   </div>
-  <div class="kpi">
+  <div class="kpi wide">
     <div class="label">ON 거래액 (누계)</div>
     <div class="value"><span id="kpi-on">{fmt(total_on)}</span><span class="unit">원</span></div>
     <div class="sub">{date_range_label}</div>
   </div>
-  <div class="kpi">
+  <div class="kpi wide">
     <div class="label">총 거래액 (누계)</div>
     <div class="value red"><span id="kpi-total">{fmt(total_total)}</span><span class="unit">원</span></div>
     <div class="sub">{date_range_label}</div>
   </div>
-  <div class="kpi">
+  <div class="kpi narrow">
     <div class="label">경기 수</div>
     <div class="value">{len(game_days)}</div>
     <div class="sub">홈 {len(home_rows)} · 어웨이 {len(away_rows)}</div>
   </div>
-  <div class="kpi">
+  <div class="kpi narrow">
     <div class="label">승률</div>
     <div class="value">{win_rate}</div>
     <div class="sub">{wins}승 {losses}패</div>
   </div>
-  <div class="kpi">
+  <div class="kpi narrow">
     <div class="label">홈 평균 관중</div>
     <div class="value">{fmt(avg_crowd)}<span class="unit">명</span></div>
-    <div class="sub">평균 점유율 {avg_occupancy} (수용 {STADIUM_CAPACITY:,}명)</div>
+    <div class="sub">점유율 {avg_occupancy}</div>
   </div>
 </div>
 
