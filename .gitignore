@@ -2,3 +2,4 @@
 google_credentials.json
 debug_*.png
 __pycache__/
+dashboard/index.html
