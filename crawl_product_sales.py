@@ -27,7 +27,7 @@ PASSWORD     = os.environ.get("PLAYMD_PASS", "")
 
 # ── Google Sheets 설정 ────────────────────────────────
 SPREADSHEET_ID    = "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU"
-SHEET_NAME        = "상품별매출"
+SHEET_NAME        = "상품별매출(off)"
 GOOGLE_CREDS_ENV  = os.environ.get("GOOGLE_CREDENTIALS", "")
 GOOGLE_CREDS_FILE = "google_credentials.json"
 
