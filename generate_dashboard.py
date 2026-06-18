@@ -1270,7 +1270,9 @@ async function submitUpload() {{
     const result = await resp.json();
     if (result.ok) {{
       status.style.color = '#1a7f37';
-      status.textContent = `✅ ${{result.inserted}}행 업로드 완료! 대시보드 재생성 중...`;
+      status.textContent = `✅ ${{result.inserted}}행 업로드 완료! 약 2~3분 후 대시보드가 자동으로 갱신됩니다.`;
+      setTimeout(() => closeUploadModal(), 3000);
+      setTimeout(() => location.reload(), 3 * 60 * 1000);
     }} else {{
       status.style.color = '#C8102E';
       status.textContent = '❌ ' + result.error;
