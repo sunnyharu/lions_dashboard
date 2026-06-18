@@ -110,14 +110,15 @@ async def get_cookies() -> dict:
 
         print("로그인 중...")
         await page.goto(LOGIN_URL)
-        await page.wait_for_load_state("networkidle")
+        await page.wait_for_load_state("load")
+        await page.wait_for_timeout(2000)
         await page.fill("#txt-tenantLoginId", COMPANY_USER)
         await page.fill("#pw-tenantPassword", COMPANY_PASS)
         await page.fill("#txt-userLoginId",   USERNAME)
         await page.fill("#txt-userPassword",  PASSWORD)
         await page.locator("button:has-text('플레이엠디 로그인')").click()
-        await page.wait_for_timeout(3000)
-        await page.wait_for_load_state("networkidle")
+        await page.wait_for_timeout(5000)
+        await page.wait_for_load_state("load")
         print(f"로그인 완료: {page.url}")
 
         cookies = await page.context.cookies()
