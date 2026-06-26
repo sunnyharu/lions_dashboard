@@ -232,6 +232,9 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
     date_range_end   = dates_with_sales[-1] if dates_with_sales else ""
     date_range_label = f"{date_range_start} ~ {date_range_end}" if date_range_start else ""
 
+    off_last_date = max((r["date"] for r in raw_products_off if r["date"]), default="")
+    on_last_date  = max((r["date"] for r in raw_products_on  if r["date"]), default="")
+
     home_rows  = [r for r in game_days if r["home_away"] == "홈"]
     away_rows  = [r for r in game_days if r["home_away"] == "어웨이"]
     win_rows   = [r for r in game_days if r["result"] == "승"]
@@ -705,6 +708,10 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
         <h3 style="margin-bottom:4px">상품별 누적 판매 실적 (온/오프 통합)</h3>
         <span id="productRangeLabel" style="font-size:11px;color:#aaa"></span>
         <span style="font-size:11px;color:#bbb;margin-left:8px">※ 온라인 판매수량·금액은 취소 미반영</span>
+        <div style="margin-top:4px;display:flex;gap:12px">
+          <span style="font-size:11px;color:#888">🏪 오프라인 최근 업데이트: <b style="color:#555">{off_last_date or '-'}</b></span>
+          <span style="font-size:11px;color:#888">🌐 온라인 최근 업데이트: <b style="color:#555">{on_last_date or '-'}</b></span>
+        </div>
       </div>
       <div style="display:flex;gap:8px">
         <button id="productExcelBtn" onclick="downloadProductExcel()">📥 엑셀 다운로드</button>
