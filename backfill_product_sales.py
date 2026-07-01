@@ -16,11 +16,11 @@ from google.oauth2.service_account import Credentials
 load_dotenv()
 
 # ── 백필 기간 설정 ─────────────────────────────────────
-FROM_DATE = "20260316"   # 시작일
-TO_DATE   = "20260521"   # 종료일 (어제)
+FROM_DATE = "20260716"   # 시작일
+TO_DATE   = "20260722"   # 종료일
 
-FROM_DISPLAY = "2026.03.16"
-TO_DISPLAY   = "2026.05.21"
+FROM_DISPLAY = "2026.07.16"
+TO_DISPLAY   = "2026.07.22"
 
 # ── 플레이엠디 계정 ────────────────────────────────────
 COMPANY_USER = os.environ.get("PLAYMD_COMPANY_USER", "")
@@ -30,14 +30,14 @@ PASSWORD     = os.environ.get("PLAYMD_PASS", "")
 
 # ── Google Sheets 설정 ────────────────────────────────
 SPREADSHEET_ID    = "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU"
-SHEET_NAME        = "상품별매출"
+SHEET_NAME        = "상품별매출(off)"
 GOOGLE_CREDS_ENV  = os.environ.get("GOOGLE_CREDENTIALS", "")
 GOOGLE_CREDS_FILE = "google_credentials.json"
 
 LOGIN_URL = "https://playmd.xmd.co.kr/"
 API_URL   = "https://playmd.xmd.co.kr/api/xagt/xagt5000q_ver2_s01"
 
-SHEET_HEADER = ["판매일자", "상품코드", "상품명", "칼라명", "사이즈명", "자사바코드", "판매단가", "판매수량", "실판매금액"]
+SHEET_HEADER = ["판매일자", "상품코드", "상품명", "칼라명", "사이즈명", "자사바코드", "추가바코드1", "판매단가", "판매수량", "실판매금액"]
 
 KEY_MAP = {
     "판매일자":  ["ASALDT", "SALDT",  "SALEDT"],
@@ -45,7 +45,8 @@ KEY_MAP = {
     "상품명":    ["GODNM",  "ITEMNM", "PRODNM"],
     "칼라명":    ["CRNM",   "COLORNM","CLRNM"],
     "사이즈명":  ["SZNM",   "SIZENM", "SIZNM"],
-    "자사바코드":["BARNO1", "BARCD",  "BARCODE", "MAINBARCD"],
+    "자사바코드": ["BARNO1", "BARCD",  "BARCODE", "MAINBARCD"],
+    "추가바코드1":["CBARNO1"],
     "판매단가":  ["SALPR",  "SCHPR",  "PRICE",   "GODPR",  "SALUPRC"],
     "판매수량":  ["SALQT",  "QTY",    "SALQTY"],
     "실판매금액":["RSALAMT","SALAMT", "NETAMT",  "RSLAMT", "ACSLAMT"],
@@ -71,14 +72,14 @@ async def get_cookies() -> dict:
 
         print("로그인 중...")
         await page.goto(LOGIN_URL)
-        await page.wait_for_load_state("networkidle")
+        await page.wait_for_load_state("load")
         await page.fill("#txt-tenantLoginId", COMPANY_USER)
         await page.fill("#pw-tenantPassword", COMPANY_PASS)
         await page.fill("#txt-userLoginId",   USERNAME)
         await page.fill("#txt-userPassword",  PASSWORD)
         await page.locator("button:has-text('플레이엠디 로그인')").click()
         await page.wait_for_timeout(3000)
-        await page.wait_for_load_state("networkidle")
+        await page.wait_for_load_state("load")
         print(f"로그인 완료: {page.url}")
 
         cookies = await page.context.cookies()
@@ -104,7 +105,7 @@ def fetch_all(cookies: dict) -> list:
         "viewSetInfo":           False,
         "viewSetInfoDisabled":   False,
         "viewSetSalse":          False,
-        "viewSubBarcode1":       False,
+        "viewSubBarcode1":       True,
         "viewSubBarcode2":       False,
         "viewTAXFREEInfo":       False,
         "ACSTNAME":  "",
@@ -125,7 +126,7 @@ def fetch_all(cookies: dict) -> list:
         "I_PLANGB":  "",
         "I_REVENUE": "",
         "I_SALESMAN": "",
-        "I_SALGB":   "1",
+        "I_SALGB":   "",
         "I_SALNM":   "",
         "I_SGB":     [],
         "I_TEAM":    "",
@@ -201,19 +202,22 @@ def aggregate_by_date(data: list) -> list:
             str(row.get(col_keys.get("사이즈명")  or "", "") or "").strip(),
             str(row.get(col_keys.get("자사바코드") or "", "") or "").strip(),
         )
-        단가_raw = row.get(col_keys.get("판매단가")  or "", 0) or 0
-        수량_raw = row.get(col_keys.get("판매수량")  or "", 0) or 0
-        금액_raw = row.get(col_keys.get("실판매금액") or "", 0) or 0
+        단가_raw    = row.get(col_keys.get("판매단가")   or "", 0) or 0
+        수량_raw    = row.get(col_keys.get("판매수량")   or "", 0) or 0
+        금액_raw    = row.get(col_keys.get("실판매금액")  or "", 0) or 0
+        추가바코드  = str(row.get(col_keys.get("추가바코드1") or "", "") or "").strip()
 
         if key not in agg:
-            agg[key] = {"단가": to_int(단가_raw), "수량": 0, "금액": 0}
+            agg[key] = {"단가": to_int(단가_raw), "수량": 0, "금액": 0, "추가바코드1": 추가바코드}
+        elif not agg[key]["추가바코드1"] and 추가바코드:
+            agg[key]["추가바코드1"] = 추가바코드
         agg[key]["수량"] += to_int(수량_raw)
         agg[key]["금액"] += to_int(금액_raw)
 
     # 날짜 오름차순, 같은 날은 금액 내림차순
     rows = []
     for (날짜, 코드, 명, 칼라, 사이즈, 바코드), v in sorted(agg.items(), key=lambda x: (x[0][0], -x[0][1]["금액"]) if False else (x[0][0], -x[1]["금액"])):
-        rows.append([날짜, 코드, 명, 칼라, 사이즈, 바코드, v["단가"], v["수량"], v["금액"]])
+        rows.append([날짜, 코드, 명, 칼라, 사이즈, 바코드, v["추가바코드1"], v["단가"], v["수량"], v["금액"]])
 
     dates = sorted({r[0] for r in rows})
     print(f"집계 결과: {len(rows)}행 ({len(dates)}일치, {dates[0]} ~ {dates[-1]})")
@@ -239,21 +243,17 @@ def upload_to_sheets(rows: list):
         print("헤더 복구 완료")
         existing = ws.get_all_values()
 
-    existing_dates = {r[0].strip() for r in existing[1:] if r}
-    print(f"시트 기존 날짜: {sorted(existing_dates)}")
+    # 백필 대상 날짜 범위 계산
+    target_dates = {r[0] for r in rows}
+    print(f"덮어쓸 날짜: {sorted(target_dates)}")
 
-    new_rows = [r for r in rows if r[0] not in existing_dates]
-    skip_dates = {r[0] for r in rows if r[0] in existing_dates}
-
-    if skip_dates:
-        print(f"스킵 날짜 ({len(skip_dates)}일): {sorted(skip_dates)}")
-    if not new_rows:
-        print("모든 날짜가 이미 존재하여 업로드 없음")
-        return
-
-    ws.append_rows(new_rows, value_input_option="USER_ENTERED")
-    new_dates = sorted({r[0] for r in new_rows})
-    print(f"적재 완료: {len(new_rows)}행, {len(new_dates)}일치 ({new_dates[0]} ~ {new_dates[-1]})")
+    # 기존 데이터에서 대상 날짜 행 제거 후 새 데이터로 교체
+    kept = [existing[0]] + [r for r in existing[1:] if r and r[0].strip() not in target_dates]
+    write_data = kept + rows
+    ws.clear()
+    import time; time.sleep(1)
+    ws.append_rows(write_data, value_input_option="USER_ENTERED")
+    print(f"적재 완료: {len(rows)}행, {len(target_dates)}일치 ({min(target_dates)} ~ {max(target_dates)})")
 
 
 async def main():

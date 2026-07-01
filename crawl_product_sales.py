@@ -168,7 +168,7 @@ def fetch_product_data(cookies: dict) -> list:
         "I_PLANGB":  "",
         "I_REVENUE": "",
         "I_SALESMAN": "",
-        "I_SALGB":   "1",
+        "I_SALGB":   "",
         "I_SALNM":   "",
         "I_SGB":     [],
         "I_TEAM":    "",
