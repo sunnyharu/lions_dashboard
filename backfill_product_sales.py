@@ -16,11 +16,11 @@ from google.oauth2.service_account import Credentials
 load_dotenv()
 
 # ── 백필 기간 설정 ─────────────────────────────────────
-FROM_DATE = "20260716"   # 시작일
-TO_DATE   = "20260722"   # 종료일
+FROM_DATE = "20260316"   # 시작일
+TO_DATE   = "20260715"   # 종료일
 
-FROM_DISPLAY = "2026.07.16"
-TO_DISPLAY   = "2026.07.22"
+FROM_DISPLAY = "2026.03.16"
+TO_DISPLAY   = "2026.07.15"
 
 # ── 플레이엠디 계정 ────────────────────────────────────
 COMPANY_USER = os.environ.get("PLAYMD_COMPANY_USER", "")
