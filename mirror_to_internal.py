@@ -19,9 +19,8 @@ DST_ID = "1kwsFg2DoIlyYr5tfpx0b1htq0PSXpV1gqlls496Pb6s"   # 사내(테스트)
 GOOGLE_CREDS_ENV  = os.environ.get("GOOGLE_CREDENTIALS", "")
 GOOGLE_CREDS_FILE = "google_credentials.json"
 
-# 미러링 제외 탭 (사내 시트가 다른 기준을 쓰는 탭)
-#  - 상품별매출(on): 사내 시트는 순결제 기준(Redash 16900), 개인 시트는 gross 기준이라 덮어쓰면 안 됨
-EXCLUDE = {"상품별매출(on)"}
+# 미러링 제외 탭 (2026-08-07: 개인 시트도 순결제 기준으로 전환돼 제외 없음)
+EXCLUDE = set()
 
 
 def get_client():
