@@ -28,6 +28,12 @@ jobs:
           APPS_SCRIPT_URL: ${{ secrets.APPS_SCRIPT_URL }}
         run: python generate_dashboard.py
 
+      - name: 사내 시트 미러링 (이관 병행 운영)
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python mirror_to_internal.py
+        continue-on-error: true   # 미러링 실패해도 대시보드 배포는 진행
+
       - name: 대시보드 커밋 & 푸시
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
