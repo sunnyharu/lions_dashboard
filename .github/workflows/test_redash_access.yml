@@ -1,0 +1,45 @@
+name: Redash 접근 테스트 (임시)
+
+on:
+  push:
+    paths:
+      - '.github/workflows/test_redash_access.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Redash 네트워크 도달 테스트
+        run: |
+          {
+            echo "테스트 시각: $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo "러너: GitHub-hosted (ubuntu-latest, 외부망)"
+            echo ""
+            echo "== DNS =="
+            (getent hosts melonredash.melon.com || echo "DNS 실패") 2>&1
+            echo ""
+            echo "== HTTPS 응답 (10초 타임아웃) =="
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://melonredash.melon.com/api/session 2>&1) || code="TIMEOUT/차단"
+            echo "HTTP 상태: $code"
+            echo ""
+            if [ "$code" = "TIMEOUT/차단" ] || [ "$code" = "000" ]; then
+              echo "결론: ❌ 외부(hosted 러너)에서 접근 불가 — self-hosted 러너 필요"
+            else
+              echo "결론: ✅ 외부에서 네트워크 도달 가능 (상태 $code) — hosted 러너로 Redash 자동화 가능성 높음"
+            fi
+          } > redash_access_result.txt
+          cat redash_access_result.txt
+
+      - name: 결과 커밋
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add redash_access_result.txt
+          git commit -m "test: Redash 외부 접근 테스트 결과"
+          git pull --rebase origin main
+          git push
