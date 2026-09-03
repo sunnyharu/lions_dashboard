@@ -211,7 +211,7 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.09.03 13:35</span>
+  <span class="updated">최종 업데이트: 2026.09.03 13:42</span>
 </div>
 
 <div class="kpi-row">
@@ -267,10 +267,20 @@
     </div>
     <div style="display:flex;flex-direction:column;width:100%;height:calc(100% - 48px)">
       <div style="font-size:11px;font-weight:700;color:#888">중위값 이상 (이벤트·성수기)</div>
-      <div style="position:relative;width:100%;flex:1;min-height:0">
+      <div style="position:relative;width:100%;flex:1.1;min-height:0">
         <canvas id="trendChartTop"></canvas>
       </div>
-      <div style="font-size:11px;font-weight:700;color:#888;margin-top:6px">중위값 이하 (평시)</div>
+      <div style="display:flex;align-items:center;gap:10px;height:16px;margin:0 0 0 44px">
+        <svg width="100%" height="12" preserveAspectRatio="none" viewBox="0 0 1200 12" style="flex:1">
+          <path d="M0 6 Q 15 0, 30 6 T 60 6 T 90 6 T 120 6 T 150 6 T 180 6 T 210 6 T 240 6 T 270 6 T 300 6 T 330 6 T 360 6 T 390 6 T 420 6 T 450 6 T 480 6 T 510 6 T 540 6 T 570 6 T 600 6 T 630 6 T 660 6 T 690 6 T 720 6 T 750 6 T 780 6 T 810 6 T 840 6 T 870 6 T 900 6 T 930 6 T 960 6 T 990 6 T 1020 6 T 1050 6 T 1080 6 T 1110 6 T 1140 6 T 1170 6 T 1200 6"
+                fill="none" stroke="#bbb" stroke-width="1.5"/>
+        </svg>
+        <span style="font-size:10px;color:#999;white-space:nowrap">〜 중위값 기준 축 절단 · 평시 (중위값 이하) 〜</span>
+        <svg width="100%" height="12" preserveAspectRatio="none" viewBox="0 0 1200 12" style="flex:1">
+          <path d="M0 6 Q 15 0, 30 6 T 60 6 T 90 6 T 120 6 T 150 6 T 180 6 T 210 6 T 240 6 T 270 6 T 300 6 T 330 6 T 360 6 T 390 6 T 420 6 T 450 6 T 480 6 T 510 6 T 540 6 T 570 6 T 600 6 T 630 6 T 660 6 T 690 6 T 720 6 T 750 6 T 780 6 T 810 6 T 840 6 T 870 6 T 900 6 T 930 6 T 960 6 T 990 6 T 1020 6 T 1050 6 T 1080 6 T 1110 6 T 1140 6 T 1170 6 T 1200 6"
+                fill="none" stroke="#bbb" stroke-width="1.5"/>
+        </svg>
+      </div>
       <div style="position:relative;width:100%;flex:1;min-height:0">
         <canvas id="trendChartBottom"></canvas>
       </div>
@@ -3258,15 +3268,23 @@ const notePlugin = {
           minY = Math.min(minY, m.data[i].y);
         }
       }
-      // 평시 보기에서 클리핑된 포인트는 차트 상단 안쪽으로 고정
-      minY = Math.max(minY, chart.chartArea.top + 42);
+      // 라벨이 차트 영역 밖으로 잘리지 않도록 위치 보정
+      const area = chart.chartArea;
+      minY = Math.max(minY, area.top + 42);
+      minY = Math.min(minY, area.bottom);
 
       ctx.save();
       ctx.font = 'bold 10px sans-serif';
       ctx.fillStyle = '#C8102E';
-      ctx.textAlign = 'center';
       const text = note.length > 16 ? note.substring(0, 15) + '…' : note;
-      ctx.translate(pt.x, minY - 16);
+      const tw = ctx.measureText(text).width;
+      // 회전(-22.5도) 시 텍스트가 우측 위로 뻗음 → 우측 경계에서 잘리면 좌측 정렬로 전환
+      const projW = tw * Math.cos(Math.PI / 8);
+      let x = pt.x, align = 'center';
+      if (x + projW / 2 > area.right) { align = 'right'; x = Math.min(x, area.right); }
+      if (x - projW / 2 < area.left)  { align = 'left';  x = Math.max(x, area.left); }
+      ctx.textAlign = align;
+      ctx.translate(x, minY - 16);
       ctx.rotate(-Math.PI / 8);
       ctx.fillText(text, 0, 0);
       ctx.restore();
@@ -3342,10 +3360,11 @@ const trendChartTop = new Chart(document.getElementById('trendChartTop'), {
         min: TREND_MEDIAN,
         ticks: {
           callback: v => {
-            // 로그축: 주요 눈금만 (2·5·10 단위)
+            // 로그축: 주요 눈금만 (1·2·5 단위), 억/만 한글 표기
             const m = v / 1e6;
             if (![1,2,5].includes(Number((m / Math.pow(10, Math.floor(Math.log10(m)))).toFixed(2)))) return null;
-            return v >= 1e8 ? (v/1e8).toFixed(v % 1e8 ? 1 : 0)+'억' : m.toFixed(0)+'M';
+            return v >= 1e8 ? ((v/1e8) % 1 ? (v/1e8).toFixed(1) : (v/1e8).toFixed(0))+'억'
+                            : (v/1e4).toLocaleString('ko-KR')+'만';
           }
         },
       }
@@ -3366,7 +3385,7 @@ const trendChartBottom = new Chart(document.getElementById('trendChartBottom'), 
       x: { ticks: { maxTicksLimit: 12 } },
       y: {
         min: 0, max: TREND_MEDIAN,
-        ticks: { callback: v => (v/1e6).toFixed(1)+'M' },
+        ticks: { callback: v => v >= 1e8 ? (v/1e8).toFixed(1)+'억' : (v/1e4).toLocaleString('ko-KR')+'만' },
       }
     }
   }
