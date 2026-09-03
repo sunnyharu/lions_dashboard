@@ -637,6 +637,18 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
         style="background:none;border:1.5px solid #ddd;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;color:#555;white-space:nowrap;">
         ✏️ 특이사항
       </button>
+      <div style="display:flex;gap:4px;margin-left:auto" id="trendModeBtns">
+        <button class="trend-btn active" data-mode="normal" onclick="setTrendMode('normal')">평시 보기</button>
+        <button class="trend-btn" data-mode="full" onclick="setTrendMode('full')">전체 보기</button>
+        <span style="width:10px"></span>
+        <button class="trend-btn active" data-series="both" onclick="setTrendSeries('both')">온+오프</button>
+        <button class="trend-btn" data-series="off" onclick="setTrendSeries('off')">OFF만</button>
+        <button class="trend-btn" data-series="on" onclick="setTrendSeries('on')">ON만</button>
+      </div>
+      <style>
+        .trend-btn {{ background:#f5f5f5;border:1.5px solid #ddd;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px;color:#666;white-space:nowrap; }}
+        .trend-btn.active {{ background:#C8102E;border-color:#C8102E;color:#fff;font-weight:700; }}
+      </style>
     </div>
     <div style="position:relative;width:100%;height:calc(100% - 48px)">
       <canvas id="trendChart"></canvas>
@@ -1353,6 +1365,8 @@ const notePlugin = {{
           minY = Math.min(minY, m.data[i].y);
         }}
       }}
+      // 평시 보기에서 클리핑된 포인트는 차트 상단 안쪽으로 고정
+      minY = Math.max(minY, chart.chartArea.top + 42);
 
       ctx.save();
       ctx.font = 'bold 10px sans-serif';
@@ -1368,19 +1382,64 @@ const notePlugin = {{
 }};
 
 // ── 추이 차트 ──
-new Chart(document.getElementById('trendChart'), {{
+// 평시 보기 상한: 이벤트 스파이크를 제외한 분포 기준 (85퍼센타일 x 1.4, 최소 1.5억)
+const trendOffData = {json.dumps(chart_off)};
+const trendOnData  = {json.dumps(chart_on)};
+const _allVals = trendOffData.concat(trendOnData).filter(v => v > 0).sort((a, b) => a - b);
+const _p85 = _allVals.length ? _allVals[Math.floor(_allVals.length * 0.85)] : 0;
+const TREND_CAP = Math.max(Math.ceil(_p85 * 1.4 / 1e7) * 1e7, 150e6);
+const OFF_BASELINE = 100e6;  // 오프라인 1억 기준선
+
+// 기준선 + 클리핑 표시 플러그인
+const trendGuidePlugin = {{
+  id: 'trendGuide',
+  afterDatasetsDraw(chart) {{
+    const ctx = chart.ctx, area = chart.chartArea, yScale = chart.scales.y;
+    // ① 오프라인 1억 기준선 (OFF 시리즈 표시 중일 때만)
+    if (!chart.getDatasetMeta(0).hidden && OFF_BASELINE <= yScale.max) {{
+      const y = yScale.getPixelForValue(OFF_BASELINE);
+      ctx.save();
+      ctx.strokeStyle = '#C8102E'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(area.left, y); ctx.lineTo(area.right, y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = '#C8102E'; ctx.textAlign = 'left';
+      ctx.fillText('OFF 1억 기준', area.left + 4, y - 5);
+      ctx.restore();
+    }}
+    // ② 평시 보기에서 상한 초과(클리핑) 포인트 ▲ 표시
+    if (trendMode !== 'normal') return;
+    ctx.save();
+    chart.data.datasets.forEach((ds, di) => {{
+      const meta = chart.getDatasetMeta(di);
+      if (meta.hidden) return;
+      ds.data.forEach((v, i) => {{
+        if (v == null || v <= yScale.max) return;
+        const x = meta.data[i] ? meta.data[i].x : chart.scales.x.getPixelForValue(i);
+        ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = ds.borderColor;
+        ctx.fillText('▲', x, area.top + 12);
+        ctx.font = '9px sans-serif'; ctx.fillStyle = '#888';
+        ctx.fillText((v / 1e8).toFixed(1) + '억', x, area.top + 23);
+      }});
+    }});
+    ctx.restore();
+  }}
+}};
+
+let trendMode = 'normal';
+const trendChart = new Chart(document.getElementById('trendChart'), {{
   type: 'line',
-  plugins: [notePlugin],
+  plugins: [notePlugin, trendGuidePlugin],
   data: {{
     labels: {json.dumps(chart_dates)},
     datasets: [
       {{
-        label: 'OFF거래액', data: {json.dumps(chart_off)},
+        label: 'OFF거래액', data: trendOffData,
         borderColor: OFF, backgroundColor: alpha(OFF, .15),
         borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
       }},
       {{
-        label: 'ON거래액', data: {json.dumps(chart_on)},
+        label: 'ON거래액', data: trendOnData,
         borderColor: ON, backgroundColor: alpha(ON, .1),
         borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
       }},
@@ -1393,10 +1452,26 @@ new Chart(document.getElementById('trendChart'), {{
     plugins: {{ legend: {{ position: 'top' }} }},
     scales: {{
       x: {{ ticks: {{ maxTicksLimit: 12 }} }},
-      y: {{ ticks: {{ callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() }} }}
+      y: {{ max: TREND_CAP, ticks: {{ callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() }} }}
     }}
   }}
 }});
+
+function setTrendMode(mode) {{
+  trendMode = mode;
+  trendChart.options.scales.y.max = (mode === 'normal') ? TREND_CAP : undefined;
+  document.querySelectorAll('#trendModeBtns [data-mode]').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === mode));
+  trendChart.update();
+}}
+
+function setTrendSeries(series) {{
+  trendChart.getDatasetMeta(0).hidden = (series === 'on');
+  trendChart.getDatasetMeta(1).hidden = (series === 'off');
+  document.querySelectorAll('#trendModeBtns [data-series]').forEach(b =>
+    b.classList.toggle('active', b.dataset.series === series));
+  trendChart.update();
+}}
 
 // 바 상단 수치 (백만 단위 반올림) 인라인 플러그인
 const topLabelPlugin = {{
@@ -1480,9 +1555,10 @@ function closeNoteModal() {{
   document.getElementById('noteModal').classList.remove('open');
 }}
 
-document.getElementById('noteModal').addEventListener('click', function(e) {{
+// 모달 마크업이 스크립트 뒤에 있어 DOM 로드 후 바인딩
+window.addEventListener('DOMContentLoaded', () => document.getElementById('noteModal')?.addEventListener('click', function(e) {{
   if (e.target === this) closeNoteModal();
-}});
+}}));
 
 async function submitNote() {{
   const rawDate = document.getElementById('noteDate').value;
