@@ -1,0 +1,11 @@
+테스트 시각: 2026-09-03 04:12 UTC
+러너: GitHub-hosted (ubuntu-latest, 외부망)
+
+== DNS ==
+10.206.24.153   melonredash.melon.com
+10.206.8.232    melonredash.melon.com
+
+== HTTPS 응답 (10초 타임아웃) ==
+HTTP 상태: TIMEOUT/차단
+
+결론: ❌ 외부(hosted 러너)에서 접근 불가 — self-hosted 러너 필요
