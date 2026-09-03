@@ -211,7 +211,7 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.09.03 11:56</span>
+  <span class="updated">최종 업데이트: 2026.09.03 13:35</span>
 </div>
 
 <div class="kpi-row">
@@ -248,7 +248,7 @@
 </div>
 
 <div class="charts-top">
-  <div class="chart-card" style="height:320px">
+  <div class="chart-card" style="height:520px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
       <h3 style="margin-bottom:0">날짜별 거래액 추이</h3>
       <button onclick="openNoteModal()" title="특이사항 입력"
@@ -256,9 +256,6 @@
         ✏️ 특이사항
       </button>
       <div style="display:flex;gap:4px;margin-left:auto" id="trendModeBtns">
-        <button class="trend-btn active" data-mode="normal" onclick="setTrendMode('normal')">평시 보기</button>
-        <button class="trend-btn" data-mode="full" onclick="setTrendMode('full')">전체 보기</button>
-        <span style="width:10px"></span>
         <button class="trend-btn active" data-series="both" onclick="setTrendSeries('both')">온+오프</button>
         <button class="trend-btn" data-series="off" onclick="setTrendSeries('off')">OFF만</button>
         <button class="trend-btn" data-series="on" onclick="setTrendSeries('on')">ON만</button>
@@ -268,8 +265,15 @@
         .trend-btn.active { background:#C8102E;border-color:#C8102E;color:#fff;font-weight:700; }
       </style>
     </div>
-    <div style="position:relative;width:100%;height:calc(100% - 48px)">
-      <canvas id="trendChart"></canvas>
+    <div style="display:flex;flex-direction:column;width:100%;height:calc(100% - 48px)">
+      <div style="font-size:11px;font-weight:700;color:#888">중위값 이상 (이벤트·성수기)</div>
+      <div style="position:relative;width:100%;flex:1;min-height:0">
+        <canvas id="trendChartTop"></canvas>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#888;margin-top:6px">중위값 이하 (평시)</div>
+      <div style="position:relative;width:100%;flex:1;min-height:0">
+        <canvas id="trendChartBottom"></canvas>
+      </div>
     </div>
   </div>
 </div>
@@ -3270,98 +3274,113 @@ const notePlugin = {
   }
 };
 
-// ── 추이 차트 ──
-// 평시 보기 상한: 이벤트 스파이크를 제외한 분포 기준 (85퍼센타일 x 1.4, 최소 1.5억)
+// ── 추이 차트 (중위값 기준 상/하 분리) ──
 const trendOffData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14556100, 13318600, 9678500, 13884720, 18814700, 127589400, 148697600, 0, 0, 0, 22179010, 29078540, 165140900, 135153370, 9235000, 103645700, 103942750, 113634740, 10199530, 33255760, 35029540, 6819200, 10028700, 11794060, 9506700, 129194720, 152645210, 143364920, 4433130, 8914190, 10469430, 8395500, 51224570, 187092020, 192019410, 11601830, 118841770, 106883830, 101374110, 6253200, 23578930, 18255300, 3332100, 6069300, 6469000, 7103830, 128762450, 126494140, 95486770, 20681000, 129497200, 61078910, 52819430, 12846430, 27384760, 22583000, 4171830, 4439330, 6931800, 12669400, 98711390, 114207291, 125986620, 3363660, 4795700, 2505900, 2810400, 4170830, 25195730, 20569130, 19048000, 5090800, 6139950, 8509800, 98887080, 121836820, 124574220, 5109600, 83665970, 126090590, 88150420, 3769130, 17358860, 19042860, 4954400, 6779830, 9837300, 11912500, 382760790, 139933320, 130118690, 8275800, 80544750, 83172920, 95044440, 6639830, 18880600, 17689560, 3953500, 5964300, 5232690, 7388600, 117219700, 126120100, 122683600, 3461000, 4411000, 8656600, 5135900, 5569300, 19376600, 15982200, 8822200, 85898140, 85385340, 66005700, 6487500, 20437800, 17728300, 3797500, 5752100, 5705900, 280996600, 108852900, 142342100, 116817700, 5456100, 7503100, 21840100, 14850240, 15713100, 35331100, 29153900, 16713400, 135861540, 120887800, 120370600, 11349200, 26311900, 18564900, 59436500, 150301950, 29953100, 15369600, 18883300, 127914300, 48640800, 13233900, 8292900, 9575300, 8690100, 102039900, 154487120, 47441900, 17328800, 372851100, 111990000, 89357700, 6355600, 20181400, 16215300, 2722400, 4117000, 7748000, 21855800, 125014300, 157185040, 65490500, 6923500, 81385200, 72165100];
 const trendOnData  = [1768326000, 136568000, 57396000, 94807000, 50482000, 71340000, 49605000, 53643000, 68350000, 179083000, 27715000, 4831000, 4605000, 3753000, 5066000, 4256000, 7065000, 5415000, 4937000, 5481000, 54443000, 20325000, 11560000, 8300000, 8255000, 15005000, 18370000, 15439000, 16481000, 12055000, 9834000, 10081000, 15686000, 16098000, 11975000, 11498000, 29970000, 22887000, 14195000, 14075000, 15885000, 16690000, 25361000, 15450500, 12805000, 13532500, 15521000, 22469000, 18342500, 16649000, 18710000, 17655500, 16833500, 165063500, 46790500, 23441000, 28727000, 16447000, 13433000, 6516000, 3800000, 4099500, 5951500, 4314500, 4219500, 4634000, 283739000, 81810500, 63302500, 52965500, 45165500, 38579000, 39575000, 40753500, 40936500, 98894000, 6678000, 4482000, 678642500, 49281500, 34512500, 33051000, 35207000, 47409000, 14407000, 8914500, 35344500, 19191500, 10032000, 9530500, 9506600, 9298860, 44229000, 14711500, 12820000, 11490000, 22486000, 33022000, 93496500, 121018000, 5672000, 4589500, 3361000, 4420500, 4564000, 5609000, 3701000, 3877500, 78225000, 5319500, 3082000, 41991000, 754587500, 22490500, 18933000, 698329000, 39137000, 38376500, 9531000, 13070500, 9149000, 12885000, 174255500, 12882000, 14164500, 125105000, 30423000, 59715500, 17602000, 18018500, 13008000, 56511000, 172217500, 58122000, 26778500, 42139000, 13106000, 12629500, 10168000, 11908500, 9642500, 9378000, 660288500, 72374000, 39749500, 65948000, 61430000, 22968000, 166829500, 25915000, 20769000, 20922500, 18795500, 10280000, 13831500, 12386500, 7388500, 12565500, 9544500, 7049500, 169297500, 23012000, 20435500, 13087000, 9526000, 83790000, 9739500, 51197000, 18339500, 21559500, 27014000, 9073500, 6538000, 7395500, 7204500, 469337500, 12761000, 10522500, 9427000, 8570000, 8712500, 10854000, 16327000, 39927000, 98662000, 25729500, 13846500, 13284500, 15872000, 19045000, 10703500];
+// 일별 중위값: 온·오프 0 제외 전체 값의 median
 const _allVals = trendOffData.concat(trendOnData).filter(v => v > 0).sort((a, b) => a - b);
-const _p85 = _allVals.length ? _allVals[Math.floor(_allVals.length * 0.85)] : 0;
-const TREND_CAP = Math.max(Math.ceil(_p85 * 1.4 / 1e7) * 1e7, 150e6);
+const TREND_MEDIAN = _allVals.length
+  ? (_allVals.length % 2 ? _allVals[(_allVals.length - 1) / 2]
+     : (_allVals[_allVals.length / 2 - 1] + _allVals[_allVals.length / 2]) / 2)
+  : 0;
 const OFF_BASELINE = 100e6;  // 오프라인 1억 기준선
 
-// 기준선 + 클리핑 표시 플러그인
-const trendGuidePlugin = {
-  id: 'trendGuide',
+// 기준선 플러그인 (해당 차트 y범위 안에 있을 때만 그림)
+const baselinePlugin = {
+  id: 'baseline',
   afterDatasetsDraw(chart) {
     const ctx = chart.ctx, area = chart.chartArea, yScale = chart.scales.y;
-    // ① 오프라인 1억 기준선 (OFF 시리즈 표시 중일 때만)
-    if (!chart.getDatasetMeta(0).hidden && OFF_BASELINE <= yScale.max) {
-      const y = yScale.getPixelForValue(OFF_BASELINE);
-      ctx.save();
-      ctx.strokeStyle = '#C8102E'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
-      ctx.beginPath(); ctx.moveTo(area.left, y); ctx.lineTo(area.right, y); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = '#C8102E'; ctx.textAlign = 'left';
-      ctx.fillText('OFF 1억 기준', area.left + 4, y - 5);
-      ctx.restore();
-    }
-    // ② 평시 보기에서 상한 초과(클리핑) 포인트 ▲ 표시
-    if (trendMode !== 'normal') return;
+    if (OFF_BASELINE < yScale.min || OFF_BASELINE > yScale.max) return;
+    if (chart.getDatasetMeta(0).hidden) return;  // OFF 숨김 시 미표시
+    const y = yScale.getPixelForValue(OFF_BASELINE);
     ctx.save();
-    chart.data.datasets.forEach((ds, di) => {
-      const meta = chart.getDatasetMeta(di);
-      if (meta.hidden) return;
-      ds.data.forEach((v, i) => {
-        if (v == null || v <= yScale.max) return;
-        const x = meta.data[i] ? meta.data[i].x : chart.scales.x.getPixelForValue(i);
-        ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillStyle = ds.borderColor;
-        ctx.fillText('▲', x, area.top + 12);
-        ctx.font = '9px sans-serif'; ctx.fillStyle = '#888';
-        ctx.fillText((v / 1e8).toFixed(1) + '억', x, area.top + 23);
-      });
-    });
+    ctx.strokeStyle = '#C8102E'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(area.left, y); ctx.lineTo(area.right, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = '#C8102E'; ctx.textAlign = 'left';
+    ctx.fillText('OFF 1억 기준', area.left + 4, y - 5);
     ctx.restore();
   }
 };
 
-let trendMode = 'normal';
-const trendChart = new Chart(document.getElementById('trendChart'), {
+function makeTrendDatasets() {
+  return [
+    {
+      label: 'OFF거래액', data: trendOffData,
+      borderColor: OFF, backgroundColor: alpha(OFF, .15),
+      borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, fill: true, tension: 0.3,
+      spanGaps: true, clip: 4,
+    },
+    {
+      label: 'ON거래액', data: trendOnData,
+      borderColor: ON, backgroundColor: alpha(ON, .1),
+      borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, fill: true, tension: 0.3,
+      spanGaps: true, clip: 4,
+    },
+  ];
+}
+
+const trendCommonOpts = {
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: { mode: 'nearest', intersect: false },
+};
+
+// 상단: 중위값 이상 (이벤트·성수기)
+const trendChartTop = new Chart(document.getElementById('trendChartTop'), {
   type: 'line',
-  plugins: [notePlugin, trendGuidePlugin],
-  data: {
-    labels: ["02.24", "02.25", "02.26", "02.27", "02.28", "03.01", "03.02", "03.03", "03.04", "03.05", "03.06", "03.07", "03.08", "03.09", "03.10", "03.11", "03.12", "03.13", "03.14", "03.15", "03.16", "03.17", "03.18", "03.19", "03.20", "03.21", "03.22", "03.23", "03.24", "03.25", "03.26", "03.27", "03.28", "03.29", "03.30", "03.31", "04.01", "04.02", "04.03", "04.04", "04.05", "04.06", "04.07", "04.08", "04.09", "04.10", "04.11", "04.12", "04.13", "04.14", "04.15", "04.16", "04.17", "04.18", "04.19", "04.20", "04.21", "04.22", "04.23", "04.24", "04.25", "04.26", "04.27", "04.28", "04.29", "04.30", "05.01", "05.02", "05.03", "05.04", "05.05", "05.06", "05.07", "05.08", "05.09", "05.10", "05.11", "05.12", "05.13", "05.14", "05.15", "05.16", "05.17", "05.18", "05.19", "05.20", "05.21", "05.22", "05.23", "05.24", "05.25", "05.26", "05.27", "05.28", "05.29", "05.30", "05.31", "06.01", "06.02", "06.03", "06.04", "06.05", "06.06", "06.07", "06.08", "06.09", "06.10", "06.11", "06.12", "06.13", "06.14", "06.15", "06.16", "06.17", "06.18", "06.19", "06.20", "06.21", "06.22", "06.23", "06.24", "06.25", "06.26", "06.27", "06.28", "06.29", "06.30", "07.01", "07.02", "07.03", "07.04", "07.05", "07.06", "07.07", "07.08", "07.09", "07.10", "07.11", "07.12", "07.13", "07.14", "07.15", "07.16", "07.17", "07.18", "07.19", "07.20", "07.21", "07.22", "07.23", "07.24", "07.25", "07.26", "07.27", "07.28", "07.29", "07.30", "07.31", "08.01", "08.02", "08.03", "08.04", "08.05", "08.06", "08.07", "08.08", "08.09", "08.10", "08.11", "08.12", "08.13", "08.14", "08.15", "08.16", "08.17", "08.18", "08.19", "08.20", "08.21", "08.22", "08.23", "08.24", "08.25", "08.26", "08.27", "08.28", "08.29", "08.30", "08.31", "09.01", "09.02"],
-    datasets: [
-      {
-        label: 'OFF거래액', data: trendOffData,
-        borderColor: OFF, backgroundColor: alpha(OFF, .15),
-        borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
-      },
-      {
-        label: 'ON거래액', data: trendOnData,
-        borderColor: ON, backgroundColor: alpha(ON, .1),
-        borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
-      },
-    ]
-  },
+  plugins: [notePlugin, baselinePlugin],
+  data: { labels: ["02.24", "02.25", "02.26", "02.27", "02.28", "03.01", "03.02", "03.03", "03.04", "03.05", "03.06", "03.07", "03.08", "03.09", "03.10", "03.11", "03.12", "03.13", "03.14", "03.15", "03.16", "03.17", "03.18", "03.19", "03.20", "03.21", "03.22", "03.23", "03.24", "03.25", "03.26", "03.27", "03.28", "03.29", "03.30", "03.31", "04.01", "04.02", "04.03", "04.04", "04.05", "04.06", "04.07", "04.08", "04.09", "04.10", "04.11", "04.12", "04.13", "04.14", "04.15", "04.16", "04.17", "04.18", "04.19", "04.20", "04.21", "04.22", "04.23", "04.24", "04.25", "04.26", "04.27", "04.28", "04.29", "04.30", "05.01", "05.02", "05.03", "05.04", "05.05", "05.06", "05.07", "05.08", "05.09", "05.10", "05.11", "05.12", "05.13", "05.14", "05.15", "05.16", "05.17", "05.18", "05.19", "05.20", "05.21", "05.22", "05.23", "05.24", "05.25", "05.26", "05.27", "05.28", "05.29", "05.30", "05.31", "06.01", "06.02", "06.03", "06.04", "06.05", "06.06", "06.07", "06.08", "06.09", "06.10", "06.11", "06.12", "06.13", "06.14", "06.15", "06.16", "06.17", "06.18", "06.19", "06.20", "06.21", "06.22", "06.23", "06.24", "06.25", "06.26", "06.27", "06.28", "06.29", "06.30", "07.01", "07.02", "07.03", "07.04", "07.05", "07.06", "07.07", "07.08", "07.09", "07.10", "07.11", "07.12", "07.13", "07.14", "07.15", "07.16", "07.17", "07.18", "07.19", "07.20", "07.21", "07.22", "07.23", "07.24", "07.25", "07.26", "07.27", "07.28", "07.29", "07.30", "07.31", "08.01", "08.02", "08.03", "08.04", "08.05", "08.06", "08.07", "08.08", "08.09", "08.10", "08.11", "08.12", "08.13", "08.14", "08.15", "08.16", "08.17", "08.18", "08.19", "08.20", "08.21", "08.22", "08.23", "08.24", "08.25", "08.26", "08.27", "08.28", "08.29", "08.30", "08.31", "09.01", "09.02"], datasets: makeTrendDatasets() },
   options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    layout: { padding: { top: 30 } },
+    ...trendCommonOpts,
+    layout: { padding: { top: 26 } },
     plugins: { legend: { position: 'top' } },
     scales: {
-      x: { ticks: { maxTicksLimit: 12 } },
-      y: { max: TREND_CAP, ticks: { callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() } }
+      x: { ticks: { display: false }, grid: { display: false } },
+      y: {
+        type: 'logarithmic',
+        min: TREND_MEDIAN,
+        ticks: {
+          callback: v => {
+            // 로그축: 주요 눈금만 (2·5·10 단위)
+            const m = v / 1e6;
+            if (![1,2,5].includes(Number((m / Math.pow(10, Math.floor(Math.log10(m)))).toFixed(2)))) return null;
+            return v >= 1e8 ? (v/1e8).toFixed(v % 1e8 ? 1 : 0)+'억' : m.toFixed(0)+'M';
+          }
+        },
+      }
     }
   }
 });
 
-function setTrendMode(mode) {
-  trendMode = mode;
-  trendChart.options.scales.y.max = (mode === 'normal') ? TREND_CAP : undefined;
-  document.querySelectorAll('#trendModeBtns [data-mode]').forEach(b =>
-    b.classList.toggle('active', b.dataset.mode === mode));
-  trendChart.update();
-}
+// 하단: 중위값 이하 (평시)
+const trendChartBottom = new Chart(document.getElementById('trendChartBottom'), {
+  type: 'line',
+  plugins: [baselinePlugin],
+  data: { labels: ["02.24", "02.25", "02.26", "02.27", "02.28", "03.01", "03.02", "03.03", "03.04", "03.05", "03.06", "03.07", "03.08", "03.09", "03.10", "03.11", "03.12", "03.13", "03.14", "03.15", "03.16", "03.17", "03.18", "03.19", "03.20", "03.21", "03.22", "03.23", "03.24", "03.25", "03.26", "03.27", "03.28", "03.29", "03.30", "03.31", "04.01", "04.02", "04.03", "04.04", "04.05", "04.06", "04.07", "04.08", "04.09", "04.10", "04.11", "04.12", "04.13", "04.14", "04.15", "04.16", "04.17", "04.18", "04.19", "04.20", "04.21", "04.22", "04.23", "04.24", "04.25", "04.26", "04.27", "04.28", "04.29", "04.30", "05.01", "05.02", "05.03", "05.04", "05.05", "05.06", "05.07", "05.08", "05.09", "05.10", "05.11", "05.12", "05.13", "05.14", "05.15", "05.16", "05.17", "05.18", "05.19", "05.20", "05.21", "05.22", "05.23", "05.24", "05.25", "05.26", "05.27", "05.28", "05.29", "05.30", "05.31", "06.01", "06.02", "06.03", "06.04", "06.05", "06.06", "06.07", "06.08", "06.09", "06.10", "06.11", "06.12", "06.13", "06.14", "06.15", "06.16", "06.17", "06.18", "06.19", "06.20", "06.21", "06.22", "06.23", "06.24", "06.25", "06.26", "06.27", "06.28", "06.29", "06.30", "07.01", "07.02", "07.03", "07.04", "07.05", "07.06", "07.07", "07.08", "07.09", "07.10", "07.11", "07.12", "07.13", "07.14", "07.15", "07.16", "07.17", "07.18", "07.19", "07.20", "07.21", "07.22", "07.23", "07.24", "07.25", "07.26", "07.27", "07.28", "07.29", "07.30", "07.31", "08.01", "08.02", "08.03", "08.04", "08.05", "08.06", "08.07", "08.08", "08.09", "08.10", "08.11", "08.12", "08.13", "08.14", "08.15", "08.16", "08.17", "08.18", "08.19", "08.20", "08.21", "08.22", "08.23", "08.24", "08.25", "08.26", "08.27", "08.28", "08.29", "08.30", "08.31", "09.01", "09.02"], datasets: makeTrendDatasets() },
+  options: {
+    ...trendCommonOpts,
+    layout: { padding: { top: 6 } },
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { maxTicksLimit: 12 } },
+      y: {
+        min: 0, max: TREND_MEDIAN,
+        ticks: { callback: v => (v/1e6).toFixed(1)+'M' },
+      }
+    }
+  }
+});
 
 function setTrendSeries(series) {
-  trendChart.getDatasetMeta(0).hidden = (series === 'on');
-  trendChart.getDatasetMeta(1).hidden = (series === 'off');
+  [trendChartTop, trendChartBottom].forEach(c => {
+    c.getDatasetMeta(0).hidden = (series === 'on');
+    c.getDatasetMeta(1).hidden = (series === 'off');
+    c.update();
+  });
   document.querySelectorAll('#trendModeBtns [data-series]').forEach(b =>
     b.classList.toggle('active', b.dataset.series === series));
-  trendChart.update();
 }
-
 // 바 상단 수치 (백만 단위 반올림) 인라인 플러그인
 const topLabelPlugin = {
   id: 'topLabel',

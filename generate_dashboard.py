@@ -630,7 +630,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 </div>
 
 <div class="charts-top">
-  <div class="chart-card" style="height:320px">
+  <div class="chart-card" style="height:520px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
       <h3 style="margin-bottom:0">날짜별 거래액 추이</h3>
       <button onclick="openNoteModal()" title="특이사항 입력"
@@ -638,9 +638,6 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
         ✏️ 특이사항
       </button>
       <div style="display:flex;gap:4px;margin-left:auto" id="trendModeBtns">
-        <button class="trend-btn active" data-mode="normal" onclick="setTrendMode('normal')">평시 보기</button>
-        <button class="trend-btn" data-mode="full" onclick="setTrendMode('full')">전체 보기</button>
-        <span style="width:10px"></span>
         <button class="trend-btn active" data-series="both" onclick="setTrendSeries('both')">온+오프</button>
         <button class="trend-btn" data-series="off" onclick="setTrendSeries('off')">OFF만</button>
         <button class="trend-btn" data-series="on" onclick="setTrendSeries('on')">ON만</button>
@@ -650,8 +647,15 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
         .trend-btn.active {{ background:#C8102E;border-color:#C8102E;color:#fff;font-weight:700; }}
       </style>
     </div>
-    <div style="position:relative;width:100%;height:calc(100% - 48px)">
-      <canvas id="trendChart"></canvas>
+    <div style="display:flex;flex-direction:column;width:100%;height:calc(100% - 48px)">
+      <div style="font-size:11px;font-weight:700;color:#888">중위값 이상 (이벤트·성수기)</div>
+      <div style="position:relative;width:100%;flex:1;min-height:0">
+        <canvas id="trendChartTop"></canvas>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#888;margin-top:6px">중위값 이하 (평시)</div>
+      <div style="position:relative;width:100%;flex:1;min-height:0">
+        <canvas id="trendChartBottom"></canvas>
+      </div>
     </div>
   </div>
 </div>
@@ -1381,98 +1385,113 @@ const notePlugin = {{
   }}
 }};
 
-// ── 추이 차트 ──
-// 평시 보기 상한: 이벤트 스파이크를 제외한 분포 기준 (85퍼센타일 x 1.4, 최소 1.5억)
+// ── 추이 차트 (중위값 기준 상/하 분리) ──
 const trendOffData = {json.dumps(chart_off)};
 const trendOnData  = {json.dumps(chart_on)};
+// 일별 중위값: 온·오프 0 제외 전체 값의 median
 const _allVals = trendOffData.concat(trendOnData).filter(v => v > 0).sort((a, b) => a - b);
-const _p85 = _allVals.length ? _allVals[Math.floor(_allVals.length * 0.85)] : 0;
-const TREND_CAP = Math.max(Math.ceil(_p85 * 1.4 / 1e7) * 1e7, 150e6);
+const TREND_MEDIAN = _allVals.length
+  ? (_allVals.length % 2 ? _allVals[(_allVals.length - 1) / 2]
+     : (_allVals[_allVals.length / 2 - 1] + _allVals[_allVals.length / 2]) / 2)
+  : 0;
 const OFF_BASELINE = 100e6;  // 오프라인 1억 기준선
 
-// 기준선 + 클리핑 표시 플러그인
-const trendGuidePlugin = {{
-  id: 'trendGuide',
+// 기준선 플러그인 (해당 차트 y범위 안에 있을 때만 그림)
+const baselinePlugin = {{
+  id: 'baseline',
   afterDatasetsDraw(chart) {{
     const ctx = chart.ctx, area = chart.chartArea, yScale = chart.scales.y;
-    // ① 오프라인 1억 기준선 (OFF 시리즈 표시 중일 때만)
-    if (!chart.getDatasetMeta(0).hidden && OFF_BASELINE <= yScale.max) {{
-      const y = yScale.getPixelForValue(OFF_BASELINE);
-      ctx.save();
-      ctx.strokeStyle = '#C8102E'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
-      ctx.beginPath(); ctx.moveTo(area.left, y); ctx.lineTo(area.right, y); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = '#C8102E'; ctx.textAlign = 'left';
-      ctx.fillText('OFF 1억 기준', area.left + 4, y - 5);
-      ctx.restore();
-    }}
-    // ② 평시 보기에서 상한 초과(클리핑) 포인트 ▲ 표시
-    if (trendMode !== 'normal') return;
+    if (OFF_BASELINE < yScale.min || OFF_BASELINE > yScale.max) return;
+    if (chart.getDatasetMeta(0).hidden) return;  // OFF 숨김 시 미표시
+    const y = yScale.getPixelForValue(OFF_BASELINE);
     ctx.save();
-    chart.data.datasets.forEach((ds, di) => {{
-      const meta = chart.getDatasetMeta(di);
-      if (meta.hidden) return;
-      ds.data.forEach((v, i) => {{
-        if (v == null || v <= yScale.max) return;
-        const x = meta.data[i] ? meta.data[i].x : chart.scales.x.getPixelForValue(i);
-        ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillStyle = ds.borderColor;
-        ctx.fillText('▲', x, area.top + 12);
-        ctx.font = '9px sans-serif'; ctx.fillStyle = '#888';
-        ctx.fillText((v / 1e8).toFixed(1) + '억', x, area.top + 23);
-      }});
-    }});
+    ctx.strokeStyle = '#C8102E'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(area.left, y); ctx.lineTo(area.right, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = '#C8102E'; ctx.textAlign = 'left';
+    ctx.fillText('OFF 1억 기준', area.left + 4, y - 5);
     ctx.restore();
   }}
 }};
 
-let trendMode = 'normal';
-const trendChart = new Chart(document.getElementById('trendChart'), {{
+function makeTrendDatasets() {{
+  return [
+    {{
+      label: 'OFF거래액', data: trendOffData,
+      borderColor: OFF, backgroundColor: alpha(OFF, .15),
+      borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, fill: true, tension: 0.3,
+      spanGaps: true, clip: 4,
+    }},
+    {{
+      label: 'ON거래액', data: trendOnData,
+      borderColor: ON, backgroundColor: alpha(ON, .1),
+      borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, fill: true, tension: 0.3,
+      spanGaps: true, clip: 4,
+    }},
+  ];
+}}
+
+const trendCommonOpts = {{
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {{ mode: 'nearest', intersect: false }},
+}};
+
+// 상단: 중위값 이상 (이벤트·성수기)
+const trendChartTop = new Chart(document.getElementById('trendChartTop'), {{
   type: 'line',
-  plugins: [notePlugin, trendGuidePlugin],
-  data: {{
-    labels: {json.dumps(chart_dates)},
-    datasets: [
-      {{
-        label: 'OFF거래액', data: trendOffData,
-        borderColor: OFF, backgroundColor: alpha(OFF, .15),
-        borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
-      }},
-      {{
-        label: 'ON거래액', data: trendOnData,
-        borderColor: ON, backgroundColor: alpha(ON, .1),
-        borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, fill: true, tension: 0.3,
-      }},
-    ]
-  }},
+  plugins: [notePlugin, baselinePlugin],
+  data: {{ labels: {json.dumps(chart_dates)}, datasets: makeTrendDatasets() }},
   options: {{
-    responsive: true,
-    maintainAspectRatio: false,
-    layout: {{ padding: {{ top: 30 }} }},
+    ...trendCommonOpts,
+    layout: {{ padding: {{ top: 26 }} }},
     plugins: {{ legend: {{ position: 'top' }} }},
     scales: {{
-      x: {{ ticks: {{ maxTicksLimit: 12 }} }},
-      y: {{ max: TREND_CAP, ticks: {{ callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() }} }}
+      x: {{ ticks: {{ display: false }}, grid: {{ display: false }} }},
+      y: {{
+        type: 'logarithmic',
+        min: TREND_MEDIAN,
+        ticks: {{
+          callback: v => {{
+            // 로그축: 주요 눈금만 (2·5·10 단위)
+            const m = v / 1e6;
+            if (![1,2,5].includes(Number((m / Math.pow(10, Math.floor(Math.log10(m)))).toFixed(2)))) return null;
+            return v >= 1e8 ? (v/1e8).toFixed(v % 1e8 ? 1 : 0)+'억' : m.toFixed(0)+'M';
+          }}
+        }},
+      }}
     }}
   }}
 }});
 
-function setTrendMode(mode) {{
-  trendMode = mode;
-  trendChart.options.scales.y.max = (mode === 'normal') ? TREND_CAP : undefined;
-  document.querySelectorAll('#trendModeBtns [data-mode]').forEach(b =>
-    b.classList.toggle('active', b.dataset.mode === mode));
-  trendChart.update();
-}}
+// 하단: 중위값 이하 (평시)
+const trendChartBottom = new Chart(document.getElementById('trendChartBottom'), {{
+  type: 'line',
+  plugins: [baselinePlugin],
+  data: {{ labels: {json.dumps(chart_dates)}, datasets: makeTrendDatasets() }},
+  options: {{
+    ...trendCommonOpts,
+    layout: {{ padding: {{ top: 6 }} }},
+    plugins: {{ legend: {{ display: false }} }},
+    scales: {{
+      x: {{ ticks: {{ maxTicksLimit: 12 }} }},
+      y: {{
+        min: 0, max: TREND_MEDIAN,
+        ticks: {{ callback: v => (v/1e6).toFixed(1)+'M' }},
+      }}
+    }}
+  }}
+}});
 
 function setTrendSeries(series) {{
-  trendChart.getDatasetMeta(0).hidden = (series === 'on');
-  trendChart.getDatasetMeta(1).hidden = (series === 'off');
+  [trendChartTop, trendChartBottom].forEach(c => {{
+    c.getDatasetMeta(0).hidden = (series === 'on');
+    c.getDatasetMeta(1).hidden = (series === 'off');
+    c.update();
+  }});
   document.querySelectorAll('#trendModeBtns [data-series]').forEach(b =>
     b.classList.toggle('active', b.dataset.series === series));
-  trendChart.update();
 }}
-
 // 바 상단 수치 (백만 단위 반올림) 인라인 플러그인
 const topLabelPlugin = {{
   id: 'topLabel',
