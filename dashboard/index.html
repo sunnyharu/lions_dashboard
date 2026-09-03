@@ -211,7 +211,7 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.09.03 13:42</span>
+  <span class="updated">최종 업데이트: 2026.09.03 13:46</span>
 </div>
 
 <div class="kpi-row">
@@ -3255,40 +3255,63 @@ const notePlugin = {
     const ctx = chart.ctx;
     const numDatasets = chart.data.datasets.length;
     const firstMeta = chart.getDatasetMeta(0);
+    const area = chart.chartArea;
 
+    // 1) 노트가 있는 포인트 수집 (날짜순)
+    const items = [];
     firstMeta.data.forEach((pt, i) => {
       const note = chartNotes[i];
       if (!note) return;
-
-      // 모든 데이터셋 중 가장 높은 점(y값 최소) 찾기
       let minY = pt.y;
       for (let d = 1; d < numDatasets; d++) {
         const m = chart.getDatasetMeta(d);
-        if (m.data[i] && !m.hidden) {
-          minY = Math.min(minY, m.data[i].y);
-        }
+        if (m.data[i] && !m.hidden) minY = Math.min(minY, m.data[i].y);
       }
-      // 라벨이 차트 영역 밖으로 잘리지 않도록 위치 보정
-      const area = chart.chartArea;
-      minY = Math.max(minY, area.top + 42);
+      minY = Math.max(minY, area.top);
       minY = Math.min(minY, area.bottom);
-
-      ctx.save();
-      ctx.font = 'bold 10px sans-serif';
-      ctx.fillStyle = '#C8102E';
-      const text = note.length > 16 ? note.substring(0, 15) + '…' : note;
-      const tw = ctx.measureText(text).width;
-      // 회전(-22.5도) 시 텍스트가 우측 위로 뻗음 → 우측 경계에서 잘리면 좌측 정렬로 전환
-      const projW = tw * Math.cos(Math.PI / 8);
-      let x = pt.x, align = 'center';
-      if (x + projW / 2 > area.right) { align = 'right'; x = Math.min(x, area.right); }
-      if (x - projW / 2 < area.left)  { align = 'left';  x = Math.max(x, area.left); }
-      ctx.textAlign = align;
-      ctx.translate(x, minY - 16);
-      ctx.rotate(-Math.PI / 8);
-      ctx.fillText(text, 0, 0);
-      ctx.restore();
+      items.push({ x: pt.x, ptY: minY, note });
     });
+    if (!items.length) return;
+
+    // 2) 3단 꼬리표 배치: 가까운 라벨끼리 겹치지 않도록 단(tier) 순환 + 가로 밀어내기
+    ctx.save();
+    ctx.font = 'bold 9px sans-serif';
+    const TIERS = 3, ROW_H = 12, PAD = 8;
+    const tierRight = new Array(TIERS).fill(-Infinity);  // 각 단의 마지막 라벨 우측 끝
+    items.forEach(it => {
+      const text = it.note.length > 14 ? it.note.substring(0, 13) + '…' : it.note;
+      const tw = ctx.measureText(text).width;
+      // 겹치지 않는 단 찾기 (없으면 가장 여유 있는 단)
+      let tier = -1;
+      for (let t = 0; t < TIERS; t++) {
+        if (it.x - tw / 2 > tierRight[t] + PAD) { tier = t; break; }
+      }
+      if (tier < 0) tier = tierRight.indexOf(Math.min(...tierRight));
+      // 라벨 x: 포인트 중심, 단 안에서 이전 라벨과 겹치면 우측으로 밀기 + 경계 보정
+      let lx = Math.max(it.x, tierRight[tier] + PAD + tw / 2);
+      lx = Math.max(lx, area.left + tw / 2);
+      lx = Math.min(lx, area.right - tw / 2);
+      const ly = area.top + 9 + tier * ROW_H;
+      tierRight[tier] = lx + tw / 2;
+
+      // 꼬리선: 라벨 아래 → 데이터 포인트
+      ctx.strokeStyle = 'rgba(200,16,46,.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(lx, ly + 3);
+      ctx.lineTo(it.x, Math.max(it.ptY - 4, ly + 3));
+      ctx.stroke();
+      // 포인트 표식
+      ctx.fillStyle = '#C8102E';
+      ctx.beginPath();
+      ctx.arc(it.x, Math.max(it.ptY - 4, ly + 3), 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      // 라벨
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(text, lx, ly);
+    });
+    ctx.restore();
   }
 };
 
