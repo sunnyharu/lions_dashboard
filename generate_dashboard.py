@@ -2,6 +2,7 @@
 Google Sheets 두 탭(일별매출 + 경기현황)을 읽어 dashboard/index.html 생성
 """
 import json
+import re
 import os
 from datetime import datetime
 
@@ -15,6 +16,17 @@ SPREADSHEET_ID    = "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU"
 GOOGLE_CREDS_ENV  = os.environ.get("GOOGLE_CREDENTIALS", "")
 GOOGLE_CREDS_FILE = "google_credentials.json"
 
+
+
+# 플레이엠디에 사이즈명 FREE 로 등록하고 상품명 끝에 사이즈를 붙인 상품이 있다 (예: "…유니폼(블루)_M(100)")
+_NAME_SIZE = re.compile(r"_((?:2XS|XS|S|M|L|XL|2XL|3XL|4XL|5XL)\(\d+\)|\d+\((?:2XS|XS|S|M|L|XL|2XL|3XL|4XL|5XL)\)|KIDS)$")
+
+
+def _off_size(size: str, name: str) -> str:
+    if size.upper() not in ("", "FREE"):
+        return size
+    m = _NAME_SIZE.search(name)
+    return m.group(1) if m else size
 
 def get_client():
     scopes = [
@@ -137,7 +149,7 @@ def fetch_data():
             barcode = _barcode(row.get("추가바코드1",""))
             name    = str(row.get("상품명",     "") or "").strip()
             color   = str(row.get("칼라명",     "") or "").strip()
-            size    = str(row.get("사이즈명",   "") or "").strip()
+            size    = _off_size(str(row.get("사이즈명",   "") or "").strip(), name)
             if not barcode and not name:
                 continue
             raw_products_off.append({
