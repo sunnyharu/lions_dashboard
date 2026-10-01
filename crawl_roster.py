@@ -28,6 +28,12 @@ HEADER            = ["이름", "등번호", "포지션", "구분", "최초확인
 
 PAGES = {2: "투수", 3: "타자", 5: "신입단", 4: "군입대", 6: "재활"}
 URL   = "https://www.samsunglions.com/roster/roster_{}_list.asp"
+# 공식 선수단 페이지에 없지만 굿즈가 팔리는 선수 - 은퇴 레전드와 시즌 중 떠난 선수.
+# 굿즈 실적이 생기면 여기에 이름을 더한다.
+EXTRA = {
+    "레전드":  ["오승환", "이승엽", "양준혁", "이만수"],
+    "前 선수": ["매닝", "미야지"],
+}
 TODAY = datetime.now(timezone(timedelta(hours=9))).strftime("%Y.%m.%d")
 
 
@@ -72,6 +78,10 @@ def main():
         print(f"  {group}: {len(got)}명")
         for name, no, pos in got:
             found.setdefault((name, no), (name, no, pos, group))
+    for group, names in EXTRA.items():
+        for name in names:
+            if not any(k[0] == name for k in found):
+                found[(name, "")] = (name, "", group, group)
     if len(found) < 30:   # 페이지 구조가 바뀌어 거의 못 읽었으면 명단을 망가뜨리지 않고 실패로 끝낸다
         raise SystemExit(f"수집 {len(found)}명 - 페이지 구조 변경 의심, 시트를 갱신하지 않음")
 
