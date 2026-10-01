@@ -1,10 +1,11 @@
 """
 Google Sheets 두 탭(일별매출 + 경기현황)을 읽어 dashboard/index.html 생성
 """
+import html as _html
 import json
 import re
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
@@ -12,9 +13,27 @@ import gspread
 
 load_dotenv()
 
-SPREADSHEET_ID    = "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU"
+# 배포 서버는 UTC 라 날짜·시각은 한국시간으로 계산한다
+KST = timezone(timedelta(hours=9))
+
+SPREADSHEET_ID    = os.environ.get("SPREADSHEET_ID", "1ylkJlnm1ykfazJXV65HKt5cH5IXudWEeKBKLt_SzplU")
 GOOGLE_CREDS_ENV  = os.environ.get("GOOGLE_CREDENTIALS", "")
 GOOGLE_CREDS_FILE = "google_credentials.json"
+
+
+def _jsdump(obj, **kw) -> str:
+    # <script> 안에 넣는 JSON - 값 속 '</script>' 가 스크립트 블록을 닫지 못하게 '<' 를 \u003c 로 바꾼다
+    return json.dumps(obj, **kw).replace("<", "\\u003c")
+
+
+def _text(s) -> str:
+    # 시트·AI 요약 텍스트를 HTML 본문에 넣을 때 - 엔티티로 들어온 값도 한 번 풀었다가 다시 이스케이프
+    return _html.escape(_html.unescape(str(s or "")))
+
+
+def _safe_href(url) -> str:
+    url = str(url or "").strip()
+    return _html.escape(url, quote=True) if url.lower().startswith(("http://", "https://")) else ""
 
 
 
@@ -229,6 +248,20 @@ def fetch_data():
     return merged, news, digest, raw_products_off, raw_products_on
 
 
+CATEGORY_RULES = [   # (카테고리, 상품명 키워드) - 위에서부터 첫 매칭
+    ["쇼핑백·비닐", ["비닐 L", "비닐 S", "비닐 M", "쇼핑백"]],
+    ["마킹·와펜", ["마킹키트", "와펜", "마킹 "]],
+    ["유니폼", ["유니폼", "UNIFORM", "레플리카", "레플", "슬리브", "저지", "JERSEY", "BASEBALL SHIRT", "BASEBAL"]],
+    ["인형·키링·잡화", ["키링", "인형", "머리띠", "뱃지", "배지", "스티커", "그립톡", "키캡", "홀더", "스마트톡", "레인코트", "선풍기", "바인더", "텀블러", "머그", "컵", "우산", "담요", "쿠션", "스카프", "반다나", "스크런치", "SCARF", "SCRUNCHIE", "KEYRING", "DOLL", "헤어밴드", "보안경", "방석", "블루렐라"]],
+    ["모자", ["볼캡", "캡", "모자", "버킷", "햇", "TRUCKER", "비니", "CAP"]],
+    ["응원용품", ["응원봉", "클래퍼", "타월", "타올", "머플러", "응원", "깃발", "배트", "LED", "스틱", "부채"]],
+    ["가방·파우치", ["백팩", "짐색", "보스턴", "가방", "파우치", "에코백", "토트", "크로스백", "숄더백", "슬링백", "보냉백", "리유저블백", "데코백", "BAG"]],
+    ["의류", ["티셔츠", "반소매", "반팔", "긴팔", "자켓", "재킷", "점퍼", "맨투맨", "후드", "셔츠", "팬츠", "바지", "트레이닝", "T-SHIRT", "TEE", "JACKET", "HOODIE", "PANTS", "SWEAT", "스커트", "SKIRT", "PLEATS", "양말"]],
+    ["공·기념구", ["로고볼", "기념구", "야구공", "사인볼", "볼"]],
+    ["어린이회원", ["어린이회원"]],
+]
+
+
 def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_products_on: list, apps_script_url: str = "") -> str:
     game_days = [r for r in data if r["result"] and r["result"] != "취소"]
 
@@ -335,8 +368,8 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   <td class="num bold">{fmt(grand_tot)}</td>
 </tr>"""
 
-    raw_off_json = json.dumps(raw_products_off, ensure_ascii=False)
-    raw_on_json  = json.dumps(raw_products_on,  ensure_ascii=False)
+    raw_off_json = _jsdump(raw_products_off, ensure_ascii=False)
+    raw_on_json  = _jsdump(raw_products_on,  ensure_ascii=False)
 
     # 뉴스 / 카페 분리
     news_items = sorted(
@@ -344,27 +377,28 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
         key=lambda x: x.get("date", ""), reverse=True
     )[:10]
     from datetime import date as _date, timedelta as _td
-    _cutoff = (_date.today() - _td(days=3)).strftime("%Y.%m.%d")
+    _cutoff = (datetime.now(KST).date() - _td(days=3)).strftime("%Y.%m.%d")
     cafe_items = sorted(
         [n for n in news if "카페" in n["source"] and n.get("date", "") >= _cutoff],
         key=lambda x: x.get("views", 0), reverse=True
     )[:10]
 
     def issue_item_html(n):
-        link_open  = f'<a href="{n["link"]}" target="_blank" rel="noopener">' if n["link"] else ""
-        link_close = "</a>" if n["link"] else ""
+        href       = _safe_href(n["link"])
+        link_open  = f'<a href="{href}" target="_blank" rel="noopener">' if href else ""
+        link_close = "</a>" if href else ""
         views_html = f'<span class="issue-views">조회 {int(n.get("views",0)):,}</span>' if n.get("views") else ""
         return f"""<div class="issue-item">
           <div class="issue-meta">{views_html}</div>
-          {link_open}<div class="issue-title">{n["title"]}</div>{link_close}
-          {'<div class="issue-desc">' + n["summary"] + '</div>' if n["summary"] else ""}
+          {link_open}<div class="issue-title">{_text(n["title"])}</div>{link_close}
+          {'<div class="issue-desc">' + _text(n["summary"]) + '</div>' if n["summary"] else ""}
         </div>"""
 
     # 왼쪽: 뉴스
     news_col_html = "".join(issue_item_html(n) for n in news_items) or '<div class="issue-empty">수집된 뉴스 없음</div>'
 
     # 오른쪽: 카페 다이제스트
-    digest_col_html = f'<div class="digest-text">{digest}</div>' if digest else '<div class="issue-empty">카페 다이제스트 없음</div>'
+    digest_col_html = f'<div class="digest-text">{_text(digest)}</div>' if digest else '<div class="issue-empty">카페 다이제스트 없음</div>'
 
     # 하단: 카페 상세글
     cafe_col_html = "".join(issue_item_html(n) for n in cafe_items) or '<div class="issue-empty">수집된 카페글 없음</div>'
@@ -379,9 +413,9 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
         crowd_txt    = fmt(crowd) if crowd else "-"
         table_rows += f"""
         <tr data-month="{r['date'][:7]}">
-          <td>{r["date"]}</td>
-          <td>{r["home_away"] or "-"}</td>
-          <td>{r["opponent"] or "-"}</td>
+          <td>{_text(r["date"])}</td>
+          <td>{_text(r["home_away"] or "-")}</td>
+          <td>{_text(r["opponent"] or "-")}</td>
           <td><span class="badge {result_cls}">{result_txt}</span></td>
           <td class="num">{crowd_txt}</td>
           <td class="num">{occupancy}</td>
@@ -390,7 +424,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
           <td class="num bold">{fmt(r["total"])}</td>
         </tr>"""
 
-    updated_at = datetime.now().strftime("%Y.%m.%d %H:%M")
+    updated_at = datetime.now(KST).strftime("%Y.%m.%d %H:%M")
 
     return f"""<!DOCTYPE html>
 <html lang="ko">
@@ -650,6 +684,9 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
         ✏️ 특이사항
       </button>
       <div style="display:flex;gap:4px;margin-left:auto" id="trendModeBtns">
+        <button class="trend-btn active" data-range="6m" onclick="setTrendRange('6m')">최근 6개월</button>
+        <button class="trend-btn" data-range="all" onclick="setTrendRange('all')">전체</button>
+        <span style="width:10px"></span>
         <button class="trend-btn active" data-series="both" onclick="setTrendSeries('both')">온+오프</button>
         <button class="trend-btn" data-series="off" onclick="setTrendSeries('off')">OFF만</button>
         <button class="trend-btn" data-series="on" onclick="setTrendSeries('on')">ON만</button>
@@ -664,7 +701,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       <div style="position:relative;width:100%;flex:1.1;min-height:0">
         <canvas id="trendChartTop"></canvas>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;height:16px;margin:0 0 0 44px">
+      <div style="display:flex;align-items:center;gap:10px;height:16px;margin:0 0 0 72px">
         <svg width="100%" height="12" preserveAspectRatio="none" viewBox="0 0 1200 12" style="flex:1">
           <path d="M0 6 Q 15 0, 30 6 T 60 6 T 90 6 T 120 6 T 150 6 T 180 6 T 210 6 T 240 6 T 270 6 T 300 6 T 330 6 T 360 6 T 390 6 T 420 6 T 450 6 T 480 6 T 510 6 T 540 6 T 570 6 T 600 6 T 630 6 T 660 6 T 690 6 T 720 6 T 750 6 T 780 6 T 810 6 T 840 6 T 870 6 T 900 6 T 930 6 T 960 6 T 990 6 T 1020 6 T 1050 6 T 1080 6 T 1110 6 T 1140 6 T 1170 6 T 1200 6"
                 fill="none" stroke="#bbb" stroke-width="1.5"/>
@@ -745,7 +782,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       <div>
         <h3 style="margin-bottom:4px">상품별 누적 판매 실적 (온/오프 통합)</h3>
         <span id="productRangeLabel" style="font-size:11px;color:#aaa"></span>
-        <span style="font-size:11px;color:#bbb;margin-left:8px">※ 온라인 판매수량·금액은 취소 미반영</span>
+        <span style="font-size:11px;color:#bbb;margin-left:8px">※ 온라인 판매수량·금액은 순결제(취소 차감) 기준</span>
         <div style="margin-top:4px;display:flex;gap:12px;align-items:center">
           <span style="font-size:11px;color:#888">🏪 오프라인 최근 업데이트: <b style="color:#555">{off_last_date or '-'}</b></span>
           <span style="font-size:11px;color:#888">🌐 온라인 최근 업데이트: <b style="color:#555">{on_last_date or '-'}</b></span>
@@ -787,6 +824,29 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       <tbody id="productTbody"></tbody>
     </table>
     <div class="pagination" id="productPagination"></div>
+  </div>
+  <div class="table-card" style="margin-top:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div>
+        <h3 style="margin-bottom:4px">상품 실적 분석 (온/오프)</h3>
+        <span style="font-size:11px;color:#aaa">위 상품별 누적 판매 실적과 같은 조회 조건 기준 · 카테고리는 상품명 키워드로 분류</span>
+      </div>
+      <div style="display:flex;gap:4px" id="analysisTabs">
+        <button class="trend-btn active" data-dim="category" onclick="setAnalysisDim('category')">카테고리별</button>
+        <button class="trend-btn" data-dim="price" onclick="setAnalysisDim('price')">판매단가별</button>
+        <button class="trend-btn" data-dim="player" onclick="setAnalysisDim('player')">선수별</button>
+        <button class="trend-btn" data-dim="size" onclick="setAnalysisDim('size')">사이즈별</button>
+      </div>
+    </div>
+    <table style="font-size:12px">
+      <thead><tr>
+        <th id="analysisDimHead">카테고리</th>
+        <th style="text-align:right">OFF수량</th><th style="text-align:right">ON수량</th><th style="text-align:right">합계수량</th>
+        <th style="text-align:right">OFF금액</th><th style="text-align:right">ON금액</th><th style="text-align:right">합계금액</th>
+        <th style="width:170px">금액 비중</th>
+      </tr></thead>
+      <tbody id="analysisTbody"></tbody>
+    </table>
   </div>
 </div>
 
@@ -857,7 +917,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 
 <script>
 // ── 월별 필터 & 페이지네이션 ──
-const allData = {json.dumps(data)};
+const allData = {_jsdump(data)};
 const ROWS_PER_PAGE = 15;
 let currentMonth = 'all';
 let currentPage  = 1;
@@ -1125,6 +1185,7 @@ function renderProductTable() {{
     <td></td>
   </tr>`;
   tbody.innerHTML = html;
+  renderProductAnalysis();
 
   const container = document.getElementById('productPagination');
   if (totalPages <= 1) {{ container.innerHTML = ''; return; }}
@@ -1365,13 +1426,111 @@ function downloadProductExcel() {{
   XLSX.writeFile(wb, '삼성라이온즈_상품별매출_온오프.xlsx');
 }}
 
+
+// ── 상품 실적 분석: 카테고리·판매단가·선수·사이즈 × 온/오프 (currentProductRows 기준) ──
+const CATEGORY_RULES = {_jsdump(CATEGORY_RULES)};
+const PRICE_BANDS = [[1, 10000, '1만원 미만'], [10000, 30000, '1~3만원'], [30000, 50000, '3~5만원'],
+                     [50000, 100000, '5~10만원'], [100000, 150000, '10~15만원'], [150000, Infinity, '15만원 이상']];
+const SIZE_LETTERS = ['2XS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+const ANALYSIS_DIMS = {{ category: '카테고리', price: '판매단가', player: '선수', size: '사이즈' }};
+const PLAYER_TOP_N = 30;
+let analysisDim = 'category';
+
+const aEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c]));
+
+function productCategory(p) {{
+  const n = String(p.off_name && p.off_name !== '-' ? p.off_name : (p.on_name || '')).toUpperCase();
+  for (const [cat, kws] of CATEGORY_RULES) if (kws.some(k => n.includes(k.toUpperCase()))) return cat;
+  return '기타';
+}}
+function priceBand(p) {{
+  const v = p.price || 0;
+  const b = PRICE_BANDS.find(([lo, hi]) => v >= lo && v < hi);
+  return b ? b[2] : '단가 미확인';
+}}
+const analysisKey = {{
+  category: productCategory,
+  price: priceBand,
+  player: p => (isFree(p.player) ? '' : p.player) || '마킹 없음',
+  // 90 / 90(S) / S(90) 처럼 표기만 다른 같은 치수는 숫자로 묶는다
+  size: p => {{
+    if (isFree(p.size)) return 'FREE·없음';
+    const k = String(p.size).trim().toUpperCase().replace(/\\s*-\\s*/g, '/');   // M-L 과 M/L 은 같은 표기
+    if (k === 'KIDS' || SIZE_LETTERS.includes(k)) return k;
+    const n = k.match(/\\d{{2,3}}/);
+    return n ? n[0] : k;
+  }},
+}};
+function sizeOrder(k) {{
+  if (k === 'FREE·없음') return [9, 0];
+  if (k === 'KIDS') return [0, 0];
+  const i = SIZE_LETTERS.indexOf(k);
+  if (i >= 0) return [2, i];
+  return /^\\d+$/.test(k) ? [1, Number(k)] : [3, 0];
+}}
+
+function renderProductAnalysis() {{
+  const tbody = document.getElementById('analysisTbody');
+  if (!tbody) return;
+  const m = {{}};
+  currentProductRows.forEach(p => {{
+    const k = analysisKey[analysisDim](p);
+    const a = m[k] || (m[k] = {{ key: k, oq: 0, nq: 0, oa: 0, na: 0 }});
+    a.oq += p.off_qty; a.nq += p.on_qty; a.oa += p.off_amount; a.na += p.on_amount;
+  }});
+  let rows = Object.values(m);
+  const amt = r => r.oa + r.na;
+  if (analysisDim === 'price') {{
+    const order = PRICE_BANDS.map(b => b[2]).concat(['단가 미확인']);
+    rows.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+  }} else if (analysisDim === 'size') {{
+    rows.sort((a, b) => {{ const x = sizeOrder(a.key), y = sizeOrder(b.key); return x[0] - y[0] || x[1] - y[1] || a.key.localeCompare(b.key); }});
+  }} else {{
+    const last = analysisDim === 'player' ? '마킹 없음' : '기타';
+    rows.sort((a, b) => (a.key === last) - (b.key === last) || amt(b) - amt(a));
+    if (analysisDim === 'player') {{
+      const named = rows.filter(r => r.key !== '마킹 없음');
+      if (named.length > PLAYER_TOP_N) {{
+        const rest = named.slice(PLAYER_TOP_N).reduce((s, r) => ({{ key: `기타 선수 ${{named.length - PLAYER_TOP_N}}명`, oq: s.oq + r.oq, nq: s.nq + r.nq, oa: s.oa + r.oa, na: s.na + r.na }}), {{ oq: 0, nq: 0, oa: 0, na: 0 }});
+        rows = named.slice(0, PLAYER_TOP_N).concat([rest], rows.filter(r => r.key === '마킹 없음'));
+      }}
+    }}
+  }}
+  const tot = rows.reduce((s, r) => ({{ oq: s.oq + r.oq, nq: s.nq + r.nq, oa: s.oa + r.oa, na: s.na + r.na }}), {{ oq: 0, nq: 0, oa: 0, na: 0 }});
+  const totAmt = tot.oa + tot.na || 1;
+  const f = n => n ? n.toLocaleString('ko-KR') : '-';
+  let html = '';
+  rows.forEach(r => {{
+    const pct = amt(r) / totAmt * 100;
+    html += `<tr>
+      <td>${{aEsc(r.key)}}</td>
+      <td class="num">${{f(r.oq)}}</td><td class="num">${{f(r.nq)}}</td><td class="num bold">${{f(r.oq + r.nq)}}</td>
+      <td class="num">${{f(r.oa)}}</td><td class="num">${{f(r.na)}}</td><td class="num bold">${{f(amt(r))}}</td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;background:#eef2fb;border-radius:3px;height:8px"><div style="width:${{Math.max(pct, 0).toFixed(1)}}%;background:#002D72;height:8px;border-radius:3px"></div></div><span style="font-size:11px;color:#666;min-width:38px;text-align:right">${{pct.toFixed(1)}}%</span></div></td>
+    </tr>`;
+  }});
+  html += `<tr class="product-total-row">
+    <td>합계 (${{rows.length}}개 구분)</td>
+    <td class="num">${{f(tot.oq)}}</td><td class="num">${{f(tot.nq)}}</td><td class="num bold">${{f(tot.oq + tot.nq)}}</td>
+    <td class="num">${{f(tot.oa)}}</td><td class="num">${{f(tot.na)}}</td><td class="num bold">${{f(tot.oa + tot.na)}}</td><td></td>
+  </tr>`;
+  tbody.innerHTML = html;
+  document.getElementById('analysisDimHead').textContent = ANALYSIS_DIMS[analysisDim];
+}}
+
+function setAnalysisDim(dim) {{
+  analysisDim = dim;
+  document.querySelectorAll('#analysisTabs [data-dim]').forEach(b => b.classList.toggle('active', b.dataset.dim === dim));
+  renderProductAnalysis();
+}}
+
 // 초기 렌더링: 전체
 currentProductRows = mergeProducts(rawOffData, rawOnData);
 document.getElementById('productRangeLabel').textContent = '전체 기간 합산';
 renderProductTable();
 
 // ── 특이사항 노트 플러그인 ──
-const chartNotes = {json.dumps(chart_notes)};
+const chartNotes = {_jsdump(chart_notes)};
 const notePlugin = {{
   id: 'notePlugin',
   afterDatasetsDraw(chart) {{
@@ -1385,6 +1544,7 @@ const notePlugin = {{
     firstMeta.data.forEach((pt, i) => {{
       const note = chartNotes[i];
       if (!note) return;
+      if (pt.x < area.left - 1 || pt.x > area.right + 1) return;   // 기간 밖(6개월 보기) 라벨 생략
       let minY = pt.y;
       for (let d = 1; d < numDatasets; d++) {{
         const m = chart.getDatasetMeta(d);
@@ -1439,14 +1599,28 @@ const notePlugin = {{
 }};
 
 // ── 추이 차트 (중위값 기준 상/하 분리) ──
-const trendOffData = {json.dumps(chart_off)};
-const trendOnData  = {json.dumps(chart_on)};
-// 일별 중위값: 온·오프 0 제외 전체 값의 median
-const _allVals = trendOffData.concat(trendOnData).filter(v => v > 0).sort((a, b) => a - b);
-const TREND_MEDIAN = _allVals.length
-  ? (_allVals.length % 2 ? _allVals[(_allVals.length - 1) / 2]
-     : (_allVals[_allVals.length / 2 - 1] + _allVals[_allVals.length / 2]) / 2)
-  : 0;
+const trendOffData = {_jsdump(chart_off)};
+const trendOnData  = {_jsdump(chart_on)};
+const trendFullDates = {_jsdump([r["date"] for r in data])};
+const TREND_AXIS_W = 72;   // 위·아래 차트의 y축 폭을 같게 고정해 왼쪽 선을 맞춘다
+
+// 보기 시작 위치: 최근 6개월이면 마지막 날짜에서 6개월 전, 전체면 처음
+function trendStartIndex(range) {{
+  if (range !== '6m' || !trendFullDates.length) return 0;
+  const [y, m, d] = trendFullDates[trendFullDates.length - 1].split('.').map(Number);
+  const c = new Date(y, m - 1 - 6, d);
+  const cut = c.getFullYear() + '.' + String(c.getMonth() + 1).padStart(2, '0') + '.' + String(c.getDate()).padStart(2, '0');
+  const i = trendFullDates.findIndex(x => x >= cut);
+  return i < 0 ? 0 : i;
+}}
+// 위/아래를 나누는 중위값: 보이는 기간의 온·오프 일별 값(0 제외) 기준
+function trendMedianFrom(i0) {{
+  const v = trendOffData.slice(i0).concat(trendOnData.slice(i0)).filter(x => x > 0).sort((a, b) => a - b);
+  if (!v.length) return 0;
+  return v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
+}}
+let trendStart = trendStartIndex('6m');
+let TREND_MEDIAN = trendMedianFrom(trendStart);
 const OFF_BASELINE = 100e6;  // 오프라인 1억 기준선
 
 // 기준선 플러그인 (해당 차트 y범위 안에 있을 때만 그림)
@@ -1494,16 +1668,17 @@ const trendCommonOpts = {{
 const trendChartTop = new Chart(document.getElementById('trendChartTop'), {{
   type: 'line',
   plugins: [notePlugin, baselinePlugin],
-  data: {{ labels: {json.dumps(chart_dates)}, datasets: makeTrendDatasets() }},
+  data: {{ labels: {_jsdump(chart_dates)}, datasets: makeTrendDatasets() }},
   options: {{
     ...trendCommonOpts,
     layout: {{ padding: {{ top: 26 }} }},
     plugins: {{ legend: {{ position: 'top' }} }},
     scales: {{
-      x: {{ ticks: {{ display: false }}, grid: {{ display: false }} }},
+      x: {{ min: trendStart, ticks: {{ display: false }}, grid: {{ display: false }} }},
       y: {{
         type: 'logarithmic',
         min: TREND_MEDIAN,
+        afterFit: sc => {{ sc.width = TREND_AXIS_W; }},
         ticks: {{
           callback: v => {{
             // 로그축: 주요 눈금만 (1·2·5 단위), 억/만 한글 표기
@@ -1522,20 +1697,34 @@ const trendChartTop = new Chart(document.getElementById('trendChartTop'), {{
 const trendChartBottom = new Chart(document.getElementById('trendChartBottom'), {{
   type: 'line',
   plugins: [baselinePlugin],
-  data: {{ labels: {json.dumps(chart_dates)}, datasets: makeTrendDatasets() }},
+  data: {{ labels: {_jsdump(chart_dates)}, datasets: makeTrendDatasets() }},
   options: {{
     ...trendCommonOpts,
     layout: {{ padding: {{ top: 6 }} }},
     plugins: {{ legend: {{ display: false }} }},
     scales: {{
-      x: {{ ticks: {{ maxTicksLimit: 12 }} }},
+      x: {{ min: trendStart, ticks: {{ maxTicksLimit: 12 }} }},
       y: {{
         min: 0, max: TREND_MEDIAN,
-        ticks: {{ callback: v => v >= 1e8 ? (v/1e8).toFixed(1)+'억' : (v/1e4).toLocaleString('ko-KR')+'만' }},
+        afterFit: sc => {{ sc.width = TREND_AXIS_W; }},
+        ticks: {{ callback: v => v >= 1e8 ? (v/1e8).toFixed(1)+'억' : Math.round(v/1e4).toLocaleString('ko-KR')+'만' }},
       }}
     }}
   }}
 }});
+
+function setTrendRange(range) {{
+  trendStart = trendStartIndex(range);
+  TREND_MEDIAN = trendMedianFrom(trendStart);
+  trendChartTop.options.scales.x.min = trendStart;
+  trendChartTop.options.scales.y.min = TREND_MEDIAN;
+  trendChartBottom.options.scales.x.min = trendStart;
+  trendChartBottom.options.scales.y.max = TREND_MEDIAN;
+  trendChartTop.update();
+  trendChartBottom.update();
+  document.querySelectorAll('#trendModeBtns [data-range]').forEach(b =>
+    b.classList.toggle('active', b.dataset.range === range));
+}}
 
 function setTrendSeries(series) {{
   [trendChartTop, trendChartBottom].forEach(c => {{
@@ -1546,7 +1735,8 @@ function setTrendSeries(series) {{
   document.querySelectorAll('#trendModeBtns [data-series]').forEach(b =>
     b.classList.toggle('active', b.dataset.series === series));
 }}
-// 바 상단 수치 (백만 단위 반올림) 인라인 플러그인
+// 바 상단 수치 (억 단위, 소수점 한 자리) 인라인 플러그인
+const eok1 = v => (v / 1e8).toFixed(1) + '억';
 const topLabelPlugin = {{
   id: 'topLabel',
   afterDatasetsDraw(chart) {{
@@ -1559,7 +1749,9 @@ const topLabelPlugin = {{
         ctx.font = 'bold 11px sans-serif';
         ctx.fillStyle = '#444';
         ctx.textAlign = 'center';
-        ctx.fillText(Math.round(v / 1e6).toLocaleString('ko-KR') + '백만', bar.x, bar.y - 5);
+        ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.lineJoin = 'round';
+        ctx.strokeText(eok1(v), bar.x, bar.y - 5);   // 옆 막대와 겹쳐도 읽히게 흰 테두리
+        ctx.fillText(eok1(v), bar.x, bar.y - 5);
         ctx.restore();
       }});
     }});
@@ -1569,11 +1761,14 @@ const topLabelPlugin = {{
 const barSideOpts = () => ({{
   responsive: true,
   maintainAspectRatio: false,
-  plugins: {{ legend: {{ position: 'bottom', labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }} }},
+  plugins: {{
+    legend: {{ position: 'bottom', labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }},
+    tooltip: {{ callbacks: {{ label: c => `${{c.dataset.label}}: ${{eok1(c.raw)}} (${{Number(c.raw).toLocaleString('ko-KR')}}원)` }} }},
+  }},
   scales: {{
     y: {{
       min: 0,
-      ticks: {{ callback: v => v >= 1e6 ? (v/1e6).toFixed(0)+'M' : v.toLocaleString(), font: {{ size: 10 }} }},
+      ticks: {{ callback: v => Number((v / 1e8).toFixed(1)).toLocaleString('ko-KR') + '억', font: {{ size: 10 }} }},
       grid: {{ color: '#f0f0f0' }},
     }},
     x: {{ ticks: {{ font: {{ size: 12 }} }} }}
@@ -1586,10 +1781,10 @@ new Chart(document.getElementById('haChart'), {{
   type: 'bar',
   plugins: [topLabelPlugin],
   data: {{
-    labels: {json.dumps(ha_month_labels)},
+    labels: {_jsdump(ha_month_labels)},
     datasets: [
-      {{ label: '홈',    data: {json.dumps(home_total)}, backgroundColor: alpha(OFF, .85) }},
-      {{ label: '어웨이', data: {json.dumps(away_total)}, backgroundColor: alpha(ON,  .75) }},
+      {{ label: '홈',    data: {_jsdump(home_total)}, backgroundColor: alpha(OFF, .85) }},
+      {{ label: '어웨이', data: {_jsdump(away_total)}, backgroundColor: alpha(ON,  .75) }},
     ]
   }},
   options: barSideOpts(),
@@ -1600,10 +1795,10 @@ new Chart(document.getElementById('resultChart'), {{
   type: 'bar',
   plugins: [topLabelPlugin],
   data: {{
-    labels: {json.dumps(res_month_labels)},
+    labels: {_jsdump(res_month_labels)},
     datasets: [
-      {{ label: '승', data: {json.dumps(win_total)},  backgroundColor: 'rgba(46,125,50,.8)' }},
-      {{ label: '패', data: {json.dumps(lose_total)}, backgroundColor: 'rgba(198,40,40,.7)' }},
+      {{ label: '승', data: {_jsdump(win_total)},  backgroundColor: 'rgba(46,125,50,.8)' }},
+      {{ label: '패', data: {_jsdump(lose_total)}, backgroundColor: 'rgba(198,40,40,.7)' }},
     ]
   }},
   options: barSideOpts(),
