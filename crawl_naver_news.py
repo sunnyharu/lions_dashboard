@@ -82,8 +82,22 @@ def ensure_sheet(client, name: str, header: list):
 
 # ── Claude ────────────────────────────────────────────────────────────────────
 
+# 호출부는 실패 시 원문 일부로 대체해 화면을 채우므로, 실패는 여기서 집계해
+# main() 끝에서 잡을 실패로 올린다 (2026-09 크레딧 소진이 한 달간 묻힌 원인).
+CLAUDE_FAILURES = 0
+CLAUDE_LAST_ERROR = ""
+_CLAUDE_DISABLED = False   # 크레딧·인증 오류는 재시도해도 안 되므로 이후 호출 생략
+_FATAL_MARKERS = ("credit balance", "authentication", "invalid x-api-key", "permission", "401", "403")
+
+
 def call_claude(prompt: str, max_tokens: int = 300) -> str:
+    global CLAUDE_FAILURES, CLAUDE_LAST_ERROR, _CLAUDE_DISABLED
     if not ANTHROPIC_API_KEY:
+        CLAUDE_FAILURES += 1
+        CLAUDE_LAST_ERROR = "ANTHROPIC_API_KEY 미설정"
+        return ""
+    if _CLAUDE_DISABLED:
+        CLAUDE_FAILURES += 1
         return ""
     try:
         import anthropic
@@ -95,7 +109,12 @@ def call_claude(prompt: str, max_tokens: int = 300) -> str:
         )
         return msg.content[0].text.strip()
     except Exception as e:
+        CLAUDE_FAILURES += 1
+        CLAUDE_LAST_ERROR = str(e)[:300]
         print(f"  Claude 오류: {e}")
+        if any(m in CLAUDE_LAST_ERROR.lower() for m in _FATAL_MARKERS):
+            _CLAUDE_DISABLED = True
+            print("  → 크레딧·인증 오류라 이번 실행의 나머지 Claude 호출은 생략")
         return ""
 
 
@@ -370,6 +389,13 @@ def main():
     upload_rows(ws_news, news_rows + cafe_top10)
     print("[업로드] 카페트렌드")
     upload_digest(ws_digest, digest)
+
+    # 데이터는 위에서 이미 저장했다. 요약이 원문으로 대체됐으면 잡을 실패로 표시한다.
+    if CLAUDE_FAILURES:
+        msg = (f"Claude 요약 {CLAUDE_FAILURES}건 실패 — 뉴스·카페 요약이 원문 앞부분으로 대체되고 "
+               f"카페 다이제스트는 저장되지 않음. 마지막 오류: {CLAUDE_LAST_ERROR}")
+        print(f"\n::error title=Claude API 실패::{msg}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

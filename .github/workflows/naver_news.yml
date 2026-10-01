@@ -23,6 +23,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: 네이버 뉴스/카페 이슈 수집
+        id: naver
+        continue-on-error: true   # Claude 실패로 끝나도 KBO 수집은 진행, 실패 표시는 마지막 단계에서
         env:
           NAVER_CLIENT_ID:     ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
@@ -34,3 +36,9 @@ jobs:
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: python crawl_kbo_game.py
+
+      - name: 네이버 단계 실패 시 잡 실패 처리
+        if: steps.naver.outcome == 'failure'
+        run: |
+          echo "::error::네이버 뉴스/카페 단계 실패 — 위 로그의 'Claude API 실패' 또는 오류 확인"
+          exit 1
