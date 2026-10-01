@@ -813,6 +813,8 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       .a-table .grp {{ text-align: center; border-bottom: 1px solid #e3e7ef; letter-spacing: 1px; }}
       .a-table .sep {{ border-left: 2px solid #e3e7ef; }}
       .a-table thead th {{ text-align: center !important; vertical-align: middle !important; }}
+      .a-table tbody td, .a-table tbody td.num {{ text-align: center; }}   /* 숫자도 가운데 - 가운데 정렬 헤더와 열을 맞춘다 */
+      .a-table tbody td:first-child {{ text-align: left; }}
       .a-cell {{ display: flex; align-items: center; justify-content: center; gap: 6px; }}
       .a-track {{ flex: none; width: 56px; display: flex; height: 8px; background: #eef2fb; border-radius: 3px; overflow: hidden; }}
       .a-track > div {{ height: 8px; }}
@@ -952,7 +954,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 </div>
 
 <script>
-// ── 요약 기간(월) 버튼 → 상단 요약 카드 ──
+// ── 월 버튼 → 일별 실적 표 ──
 const allData = {_jsdump(data)};
 let currentMonth = 'all';
 
