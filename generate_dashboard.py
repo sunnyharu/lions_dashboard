@@ -378,6 +378,11 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   <td class="num bold">{fmt(grand_tot)}</td>
 </tr>"""
 
+    month_labels = [f"{int(m[5:7])}월" for m in unique_months]
+    month_off    = [monthly_summary[m]["off"] for m in unique_months]
+    month_on     = [monthly_summary[m]["on"]  for m in unique_months]
+    month_tot    = [o + n for o, n in zip(month_off, month_on)]
+
     raw_off_json = _jsdump(raw_products_off, ensure_ascii=False)
     raw_on_json  = _jsdump(raw_products_on,  ensure_ascii=False)
 
@@ -494,11 +499,11 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 
   /* 차트 */
   .charts-top {{ padding: 20px 32px 0; }}
-  .charts-bottom {{ display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 16px; padding: 16px 32px 0; align-items: stretch; }}
+  .charts-bottom {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 16px 32px 0; align-items: stretch; }}
   .charts-bottom > .chart-card {{ min-height: 340px; }}
   .monthly-card {{ margin: 0; }}
   .monthly-card th, .monthly-card td {{ padding: 7px 8px; font-size: 12px; white-space: nowrap; }}
-  @media (max-width: 1280px) {{ .charts-bottom {{ grid-template-columns: 1fr 1fr; }} .monthly-card {{ grid-column: 1 / -1; }} }}
+  @media (max-width: 1280px) {{ .charts-bottom {{ grid-template-columns: 1fr 1fr; }} .charts-bottom > .chart-card:first-child {{ grid-column: 1 / -1; }} }}
   .chart-card {{
     background: white; border-radius: 12px; padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
@@ -739,19 +744,11 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   </div>
 </div>
 <div class="charts-bottom">
-  <div class="table-card monthly-card">
-    <h3>월별 합계</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>월</th>
-          <th style="text-align:right">OFF거래액</th>
-          <th style="text-align:right">ON거래액</th>
-          <th style="text-align:right">합계</th>
-        </tr>
-      </thead>
-      <tbody>{summary_rows_html}</tbody>
-    </table>
+  <div class="chart-card">
+    <h3>월별 거래액 <span style="font-size:11px;color:#999;font-weight:500;margin-left:4px">전체 {grand_tot / 1e8:.1f}억</span></h3>
+    <div style="position:relative;width:100%;height:calc(100% - 36px)">
+      <canvas id="monthlyChart"></canvas>
+    </div>
   </div>
   <div class="chart-card">
     <h3>홈 / 어웨이 월별 거래액</h3>
@@ -855,8 +852,9 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       .a-table th, .a-table td {{ padding: 8px 8px; }}
       .a-table .grp {{ text-align: center; border-bottom: 1px solid #e3e7ef; letter-spacing: 1px; }}
       .a-table .sep {{ border-left: 2px solid #e3e7ef; }}
-      .a-cell {{ display: flex; align-items: center; gap: 6px; min-width: 118px; }}
-      .a-track {{ flex: 1; display: flex; height: 8px; background: #eef2fb; border-radius: 3px; overflow: hidden; }}
+      .a-table thead th {{ text-align: center !important; vertical-align: middle !important; }}
+      .a-cell {{ display: flex; align-items: center; justify-content: center; gap: 6px; }}
+      .a-track {{ flex: none; width: 56px; display: flex; height: 8px; background: #eef2fb; border-radius: 3px; overflow: hidden; }}
       .a-track > div {{ height: 8px; }}
       .a-cell span {{ font-size: 11px; color: #666; min-width: 36px; text-align: right; white-space: nowrap; }}
     </style>
@@ -869,13 +867,14 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
         </tr>
         <tr>
           <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
-          <th>전체 대비</th><th><span style="color:#002D72">OFF</span>/<span style="color:#C8102E">ON</span> 비중</th>
+          <th>전체 대비</th><th><span style="color:#5d73a3">OFF</span>/<span style="color:#c4707a">ON</span> 비중</th>
           <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
-          <th>전체 대비</th><th><span style="color:#002D72">OFF</span>/<span style="color:#C8102E">ON</span> 비중</th>
+          <th>전체 대비</th><th><span style="color:#5d73a3">OFF</span>/<span style="color:#c4707a">ON</span> 비중</th>
         </tr>
       </thead>
       <tbody id="analysisTbody"></tbody>
     </table>
+    <div class="pagination" id="analysisPagination"></div>
   </div>
 </div>
 
@@ -1420,7 +1419,8 @@ const PRICE_BANDS = [[1, 10000, '1만원 미만'], [10000, 30000, '1~3만원'], 
                      [50000, 100000, '5~10만원'], [100000, 150000, '10~15만원'], [150000, Infinity, '15만원 이상']];
 const SIZE_LETTERS = ['2XS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
 const ANALYSIS_DIMS = {{ category: '카테고리', price: '판매단가', player: '선수', size: '사이즈' }};
-const PLAYER_TOP_N = 30;
+const ANALYSIS_PAGE_SIZE = 10;   // 선수별 목록 페이지당 행 수
+let analysisPage = 1;
 let analysisDim = 'category';
 
 const aEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c]));
@@ -1462,7 +1462,8 @@ function sizeOrder(k) {{
   return /^\\d+$/.test(k) ? [1, Number(k)] : [3, 0];
 }}
 
-function renderProductAnalysis() {{
+function renderProductAnalysis(keepPage) {{
+  if (!keepPage) analysisPage = 1;
   const tbody = document.getElementById('analysisTbody');
   if (!tbody) return;
   const m = {{}};
@@ -1482,37 +1483,42 @@ function renderProductAnalysis() {{
   }} else {{
     const tail = analysisDim === 'player' ? ['명단 외', '마킹 없음'] : ['기타'];
     rows.sort((a, b) => tail.indexOf(a.key) - tail.indexOf(b.key) || amt(b) - amt(a));
-    if (analysisDim === 'player') {{
-      const named = rows.filter(r => !['명단 외', '마킹 없음'].includes(r.key));
-      if (named.length > PLAYER_TOP_N) {{
-        const rest = named.slice(PLAYER_TOP_N).reduce((s, r) => ({{ key: `기타 선수 ${{named.length - PLAYER_TOP_N}}명`, oq: s.oq + r.oq, nq: s.nq + r.nq, oa: s.oa + r.oa, na: s.na + r.na }}), {{ oq: 0, nq: 0, oa: 0, na: 0 }});
-        rows = named.slice(0, PLAYER_TOP_N).concat([rest], rows.filter(r => ['명단 외', '마킹 없음'].includes(r.key)));
-      }}
-    }}
   }}
   const tot = rows.reduce((s, r) => ({{ oq: s.oq + r.oq, nq: s.nq + r.nq, oa: s.oa + r.oa, na: s.na + r.na }}), {{ oq: 0, nq: 0, oa: 0, na: 0 }});
   const totQty = tot.oq + tot.nq || 1, totAmt = tot.oa + tot.na || 1;
   const f = n => n ? n.toLocaleString('ko-KR') : '-';
-  const share = pct => `<div class="a-cell"><div class="a-track"><div style="width:${{Math.max(pct, 0).toFixed(1)}}%;background:#5b7bb5"></div></div><span>${{pct.toFixed(1)}}%</span></div>`;
+  const share = pct => `<div class="a-cell"><div class="a-track"><div style="width:${{Math.max(pct, 0).toFixed(1)}}%;background:#9fb1d3"></div></div><span>${{pct.toFixed(1)}}%</span></div>`;
   const split = (off, on) => {{
     const t = off + on;
     if (!t) return '-';
     const o = off / t * 100;
-    return `<div class="a-cell"><div class="a-track"><div style="width:${{o.toFixed(1)}}%;background:#002D72"></div><div style="width:${{(100 - o).toFixed(1)}}%;background:#C8102E"></div></div><span><b style="color:#002D72">${{o.toFixed(0)}}</b>·<b style="color:#C8102E">${{(100 - o).toFixed(0)}}</b></span></div>`;
+    return `<div class="a-cell"><div class="a-track"><div style="width:${{o.toFixed(1)}}%;background:#8a9cc2"></div><div style="width:${{(100 - o).toFixed(1)}}%;background:#e3a6ad"></div></div><span><b style="color:#5d73a3">${{o.toFixed(0)}}</b>·<b style="color:#c4707a">${{(100 - o).toFixed(0)}}</b></span></div>`;
   }};
   const cells = r => `
       <td class="num sep">${{f(r.oq)}}</td><td class="num">${{f(r.nq)}}</td><td class="num bold">${{f(r.oq + r.nq)}}</td>
       <td>${{share((r.oq + r.nq) / totQty * 100)}}</td><td>${{split(r.oq, r.nq)}}</td>
       <td class="num sep">${{f(r.oa)}}</td><td class="num">${{f(r.na)}}</td><td class="num bold">${{f(r.oa + r.na)}}</td>
       <td>${{share((r.oa + r.na) / totAmt * 100)}}</td><td>${{split(r.oa, r.na)}}</td>`;
+  const paged = analysisDim === 'player';
+  const pages = paged ? Math.max(1, Math.ceil(rows.length / ANALYSIS_PAGE_SIZE)) : 1;
+  analysisPage = Math.min(analysisPage, pages);
+  const shown = paged ? rows.slice((analysisPage - 1) * ANALYSIS_PAGE_SIZE, analysisPage * ANALYSIS_PAGE_SIZE) : rows;
   let html = '';
-  rows.forEach(r => {{
-    const tip = r.names ? ` title="${{aEsc('포함: ' + Object.entries(r.names).sort((a, b) => b[1] - a[1]).slice(0, 15).map(x => x[0]).join(', '))}}"` : '';
-    html += `<tr><td${{tip}}>${{aEsc(r.key)}}${{r.names ? ' <span style="color:#aaa;font-size:11px">ⓘ</span>' : ''}}</td>${{cells(r)}}</tr>`;
+  shown.forEach(r => {{
+    const tip = r.key === '마킹 없음' ? ' title="선수 마킹이 없는 상품 (일반 굿즈·응원용품 등)"' : r.names ? ` title="${{aEsc('선수명단에 없는 마킹 - 포함: ' + Object.entries(r.names).sort((a, b) => b[1] - a[1]).slice(0, 15).map(x => x[0]).join(', '))}}"` : '';
+    html += `<tr><td${{tip}}>${{aEsc(r.key)}}${{r.names || r.key === '마킹 없음' ? ' <span style="color:#aaa;font-size:11px">ⓘ</span>' : ''}}</td>${{cells(r)}}</tr>`;
   }});
   html += `<tr class="product-total-row"><td>합계 (${{rows.length}}개 구분)</td>${{cells(tot)}}</tr>`;
   tbody.innerHTML = html;
   document.getElementById('analysisDimHead').textContent = ANALYSIS_DIMS[analysisDim];
+  let pg = '';
+  if (pages > 1) for (let i = 1; i <= pages; i++) pg += `<button class="page-btn${{i === analysisPage ? ' active' : ''}}" onclick="goAnalysisPage(${{i}})">${{i}}</button>`;
+  document.getElementById('analysisPagination').innerHTML = pg;
+}}
+
+function goAnalysisPage(n) {{
+  analysisPage = n;
+  renderProductAnalysis(true);
 }}
 
 function setAnalysisDim(dim) {{
@@ -1778,21 +1784,25 @@ const pointLabelPlugin = {{
   id: 'pointLabel',
   afterDatasetsDraw(chart) {{
     const ctx = chart.ctx, sets = chart.data.datasets;
+    const grp = ds => ds.labelGroup || 'a';
     chart.data.labels.forEach((_, i) => {{
       const vals = sets.map((ds, di) => chart.getDatasetMeta(di).hidden ? null : ds.data[i]);
+      const totIdx = sets.findIndex(ds => grp(ds) === 't');
       sets.forEach((ds, di) => {{
         const v = vals[di];
         if (!v) return;
+        // 한 채널만 판 달은 합계와 값이 같아 글자가 겹친다 - 합계 쪽만 남긴다
+        if (grp(ds) !== 't' && totIdx >= 0 && vals[totIdx] === v) return;
         const pt = chart.getDatasetMeta(di).data[i];
-        const below = vals.some((o, oi) => oi !== di && o != null && o > v);
+        const below = vals.some((o, oi) => oi !== di && o != null && o > v && grp(sets[oi]) === grp(ds));
         const y = below ? pt.y + 7 : pt.y - 7;
         ctx.save();
-        ctx.font = 'bold 11px sans-serif';
+        ctx.font = grp(ds) === 't' ? 'bold 12px sans-serif' : 'bold 11px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = below ? 'top' : 'bottom';
         ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.lineJoin = 'round';
         ctx.strokeText(eok1(v), pt.x, y);
-        ctx.fillStyle = ds.borderColor;
+        ctx.fillStyle = ds.labelColor || ds.borderColor;
         ctx.fillText(eok1(v), pt.x, y);
         ctx.restore();
       }});
@@ -1816,6 +1826,24 @@ const lineSideOpts = () => ({{
 const lineSet = (label, data, color) => ({{
   label, data, borderColor: color, backgroundColor: color,
   borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, fill: false,
+}});
+
+// ── 월별 거래액: 합계는 영역, OFF·ON 은 라인 ──
+new Chart(document.getElementById('monthlyChart'), {{
+  type: 'line',
+  plugins: [pointLabelPlugin],
+  data: {{
+    labels: {_jsdump(month_labels)},
+    datasets: [
+      lineSet('OFF', {_jsdump(month_off)}, OFF),
+      lineSet('ON', {_jsdump(month_on)}, ON),
+      Object.assign(lineSet('합계', {_jsdump(month_tot)}, 'rgba(108,117,125,0.55)'), {{
+        labelGroup: 't', labelColor: '#333', fill: 'origin', backgroundColor: 'rgba(108,117,125,0.13)',
+        borderWidth: 1.5, pointRadius: 3, order: 10,
+      }}),
+    ],
+  }},
+  options: lineSideOpts(),
 }});
 
 // ── 홈/어웨이 월별 합산 ──
