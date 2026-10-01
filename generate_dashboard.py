@@ -41,6 +41,15 @@ def _safe_href(url) -> str:
 _NAME_SIZE = re.compile(r"_((?:2XS|XS|S|M|L|XL|2XL|3XL|4XL|5XL)\(\d+\)|\d+\((?:2XS|XS|S|M|L|XL|2XL|3XL|4XL|5XL)\)|KIDS)$")
 
 
+_COLLAB_SIZE = re.compile(r"(2XS|XS|S|M|L|XL|2XL|3XL|4XL|5XL)\(\d+\)")
+
+
+def _collab_size(size: str) -> str:
+    """콜라보(라이언·시나모롤) 유니폼의 'XL(120)' 표기는 일반 유니폼 120(4XL) 과 치수가 달라 영문만 남긴다."""
+    m = _COLLAB_SIZE.fullmatch(size.strip().upper())
+    return m.group(1) if m else size
+
+
 def _off_size(size: str, name: str) -> str:
     if size.upper() not in ("", "FREE"):
         return size
@@ -168,7 +177,7 @@ def fetch_data():
             barcode = _barcode(row.get("추가바코드1",""))
             name    = str(row.get("상품명",     "") or "").strip()
             color   = str(row.get("칼라명",     "") or "").strip()
-            size    = _off_size(str(row.get("사이즈명",   "") or "").strip(), name)
+            size    = _collab_size(_off_size(str(row.get("사이즈명",   "") or "").strip(), name))
             if not barcode and not name:
                 continue
             raw_products_off.append({
@@ -191,7 +200,7 @@ def fetch_data():
             date    = _norm_date(row.get("판매일자", "") or "")
             barcode = _barcode(row.get("바코드",""))
             name    = str(row.get("상품명",   "") or "").strip()
-            size    = str(row.get("사이즈",   "") or "").strip()
+            size    = _collab_size(str(row.get("사이즈",   "") or "").strip())
             player  = str(row.get("선수명",   "") or "").strip()
             if not barcode and not name:
                 continue
@@ -1441,25 +1450,35 @@ const analysisKey = {{
   // 명단에 있는 이름만 선수로 - 이승현(57) 처럼 등번호가 붙은 표기도 이름으로 대조
   player: p => {{
     const raw = isFree(p.player) ? '' : String(p.player).trim();
-    if (!raw) return '마킹 없음';
+    if (!raw) return '선수 외';
     const base = raw.replace(/\\(\\d+\\)$/, '').trim();
-    return (!ROSTER_NAMES.size || ROSTER_NAMES.has(base)) ? raw : '명단 외';
+    return (!ROSTER_NAMES.size || ROSTER_NAMES.has(base)) ? raw : '선수 외';
   }},
-  // 90 / 90(S) / S(90) 처럼 표기만 다른 같은 치수는 숫자로 묶는다
+  // 사이즈 묶음 - 숫자(가슴둘레) 표기와 영문 표기를 한 구간으로. 키즈는 따로
   size: p => {{
     if (isFree(p.size)) return 'FREE·없음';
     const k = String(p.size).trim().toUpperCase().replace(/\\s*-\\s*/g, '/');   // M-L 과 M/L 은 같은 표기
-    if (k === 'KIDS' || SIZE_LETTERS.includes(k)) return k;
-    const n = k.match(/\\d{{2,3}}/);
-    return n ? n[0] : k;
+    if (k === 'KIDS' || k.includes('키즈')) return 'KIDS';
+    const n = (k.match(/\\d{{2,3}}/) || [])[0];
+    const letter = (k.match(/^(2XS|XS|S\\/M|M\\/L|S|M|L|XL|2XL|3XL|4XL|5XL)(\\(|$)/) || [])[1];
+    const g = SIZE_GROUPS.find(x => (n && x.nums.includes(Number(n))) || (!n && letter && x.letters.includes(letter)));
+    return g ? g.label : '기타';
   }},
 }};
+// 순서가 곧 표 순서. 숫자 표기가 있으면 숫자로, 없으면 영문으로 구간을 찾는다
+const SIZE_GROUPS = [
+  {{ label: 'KIDS', nums: [], letters: [] }},
+  {{ label: 'S(80, 85)', nums: [80, 85], letters: ['2XS', 'XS', 'S'] }},
+  {{ label: 'M(90, 95, S/M)', nums: [90, 95], letters: ['M', 'S/M'] }},
+  {{ label: 'L(100, L, M/L)', nums: [100], letters: ['L', 'M/L'] }},
+  {{ label: 'XL(105)', nums: [105], letters: ['XL'] }},
+  {{ label: '2XL(110)', nums: [110], letters: ['2XL'] }},
+  {{ label: '3XL(115)', nums: [115], letters: ['3XL'] }},
+  {{ label: '4XL 이상(120, 125, 145)', nums: [120, 125, 130, 135, 140, 145, 150], letters: ['4XL', '5XL'] }},
+];
 function sizeOrder(k) {{
-  if (k === 'FREE·없음') return [9, 0];
-  if (k === 'KIDS') return [0, 0];
-  const i = SIZE_LETTERS.indexOf(k);
-  if (i >= 0) return [2, i];
-  return /^\\d+$/.test(k) ? [1, Number(k)] : [3, 0];
+  const i = SIZE_GROUPS.findIndex(g => g.label === k);
+  return [i >= 0 ? i : (k === 'FREE·없음' ? 99 : 98), 0];
 }}
 
 function renderProductAnalysis(keepPage) {{
@@ -1471,7 +1490,7 @@ function renderProductAnalysis(keepPage) {{
     const k = analysisKey[analysisDim](p);
     const a = m[k] || (m[k] = {{ key: k, oq: 0, nq: 0, oa: 0, na: 0 }});
     a.oq += p.off_qty; a.nq += p.on_qty; a.oa += p.off_amount; a.na += p.on_amount;
-    if (k === '명단 외') {{ a.names = a.names || {{}}; a.names[p.player] = (a.names[p.player] || 0) + p.off_amount + p.on_amount; }}
+    if (k === '선수 외' && p.player && !isFree(p.player)) {{ a.names = a.names || {{}}; a.names[p.player] = (a.names[p.player] || 0) + p.off_amount + p.on_amount; }}
   }});
   let rows = Object.values(m);
   const amt = r => r.oa + r.na;
@@ -1479,9 +1498,9 @@ function renderProductAnalysis(keepPage) {{
     const order = PRICE_BANDS.map(b => b[2]).concat(['단가 미확인']);
     rows.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   }} else if (analysisDim === 'size') {{
-    rows.sort((a, b) => {{ const x = sizeOrder(a.key), y = sizeOrder(b.key); return x[0] - y[0] || x[1] - y[1] || a.key.localeCompare(b.key); }});
+    rows.sort((a, b) => sizeOrder(a.key)[0] - sizeOrder(b.key)[0]);
   }} else {{
-    const tail = analysisDim === 'player' ? ['명단 외', '마킹 없음'] : ['기타'];
+    const tail = analysisDim === 'player' ? ['선수 외'] : ['기타'];
     rows.sort((a, b) => tail.indexOf(a.key) - tail.indexOf(b.key) || amt(b) - amt(a));
   }}
   const tot = rows.reduce((s, r) => ({{ oq: s.oq + r.oq, nq: s.nq + r.nq, oa: s.oa + r.oa, na: s.na + r.na }}), {{ oq: 0, nq: 0, oa: 0, na: 0 }});
@@ -1505,8 +1524,8 @@ function renderProductAnalysis(keepPage) {{
   const shown = paged ? rows.slice((analysisPage - 1) * ANALYSIS_PAGE_SIZE, analysisPage * ANALYSIS_PAGE_SIZE) : rows;
   let html = '';
   shown.forEach(r => {{
-    const tip = r.key === '마킹 없음' ? ' title="선수 마킹이 없는 상품 (일반 굿즈·응원용품 등)"' : r.names ? ` title="${{aEsc('선수명단에 없는 마킹 - 포함: ' + Object.entries(r.names).sort((a, b) => b[1] - a[1]).slice(0, 15).map(x => x[0]).join(', '))}}"` : '';
-    html += `<tr><td${{tip}}>${{aEsc(r.key)}}${{r.names || r.key === '마킹 없음' ? ' <span style="color:#aaa;font-size:11px">ⓘ</span>' : ''}}</td>${{cells(r)}}</tr>`;
+    const tip = r.key === '선수 외' ? ` title="${{aEsc('선수 마킹이 없는 상품(일반 굿즈 등)과 선수명단에 없는 마킹' + (r.names ? ' - 포함: ' + Object.entries(r.names).sort((a, b) => b[1] - a[1]).slice(0, 15).map(x => x[0]).join(', ') : ''))}}"` : '';
+    html += `<tr><td${{tip}}>${{aEsc(r.key)}}${{r.key === '선수 외' ? ' <span style="color:#aaa;font-size:11px">ⓘ</span>' : ''}}</td>${{cells(r)}}</tr>`;
   }});
   html += `<tr class="product-total-row"><td>합계 (${{rows.length}}개 구분)</td>${{cells(tot)}}</tr>`;
   tbody.innerHTML = html;
