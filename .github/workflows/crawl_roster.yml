@@ -1,0 +1,28 @@
+name: 선수명단 수집
+
+on:
+  schedule:
+    - cron: '0 21 * * 0'   # 매주 월요일 06:00 KST
+  workflow_dispatch:
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      # 사내 시트로는 매일 대시보드 업데이트의 미러링 단계가 함께 복사한다
+      - name: 선수명단 갱신
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python crawl_roster.py

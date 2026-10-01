@@ -35,7 +35,9 @@
   .header .updated { font-size: 12px; opacity: 0.8; }
 
   /* KPI */
-  .kpi-row { display: flex; gap: 16px; padding: 24px 32px 0; flex-wrap: wrap; }
+  .kpi-filter { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 20px 32px 0; }
+  .kpi-filter-label { font-size: 12px; color: #888; font-weight: 600; margin-right: 4px; }
+  .kpi-row { display: flex; gap: 16px; padding: 12px 32px 0; flex-wrap: wrap; }
   .kpi {
     flex: 1; min-width: 140px; background: white;
     border-radius: 12px; padding: 20px 24px;
@@ -54,7 +56,11 @@
 
   /* 차트 */
   .charts-top { padding: 20px 32px 0; }
-  .charts-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px 32px 0; }
+  .charts-bottom { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 16px; padding: 16px 32px 0; align-items: stretch; }
+  .charts-bottom > .chart-card { min-height: 340px; }
+  .monthly-card { margin: 0; }
+  .monthly-card th, .monthly-card td { padding: 7px 8px; font-size: 12px; white-space: nowrap; }
+  @media (max-width: 1280px) { .charts-bottom { grid-template-columns: 1fr 1fr; } .monthly-card { grid-column: 1 / -1; } }
   .chart-card {
     background: white; border-radius: 12px; padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
@@ -202,7 +208,7 @@
 
   @media (max-width: 900px) {
     .charts-bottom { grid-template-columns: 1fr; }
-    .kpi-row, .charts-top, .charts-bottom, .table-section, .product-section, .issue-section { padding-left: 16px; padding-right: 16px; }
+    .kpi-filter, .kpi-row, .charts-top, .charts-bottom, .table-section, .product-section, .issue-section { padding-left: 16px; padding-right: 16px; }
     .issue-layout { grid-template-columns: 1fr; }
   }
 </style>
@@ -211,9 +217,22 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.10.01 17:21</span>
+  <span class="updated">최종 업데이트: 2026.10.01 18:02</span>
 </div>
 
+<div class="kpi-filter">
+  <span class="kpi-filter-label">요약 기간</span>
+  <button class="filter-btn active" data-month="all">전체</button>
+<button class="filter-btn" data-month="2026.02">26년 2월</button>
+<button class="filter-btn" data-month="2026.03">26년 3월</button>
+<button class="filter-btn" data-month="2026.04">26년 4월</button>
+<button class="filter-btn" data-month="2026.05">26년 5월</button>
+<button class="filter-btn" data-month="2026.06">26년 6월</button>
+<button class="filter-btn" data-month="2026.07">26년 7월</button>
+<button class="filter-btn" data-month="2026.08">26년 8월</button>
+<button class="filter-btn" data-month="2026.09">26년 9월</button>
+
+</div>
 <div class="kpi-row">
   <div class="kpi wide">
     <div class="label">OFF 거래액 (누계)</div>
@@ -291,23 +310,7 @@
   </div>
 </div>
 <div class="charts-bottom">
-  <div class="chart-card" style="height:280px">
-    <h3>홈 / 어웨이 월별 거래액</h3>
-    <div style="position:relative;width:100%;height:calc(100% - 36px)">
-      <canvas id="haChart"></canvas>
-    </div>
-  </div>
-  <div class="chart-card" style="height:280px">
-    <h3>경기 결과별 월별 거래액</h3>
-    <div style="position:relative;width:100%;height:calc(100% - 36px)">
-      <canvas id="resultChart"></canvas>
-    </div>
-  </div>
-</div>
-
-<div class="table-section">
-  <!-- 월별 요약 -->
-  <div class="table-card" style="margin-bottom:16px">
+  <div class="table-card monthly-card">
     <h3>월별 합계</h3>
     <table>
       <thead>
@@ -366,24 +369,25 @@
 </tr></tbody>
     </table>
   </div>
-  <!-- 전체 데이터 -->
+  <div class="chart-card">
+    <h3>홈 / 어웨이 월별 거래액</h3>
+    <div style="position:relative;width:100%;height:calc(100% - 36px)">
+      <canvas id="haChart"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>경기 결과별 월별 거래액</h3>
+    <div style="position:relative;width:100%;height:calc(100% - 36px)">
+      <canvas id="resultChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="table-section">
   <div class="table-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin-bottom:0">전체 데이터</h3>
-      <button id="excelDownloadBtn" onclick="downloadExcel()">📥 엑셀 다운로드</button>
-    </div>
-    <!-- 월별 필터 -->
-    <div class="filter-bar" style="margin-bottom:16px">
-      <button class="filter-btn active" data-month="all">전체</button>
-<button class="filter-btn" data-month="2026.02">26년 2월</button>
-<button class="filter-btn" data-month="2026.03">26년 3월</button>
-<button class="filter-btn" data-month="2026.04">26년 4월</button>
-<button class="filter-btn" data-month="2026.05">26년 5월</button>
-<button class="filter-btn" data-month="2026.06">26년 6월</button>
-<button class="filter-btn" data-month="2026.07">26년 7월</button>
-<button class="filter-btn" data-month="2026.08">26년 8월</button>
-<button class="filter-btn" data-month="2026.09">26년 9월</button>
-
+      <h3 style="margin-bottom:0">일별 실적 <span style="font-size:12px;color:#999;font-weight:500;margin-left:6px">최근 7일</span></h3>
+      <button id="excelDownloadBtn" onclick="downloadExcel()">📥 전체 기간 엑셀 다운로드</button>
     </div>
     <table id="dataTable">
       <thead>
@@ -473,2341 +477,8 @@
           <td class="num">24,332,700</td>
           <td class="num">3,931,500</td>
           <td class="num bold">28,264,200</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.23</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">2,334,900</td>
-          <td class="num">3,780,500</td>
-          <td class="num bold">6,115,400</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.22</td>
-          <td>홈</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">95,275,500</td>
-          <td class="num">4,964,500</td>
-          <td class="num bold">100,240,000</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.21</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">2,776,700</td>
-          <td class="num">6,007,000</td>
-          <td class="num bold">8,783,700</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.20</td>
-          <td>어웨이</td>
-          <td>롯데</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">12,418,600</td>
-          <td class="num">7,421,500</td>
-          <td class="num bold">19,840,100</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.19</td>
-          <td>어웨이</td>
-          <td>롯데</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">21,889,300</td>
-          <td class="num">7,416,500</td>
-          <td class="num bold">29,305,800</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.18</td>
-          <td>어웨이</td>
-          <td>한화</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,927,900</td>
-          <td class="num">10,269,000</td>
-          <td class="num bold">17,196,900</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.17</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">9,978,600</td>
-          <td class="num">70,184,500</td>
-          <td class="num bold">80,163,100</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.16</td>
-          <td>어웨이</td>
-          <td>두산</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,941,100</td>
-          <td class="num">65,587,000</td>
-          <td class="num bold">72,528,100</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.15</td>
-          <td>홈</td>
-          <td>롯데</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">86,937,600</td>
-          <td class="num">46,135,000</td>
-          <td class="num bold">133,072,600</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.14</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">7,776,900</td>
-          <td class="num">207,216,000</td>
-          <td class="num bold">214,992,900</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.13</td>
-          <td>홈</td>
-          <td>LG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">139,640,400</td>
-          <td class="num">7,094,500</td>
-          <td class="num bold">146,734,900</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.12</td>
-          <td>홈</td>
-          <td>LG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">190,238,300</td>
-          <td class="num">38,796,500</td>
-          <td class="num bold">229,034,800</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.11</td>
-          <td>홈</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">109,965,400</td>
-          <td class="num">9,358,000</td>
-          <td class="num bold">119,323,400</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.10</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">7,976,700</td>
-          <td class="num">8,379,000</td>
-          <td class="num bold">16,355,700</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.09</td>
-          <td>홈</td>
-          <td>KT</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">71,442,100</td>
-          <td class="num">11,718,000</td>
-          <td class="num bold">83,160,100</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.08</td>
-          <td>홈</td>
-          <td>KIA</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">80,942,100</td>
-          <td class="num">10,327,500</td>
-          <td class="num bold">91,269,600</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.07</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,975,000</td>
-          <td class="num">10,672,000</td>
-          <td class="num bold">16,647,000</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.06</td>
-          <td>어웨이</td>
-          <td>LG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">17,753,300</td>
-          <td class="num">12,331,000</td>
-          <td class="num bold">30,084,300</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.05</td>
-          <td>어웨이</td>
-          <td>LG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">14,632,100</td>
-          <td class="num">8,460,500</td>
-          <td class="num bold">23,092,600</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.04</td>
-          <td>어웨이</td>
-          <td>LG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,084,300</td>
-          <td class="num">10,985,000</td>
-          <td class="num bold">15,069,300</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.03</td>
-          <td>홈</td>
-          <td>롯데</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">73,367,520</td>
-          <td class="num">9,956,500</td>
-          <td class="num bold">83,324,020</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.02</td>
-          <td>홈</td>
-          <td>롯데</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">72,165,100</td>
-          <td class="num">10,703,500</td>
-          <td class="num bold">82,868,600</td>
-        </tr>
-        <tr data-month="2026.09">
-          <td>2026.09.01</td>
-          <td>홈</td>
-          <td>롯데</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">81,385,200</td>
-          <td class="num">19,045,000</td>
-          <td class="num bold">100,430,200</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.31</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,923,500</td>
-          <td class="num">15,872,000</td>
-          <td class="num bold">22,795,500</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.30</td>
-          <td>홈</td>
-          <td>KT</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">65,490,500</td>
-          <td class="num">13,284,500</td>
-          <td class="num bold">78,775,000</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.29</td>
-          <td>홈</td>
-          <td>KT</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">157,185,040</td>
-          <td class="num">13,846,500</td>
-          <td class="num bold">171,031,540</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.28</td>
-          <td>홈</td>
-          <td>KT</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">125,014,300</td>
-          <td class="num">25,729,500</td>
-          <td class="num bold">150,743,800</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.27</td>
-          <td>어웨이</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">21,855,800</td>
-          <td class="num">98,662,000</td>
-          <td class="num bold">120,517,800</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.26</td>
-          <td>어웨이</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">7,748,000</td>
-          <td class="num">39,927,000</td>
-          <td class="num bold">47,675,000</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.25</td>
-          <td>어웨이</td>
-          <td>키움</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,117,000</td>
-          <td class="num">16,327,000</td>
-          <td class="num bold">20,444,000</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.24</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">2,722,400</td>
-          <td class="num">10,854,000</td>
-          <td class="num bold">13,576,400</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.23</td>
-          <td>어웨이</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">16,215,300</td>
-          <td class="num">8,712,500</td>
-          <td class="num bold">24,927,800</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.22</td>
-          <td>어웨이</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">20,181,400</td>
-          <td class="num">8,570,000</td>
-          <td class="num bold">28,751,400</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.21</td>
-          <td>어웨이</td>
-          <td>NC</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,355,600</td>
-          <td class="num">9,427,000</td>
-          <td class="num bold">15,782,600</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.20</td>
-          <td>홈</td>
-          <td>SSG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">23,238</td>
-          <td class="num">96.8%</td>
-          <td class="num">89,357,700</td>
-          <td class="num">10,522,500</td>
-          <td class="num bold">99,880,200</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.19</td>
-          <td>홈</td>
-          <td>SSG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">22,784</td>
-          <td class="num">94.9%</td>
-          <td class="num">111,990,000</td>
-          <td class="num">12,761,000</td>
-          <td class="num bold">124,751,000</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.18</td>
-          <td>홈</td>
-          <td>SSG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">23,184</td>
-          <td class="num">96.6%</td>
-          <td class="num">372,851,100</td>
-          <td class="num">469,337,500</td>
-          <td class="num bold">842,188,600</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.17</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">17,328,800</td>
-          <td class="num">7,204,500</td>
-          <td class="num bold">24,533,300</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.16</td>
-          <td>홈</td>
-          <td>한화</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">47,441,900</td>
-          <td class="num">7,395,500</td>
-          <td class="num bold">54,837,400</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.15</td>
-          <td>홈</td>
-          <td>한화</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">154,487,120</td>
-          <td class="num">6,538,000</td>
-          <td class="num bold">161,025,120</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.14</td>
-          <td>홈</td>
-          <td>한화</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">102,039,900</td>
-          <td class="num">9,073,500</td>
-          <td class="num bold">111,113,400</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.13</td>
-          <td>어웨이</td>
-          <td>KIA</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">8,690,100</td>
-          <td class="num">27,014,000</td>
-          <td class="num bold">35,704,100</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.12</td>
-          <td>어웨이</td>
-          <td>KIA</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">9,575,300</td>
-          <td class="num">21,559,500</td>
-          <td class="num bold">31,134,800</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.11</td>
-          <td>어웨이</td>
-          <td>KIA</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">8,292,900</td>
-          <td class="num">18,339,500</td>
-          <td class="num bold">26,632,400</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.10</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">13,233,900</td>
-          <td class="num">51,197,000</td>
-          <td class="num bold">64,430,900</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.09</td>
-          <td>홈</td>
-          <td>두산</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">48,640,800</td>
-          <td class="num">9,739,500</td>
-          <td class="num bold">58,380,300</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.08</td>
-          <td>홈</td>
-          <td>두산</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">127,914,300</td>
-          <td class="num">83,790,000</td>
-          <td class="num bold">211,704,300</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.07</td>
-          <td>홈</td>
-          <td>두산</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">18,883,300</td>
-          <td class="num">9,526,000</td>
-          <td class="num bold">28,409,300</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.06</td>
-          <td>홈</td>
-          <td>한화</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">15,369,600</td>
-          <td class="num">13,087,000</td>
-          <td class="num bold">28,456,600</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.05</td>
-          <td>홈</td>
-          <td>한화</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">29,953,100</td>
-          <td class="num">20,435,500</td>
-          <td class="num bold">50,388,600</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.04</td>
-          <td>홈</td>
-          <td>한화</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">150,301,950</td>
-          <td class="num">23,012,000</td>
-          <td class="num bold">173,313,950</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.03</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">59,436,500</td>
-          <td class="num">169,297,500</td>
-          <td class="num bold">228,734,000</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.02</td>
-          <td>어웨이</td>
-          <td>롯데</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">18,564,900</td>
-          <td class="num">7,049,500</td>
-          <td class="num bold">25,614,400</td>
-        </tr>
-        <tr data-month="2026.08">
-          <td>2026.08.01</td>
-          <td>어웨이</td>
-          <td>롯데</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">26,311,900</td>
-          <td class="num">9,544,500</td>
-          <td class="num bold">35,856,400</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.31</td>
-          <td>어웨이</td>
-          <td>롯데</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">11,349,200</td>
-          <td class="num">12,565,500</td>
-          <td class="num bold">23,914,700</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.30</td>
-          <td>홈</td>
-          <td>KIA</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">120,370,600</td>
-          <td class="num">7,388,500</td>
-          <td class="num bold">127,759,100</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.29</td>
-          <td>홈</td>
-          <td>KIA</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">120,887,800</td>
-          <td class="num">12,386,500</td>
-          <td class="num bold">133,274,300</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.28</td>
-          <td>홈</td>
-          <td>KIA</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">135,861,540</td>
-          <td class="num">13,831,500</td>
-          <td class="num bold">149,693,040</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.27</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">16,713,400</td>
-          <td class="num">10,280,000</td>
-          <td class="num bold">26,993,400</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.26</td>
-          <td>어웨이</td>
-          <td>두산</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">29,153,900</td>
-          <td class="num">18,795,500</td>
-          <td class="num bold">47,949,400</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.25</td>
-          <td>어웨이</td>
-          <td>두산</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">35,331,100</td>
-          <td class="num">20,922,500</td>
-          <td class="num bold">56,253,600</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.24</td>
-          <td>어웨이</td>
-          <td>두산</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">15,713,100</td>
-          <td class="num">20,769,000</td>
-          <td class="num bold">36,482,100</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.23</td>
-          <td>어웨이</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">14,850,240</td>
-          <td class="num">25,915,000</td>
-          <td class="num bold">40,765,240</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.22</td>
-          <td>어웨이</td>
-          <td>키움</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">21,840,100</td>
-          <td class="num">166,829,500</td>
-          <td class="num bold">188,669,600</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.21</td>
-          <td>어웨이</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">7,503,100</td>
-          <td class="num">22,968,000</td>
-          <td class="num bold">30,471,100</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.20</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,456,100</td>
-          <td class="num">61,430,000</td>
-          <td class="num bold">66,886,100</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.19</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">116,817,700</td>
-          <td class="num">65,948,000</td>
-          <td class="num bold">182,765,700</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.18</td>
-          <td>홈</td>
-          <td>롯데</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">142,342,100</td>
-          <td class="num">39,749,500</td>
-          <td class="num bold">182,091,600</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.17</td>
-          <td>홈</td>
-          <td>롯데</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">108,852,900</td>
-          <td class="num">72,374,000</td>
-          <td class="num bold">181,226,900</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.16</td>
-          <td>홈</td>
-          <td>롯데</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">280,996,600</td>
-          <td class="num">660,288,500</td>
-          <td class="num bold">941,285,100</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.15</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,705,900</td>
-          <td class="num">9,378,000</td>
-          <td class="num bold">15,083,900</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.14</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,752,100</td>
-          <td class="num">9,642,500</td>
-          <td class="num bold">15,394,600</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.13</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">3,797,500</td>
-          <td class="num">11,908,500</td>
-          <td class="num bold">15,706,000</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.12</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">17,728,300</td>
-          <td class="num">10,168,000</td>
-          <td class="num bold">27,896,300</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.11</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">20,437,800</td>
-          <td class="num">12,629,500</td>
-          <td class="num bold">33,067,300</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.10</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,487,500</td>
-          <td class="num">13,106,000</td>
-          <td class="num bold">19,593,500</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.09</td>
-          <td>홈</td>
-          <td>LG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">66,005,700</td>
-          <td class="num">42,139,000</td>
-          <td class="num bold">108,144,700</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.08</td>
-          <td>홈</td>
-          <td>LG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">85,385,340</td>
-          <td class="num">26,778,500</td>
-          <td class="num bold">112,163,840</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.07</td>
-          <td>홈</td>
-          <td>LG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">85,898,140</td>
-          <td class="num">58,122,000</td>
-          <td class="num bold">144,020,140</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.06</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">8,822,200</td>
-          <td class="num">172,217,500</td>
-          <td class="num bold">181,039,700</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.05</td>
-          <td>어웨이</td>
-          <td>SSG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">15,982,200</td>
-          <td class="num">56,511,000</td>
-          <td class="num bold">72,493,200</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.04</td>
-          <td>어웨이</td>
-          <td>SSG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">19,376,600</td>
-          <td class="num">13,008,000</td>
-          <td class="num bold">32,384,600</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.03</td>
-          <td>어웨이</td>
-          <td>SSG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,569,300</td>
-          <td class="num">18,018,500</td>
-          <td class="num bold">23,587,800</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.02</td>
-          <td>어웨이</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,135,900</td>
-          <td class="num">17,602,000</td>
-          <td class="num bold">22,737,900</td>
-        </tr>
-        <tr data-month="2026.07">
-          <td>2026.07.01</td>
-          <td>어웨이</td>
-          <td>NC</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">8,656,600</td>
-          <td class="num">59,715,500</td>
-          <td class="num bold">68,372,100</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.30</td>
-          <td>어웨이</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,411,000</td>
-          <td class="num">30,423,000</td>
-          <td class="num bold">34,834,000</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.29</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">3,461,000</td>
-          <td class="num">125,105,000</td>
-          <td class="num bold">128,566,000</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.28</td>
-          <td>홈</td>
-          <td>KT</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">122,683,600</td>
-          <td class="num">14,164,500</td>
-          <td class="num bold">136,848,100</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.27</td>
-          <td>홈</td>
-          <td>KT</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">126,120,100</td>
-          <td class="num">12,882,000</td>
-          <td class="num bold">139,002,100</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.26</td>
-          <td>홈</td>
-          <td>KT</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">117,219,700</td>
-          <td class="num">174,255,500</td>
-          <td class="num bold">291,475,200</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.25</td>
-          <td>어웨이</td>
-          <td>LG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">7,388,600</td>
-          <td class="num">12,885,000</td>
-          <td class="num bold">20,273,600</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.24</td>
-          <td>어웨이</td>
-          <td>LG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,232,690</td>
-          <td class="num">9,149,000</td>
-          <td class="num bold">14,381,690</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.23</td>
-          <td>어웨이</td>
-          <td>LG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,964,300</td>
-          <td class="num">13,070,500</td>
-          <td class="num bold">19,034,800</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.22</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">3,953,500</td>
-          <td class="num">9,531,000</td>
-          <td class="num bold">13,484,500</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.21</td>
-          <td>어웨이</td>
-          <td>한화</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">17,689,560</td>
-          <td class="num">38,376,500</td>
-          <td class="num bold">56,066,060</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.20</td>
-          <td>어웨이</td>
-          <td>한화</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">18,880,600</td>
-          <td class="num">39,137,000</td>
-          <td class="num bold">58,017,600</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.19</td>
-          <td>어웨이</td>
-          <td>한화</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,639,830</td>
-          <td class="num">698,329,000</td>
-          <td class="num bold">704,968,830</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.18</td>
-          <td>홈</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">23,412</td>
-          <td class="num">97.5%</td>
-          <td class="num">95,044,440</td>
-          <td class="num">18,933,000</td>
-          <td class="num bold">113,977,440</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.17</td>
-          <td>홈</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">22,915</td>
-          <td class="num">95.5%</td>
-          <td class="num">83,172,920</td>
-          <td class="num">22,490,500</td>
-          <td class="num bold">105,663,420</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.16</td>
-          <td>홈</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">22,995</td>
-          <td class="num">95.8%</td>
-          <td class="num">80,544,750</td>
-          <td class="num">754,587,500</td>
-          <td class="num bold">835,132,250</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.15</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">8,275,800</td>
-          <td class="num">41,991,000</td>
-          <td class="num bold">50,266,800</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.14</td>
-          <td>홈</td>
-          <td>SSG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">130,118,690</td>
-          <td class="num">3,082,000</td>
-          <td class="num bold">133,200,690</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.13</td>
-          <td>홈</td>
-          <td>SSG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">139,933,320</td>
-          <td class="num">5,319,500</td>
-          <td class="num bold">145,252,820</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.12</td>
-          <td>홈</td>
-          <td>SSG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">382,760,790</td>
-          <td class="num">78,225,000</td>
-          <td class="num bold">460,985,790</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.11</td>
-          <td>어웨이</td>
-          <td>KT</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">11,912,500</td>
-          <td class="num">3,877,500</td>
-          <td class="num bold">15,790,000</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.10</td>
-          <td>어웨이</td>
-          <td>KT</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">9,837,300</td>
-          <td class="num">3,701,000</td>
-          <td class="num bold">13,538,300</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.09</td>
-          <td>어웨이</td>
-          <td>KT</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,779,830</td>
-          <td class="num">5,609,000</td>
-          <td class="num bold">12,388,830</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.08</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,954,400</td>
-          <td class="num">4,564,000</td>
-          <td class="num bold">9,518,400</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.07</td>
-          <td>어웨이</td>
-          <td>KIA</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">19,042,860</td>
-          <td class="num">4,420,500</td>
-          <td class="num bold">23,463,360</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.06</td>
-          <td>어웨이</td>
-          <td>KIA</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">17,358,860</td>
-          <td class="num">3,361,000</td>
-          <td class="num bold">20,719,860</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.05</td>
-          <td>어웨이</td>
-          <td>KIA</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">3,769,130</td>
-          <td class="num">4,589,500</td>
-          <td class="num bold">8,358,630</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.04</td>
-          <td>홈</td>
-          <td>NC</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">88,150,420</td>
-          <td class="num">5,672,000</td>
-          <td class="num bold">93,822,420</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.03</td>
-          <td>홈</td>
-          <td>NC</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">126,090,590</td>
-          <td class="num">121,018,000</td>
-          <td class="num bold">247,108,590</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.02</td>
-          <td>홈</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">83,665,970</td>
-          <td class="num">93,496,500</td>
-          <td class="num bold">177,162,470</td>
-        </tr>
-        <tr data-month="2026.06">
-          <td>2026.06.01</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,109,600</td>
-          <td class="num">33,022,000</td>
-          <td class="num bold">38,131,600</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.31</td>
-          <td>홈</td>
-          <td>두산</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">124,574,220</td>
-          <td class="num">22,486,000</td>
-          <td class="num bold">147,060,220</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.30</td>
-          <td>홈</td>
-          <td>두산</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">121,836,820</td>
-          <td class="num">11,490,000</td>
-          <td class="num bold">133,326,820</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.29</td>
-          <td>홈</td>
-          <td>두산</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">98,887,080</td>
-          <td class="num">12,820,000</td>
-          <td class="num bold">111,707,080</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.28</td>
-          <td>어웨이</td>
-          <td>SSG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">8,509,800</td>
-          <td class="num">14,711,500</td>
-          <td class="num bold">23,221,300</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.27</td>
-          <td>어웨이</td>
-          <td>SSG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,139,950</td>
-          <td class="num">44,229,000</td>
-          <td class="num bold">50,368,950</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.26</td>
-          <td>어웨이</td>
-          <td>SSG</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,090,800</td>
-          <td class="num">9,298,860</td>
-          <td class="num bold">14,389,660</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.25</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">19,048,000</td>
-          <td class="num">9,506,600</td>
-          <td class="num bold">28,554,600</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.24</td>
-          <td>어웨이</td>
-          <td>롯데</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">20,569,130</td>
-          <td class="num">9,530,500</td>
-          <td class="num bold">30,099,630</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.23</td>
-          <td>어웨이</td>
-          <td>롯데</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">25,195,730</td>
-          <td class="num">10,032,000</td>
-          <td class="num bold">35,227,730</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.22</td>
-          <td>어웨이</td>
-          <td>롯데</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,170,830</td>
-          <td class="num">19,191,500</td>
-          <td class="num bold">23,362,330</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.21</td>
-          <td>홈</td>
-          <td>KT</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">12,120</td>
-          <td class="num">50.5%</td>
-          <td class="num">2,810,400</td>
-          <td class="num">35,344,500</td>
-          <td class="num bold">38,154,900</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.20</td>
-          <td>홈</td>
-          <td>KT</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">2,505,900</td>
-          <td class="num">8,914,500</td>
-          <td class="num bold">11,420,400</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.19</td>
-          <td>홈</td>
-          <td>KT</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">12,120</td>
-          <td class="num">50.5%</td>
-          <td class="num">4,795,700</td>
-          <td class="num">14,407,000</td>
-          <td class="num bold">19,202,700</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.18</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">3,363,660</td>
-          <td class="num">47,409,000</td>
-          <td class="num bold">50,772,660</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.17</td>
-          <td>홈</td>
-          <td>KIA</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">125,986,620</td>
-          <td class="num">35,207,000</td>
-          <td class="num bold">161,193,620</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.16</td>
-          <td>홈</td>
-          <td>KIA</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">114,207,291</td>
-          <td class="num">33,051,000</td>
-          <td class="num bold">147,258,291</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.15</td>
-          <td>홈</td>
-          <td>KIA</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">98,711,390</td>
-          <td class="num">34,512,500</td>
-          <td class="num bold">133,223,890</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.14</td>
-          <td>어웨이</td>
-          <td>LG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">12,669,400</td>
-          <td class="num">49,281,500</td>
-          <td class="num bold">61,950,900</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.13</td>
-          <td>어웨이</td>
-          <td>LG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,931,800</td>
-          <td class="num">678,642,500</td>
-          <td class="num bold">685,574,300</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.12</td>
-          <td>어웨이</td>
-          <td>LG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,439,330</td>
-          <td class="num">4,482,000</td>
-          <td class="num bold">8,921,330</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.11</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,171,830</td>
-          <td class="num">6,678,000</td>
-          <td class="num bold">10,849,830</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.10</td>
-          <td>어웨이</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">22,583,000</td>
-          <td class="num">98,894,000</td>
-          <td class="num bold">121,477,000</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.09</td>
-          <td>어웨이</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">27,384,760</td>
-          <td class="num">40,936,500</td>
-          <td class="num bold">68,321,260</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.08</td>
-          <td>어웨이</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">12,846,430</td>
-          <td class="num">40,753,500</td>
-          <td class="num bold">53,599,930</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.07</td>
-          <td>홈</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">52,819,430</td>
-          <td class="num">39,575,000</td>
-          <td class="num bold">92,394,430</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.06</td>
-          <td>홈</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">61,078,910</td>
-          <td class="num">38,579,000</td>
-          <td class="num bold">99,657,910</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.05</td>
-          <td>홈</td>
-          <td>키움</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">129,497,200</td>
-          <td class="num">45,165,500</td>
-          <td class="num bold">174,662,700</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.04</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">20,681,000</td>
-          <td class="num">52,965,500</td>
-          <td class="num bold">73,646,500</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.03</td>
-          <td>홈</td>
-          <td>한화</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">95,486,770</td>
-          <td class="num">63,302,500</td>
-          <td class="num bold">158,789,270</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.02</td>
-          <td>홈</td>
-          <td>한화</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">126,494,140</td>
-          <td class="num">81,810,500</td>
-          <td class="num bold">208,304,640</td>
-        </tr>
-        <tr data-month="2026.05">
-          <td>2026.05.01</td>
-          <td>홈</td>
-          <td>한화</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">128,762,450</td>
-          <td class="num">283,739,000</td>
-          <td class="num bold">412,501,450</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.30</td>
-          <td>어웨이</td>
-          <td>두산</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">7,103,830</td>
-          <td class="num">4,634,000</td>
-          <td class="num bold">11,737,830</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.29</td>
-          <td>어웨이</td>
-          <td>두산</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,469,000</td>
-          <td class="num">4,219,500</td>
-          <td class="num bold">10,688,500</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.28</td>
-          <td>어웨이</td>
-          <td>두산</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,069,300</td>
-          <td class="num">4,314,500</td>
-          <td class="num bold">10,383,800</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.27</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">3,332,100</td>
-          <td class="num">5,951,500</td>
-          <td class="num bold">9,283,600</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.26</td>
-          <td>어웨이</td>
-          <td>키움</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">18,255,300</td>
-          <td class="num">4,099,500</td>
-          <td class="num bold">22,354,800</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.25</td>
-          <td>어웨이</td>
-          <td>키움</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">23,578,930</td>
-          <td class="num">3,800,000</td>
-          <td class="num bold">27,378,930</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.24</td>
-          <td>어웨이</td>
-          <td>키움</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,253,200</td>
-          <td class="num">6,516,000</td>
-          <td class="num bold">12,769,200</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.23</td>
-          <td>홈</td>
-          <td>SSG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">23,524</td>
-          <td class="num">98.0%</td>
-          <td class="num">101,374,110</td>
-          <td class="num">13,433,000</td>
-          <td class="num bold">114,807,110</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.22</td>
-          <td>홈</td>
-          <td>SSG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">23,539</td>
-          <td class="num">98.1%</td>
-          <td class="num">106,883,830</td>
-          <td class="num">16,447,000</td>
-          <td class="num bold">123,330,830</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.21</td>
-          <td>홈</td>
-          <td>SSG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">23,420</td>
-          <td class="num">97.6%</td>
-          <td class="num">118,841,770</td>
-          <td class="num">28,727,000</td>
-          <td class="num bold">147,568,770</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.20</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">11,601,830</td>
-          <td class="num">23,441,000</td>
-          <td class="num bold">35,042,830</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.19</td>
-          <td>홈</td>
-          <td>LG</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">192,019,410</td>
-          <td class="num">46,790,500</td>
-          <td class="num bold">238,809,910</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.18</td>
-          <td>홈</td>
-          <td>LG</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">187,092,020</td>
-          <td class="num">165,063,500</td>
-          <td class="num bold">352,155,520</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.17</td>
-          <td>홈</td>
-          <td>LG</td>
-          <td><span class="badge cancel">취소</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">51,224,570</td>
-          <td class="num">16,833,500</td>
-          <td class="num bold">68,058,070</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.16</td>
-          <td>어웨이</td>
-          <td>한화</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">8,395,500</td>
-          <td class="num">17,655,500</td>
-          <td class="num bold">26,051,000</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.15</td>
-          <td>어웨이</td>
-          <td>한화</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">10,469,430</td>
-          <td class="num">18,710,000</td>
-          <td class="num bold">29,179,430</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.14</td>
-          <td>어웨이</td>
-          <td>한화</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">8,914,190</td>
-          <td class="num">16,649,000</td>
-          <td class="num bold">25,563,190</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.13</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,433,130</td>
-          <td class="num">18,342,500</td>
-          <td class="num bold">22,775,630</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.12</td>
-          <td>홈</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">143,364,920</td>
-          <td class="num">22,469,000</td>
-          <td class="num bold">165,833,920</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.11</td>
-          <td>홈</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">152,645,210</td>
-          <td class="num">15,521,000</td>
-          <td class="num bold">168,166,210</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.10</td>
-          <td>홈</td>
-          <td>NC</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">129,194,720</td>
-          <td class="num">13,532,500</td>
-          <td class="num bold">142,727,220</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.09</td>
-          <td>어웨이</td>
-          <td>KIA</td>
-          <td><span class="badge cancel">취소</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">9,506,700</td>
-          <td class="num">12,805,000</td>
-          <td class="num bold">22,311,700</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.08</td>
-          <td>어웨이</td>
-          <td>KIA</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">11,794,060</td>
-          <td class="num">15,450,500</td>
-          <td class="num bold">27,244,560</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.07</td>
-          <td>어웨이</td>
-          <td>KIA</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">10,028,700</td>
-          <td class="num">25,361,000</td>
-          <td class="num bold">35,389,700</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.06</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">6,819,200</td>
-          <td class="num">16,690,000</td>
-          <td class="num bold">23,509,200</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.05</td>
-          <td>어웨이</td>
-          <td>KT</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">35,029,540</td>
-          <td class="num">15,885,000</td>
-          <td class="num bold">50,914,540</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.04</td>
-          <td>어웨이</td>
-          <td>KT</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">33,255,760</td>
-          <td class="num">14,075,000</td>
-          <td class="num bold">47,330,760</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.03</td>
-          <td>어웨이</td>
-          <td>KT</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">10,199,530</td>
-          <td class="num">14,195,000</td>
-          <td class="num bold">24,394,530</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.02</td>
-          <td>홈</td>
-          <td>두산</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">23,617</td>
-          <td class="num">98.4%</td>
-          <td class="num">113,634,740</td>
-          <td class="num">22,887,000</td>
-          <td class="num bold">136,521,740</td>
-        </tr>
-        <tr data-month="2026.04">
-          <td>2026.04.01</td>
-          <td>홈</td>
-          <td>두산</td>
-          <td><span class="badge win">승</span></td>
-          <td class="num">23,120</td>
-          <td class="num">96.3%</td>
-          <td class="num">103,942,750</td>
-          <td class="num">29,970,000</td>
-          <td class="num bold">133,912,750</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.31</td>
-          <td>홈</td>
-          <td>두산</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">21,489</td>
-          <td class="num">89.5%</td>
-          <td class="num">103,645,700</td>
-          <td class="num">11,498,000</td>
-          <td class="num bold">115,143,700</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.30</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">9,235,000</td>
-          <td class="num">11,975,000</td>
-          <td class="num bold">21,210,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.29</td>
-          <td>홈</td>
-          <td>롯데</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">135,153,370</td>
-          <td class="num">16,098,000</td>
-          <td class="num bold">151,251,370</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.28</td>
-          <td>홈</td>
-          <td>롯데</td>
-          <td><span class="badge lose">패</span></td>
-          <td class="num">24,000</td>
-          <td class="num">100.0%</td>
-          <td class="num">165,140,900</td>
-          <td class="num">15,686,000</td>
-          <td class="num bold">180,826,900</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.27</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">29,078,540</td>
-          <td class="num">10,081,000</td>
-          <td class="num bold">39,159,540</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.26</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">22,179,010</td>
-          <td class="num">9,834,000</td>
-          <td class="num bold">32,013,010</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.25</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">12,055,000</td>
-          <td class="num bold">12,055,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.24</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">16,481,000</td>
-          <td class="num bold">16,481,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.23</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">15,439,000</td>
-          <td class="num bold">15,439,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.22</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">148,697,600</td>
-          <td class="num">18,370,000</td>
-          <td class="num bold">167,067,600</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.21</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">127,589,400</td>
-          <td class="num">15,005,000</td>
-          <td class="num bold">142,594,400</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.20</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">18,814,700</td>
-          <td class="num">8,255,000</td>
-          <td class="num bold">27,069,700</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.19</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">13,884,720</td>
-          <td class="num">8,300,000</td>
-          <td class="num bold">22,184,720</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.18</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">9,678,500</td>
-          <td class="num">11,560,000</td>
-          <td class="num bold">21,238,500</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.17</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">13,318,600</td>
-          <td class="num">20,325,000</td>
-          <td class="num bold">33,643,600</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.16</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">14,556,100</td>
-          <td class="num">54,443,000</td>
-          <td class="num bold">68,999,100</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.15</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,481,000</td>
-          <td class="num bold">5,481,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.14</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,937,000</td>
-          <td class="num bold">4,937,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.13</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,415,000</td>
-          <td class="num bold">5,415,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.12</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">7,065,000</td>
-          <td class="num bold">7,065,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.11</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,256,000</td>
-          <td class="num bold">4,256,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.10</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">5,066,000</td>
-          <td class="num bold">5,066,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.09</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">3,753,000</td>
-          <td class="num bold">3,753,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.08</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,605,000</td>
-          <td class="num bold">4,605,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.07</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">4,831,000</td>
-          <td class="num bold">4,831,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.06</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">27,715,000</td>
-          <td class="num bold">27,715,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.05</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">179,083,000</td>
-          <td class="num bold">179,083,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.04</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">68,350,000</td>
-          <td class="num bold">68,350,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.03</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">53,643,000</td>
-          <td class="num bold">53,643,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.02</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">49,605,000</td>
-          <td class="num bold">49,605,000</td>
-        </tr>
-        <tr data-month="2026.03">
-          <td>2026.03.01</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">71,340,000</td>
-          <td class="num bold">71,340,000</td>
-        </tr>
-        <tr data-month="2026.02">
-          <td>2026.02.28</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">50,482,000</td>
-          <td class="num bold">50,482,000</td>
-        </tr>
-        <tr data-month="2026.02">
-          <td>2026.02.27</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">94,807,000</td>
-          <td class="num bold">94,807,000</td>
-        </tr>
-        <tr data-month="2026.02">
-          <td>2026.02.26</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">57,396,000</td>
-          <td class="num bold">57,396,000</td>
-        </tr>
-        <tr data-month="2026.02">
-          <td>2026.02.25</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">136,568,000</td>
-          <td class="num bold">136,568,000</td>
-        </tr>
-        <tr data-month="2026.02">
-          <td>2026.02.24</td>
-          <td>-</td>
-          <td>-</td>
-          <td><span class="badge ">-</span></td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">-</td>
-          <td class="num">1,768,326,000</td>
-          <td class="num bold">1,768,326,000</td>
         </tr></tbody>
     </table>
-    <div class="pagination" id="pagination"></div>
   </div>
 </div>
 
@@ -2873,13 +544,29 @@
         <button class="trend-btn" data-dim="size" onclick="setAnalysisDim('size')">사이즈별</button>
       </div>
     </div>
-    <table style="font-size:12px">
-      <thead><tr>
-        <th id="analysisDimHead">카테고리</th>
-        <th style="text-align:right">OFF수량</th><th style="text-align:right">ON수량</th><th style="text-align:right">합계수량</th>
-        <th style="text-align:right">OFF금액</th><th style="text-align:right">ON금액</th><th style="text-align:right">합계금액</th>
-        <th style="width:170px">금액 비중</th>
-      </tr></thead>
+    <style>
+      .a-table th, .a-table td { padding: 8px 8px; }
+      .a-table .grp { text-align: center; border-bottom: 1px solid #e3e7ef; letter-spacing: 1px; }
+      .a-table .sep { border-left: 2px solid #e3e7ef; }
+      .a-cell { display: flex; align-items: center; gap: 6px; min-width: 118px; }
+      .a-track { flex: 1; display: flex; height: 8px; background: #eef2fb; border-radius: 3px; overflow: hidden; }
+      .a-track > div { height: 8px; }
+      .a-cell span { font-size: 11px; color: #666; min-width: 36px; text-align: right; white-space: nowrap; }
+    </style>
+    <table class="a-table" style="font-size:12px">
+      <thead>
+        <tr>
+          <th rowspan="2" id="analysisDimHead" style="vertical-align:bottom">카테고리</th>
+          <th colspan="5" class="grp sep">수량</th>
+          <th colspan="5" class="grp sep">거래액</th>
+        </tr>
+        <tr>
+          <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
+          <th>전체 대비</th><th><span style="color:#002D72">OFF</span>/<span style="color:#C8102E">ON</span> 비중</th>
+          <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
+          <th>전체 대비</th><th><span style="color:#002D72">OFF</span>/<span style="color:#C8102E">ON</span> 비중</th>
+        </tr>
+      </thead>
       <tbody id="analysisTbody"></tbody>
     </table>
   </div>
@@ -3079,58 +766,18 @@ KIA 타이거즈가 KT 위즈전에서 연이틀 역전패하며 마무리투수
 </div>
 
 <script>
-// ── 월별 필터 & 페이지네이션 ──
+// ── 요약 기간(월) 버튼 → 상단 요약 카드 ──
 const allData = [{"date": "2026.02.24", "off": 0, "on": 1768326000, "total": 1768326000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": "\ubca0\ub9ac\uc988 \uc624\ud508 (\uace8\uae00 \uc624\ud508)"}, {"date": "2026.02.25", "off": 0, "on": 136568000, "total": 136568000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.02.26", "off": 0, "on": 57396000, "total": 57396000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.02.27", "off": 0, "on": 94807000, "total": 94807000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.02.28", "off": 0, "on": 50482000, "total": 50482000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.01", "off": 0, "on": 71340000, "total": 71340000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.02", "off": 0, "on": 49605000, "total": 49605000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.03", "off": 0, "on": 53643000, "total": 53643000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.04", "off": 0, "on": 68350000, "total": 68350000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.05", "off": 0, "on": 179083000, "total": 179083000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.06", "off": 0, "on": 27715000, "total": 27715000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.07", "off": 0, "on": 4831000, "total": 4831000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.08", "off": 0, "on": 4605000, "total": 4605000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.09", "off": 0, "on": 3753000, "total": 3753000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.10", "off": 0, "on": 5066000, "total": 5066000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.11", "off": 0, "on": 4256000, "total": 4256000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.12", "off": 0, "on": 7065000, "total": 7065000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.13", "off": 0, "on": 5415000, "total": 5415000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.14", "off": 0, "on": 4937000, "total": 4937000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.15", "off": 0, "on": 5481000, "total": 5481000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.16", "off": 14556100, "on": 54443000, "total": 68999100, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": "\uc655\uc870\ub808\ud50c\ub9ac\uce74 \uac1c\uc2dc"}, {"date": "2026.03.17", "off": 13318600, "on": 20325000, "total": 33643600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.18", "off": 9678500, "on": 11560000, "total": 21238500, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.19", "off": 13884720, "on": 8300000, "total": 22184720, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.20", "off": 18814700, "on": 8255000, "total": 27069700, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.21", "off": 127589400, "on": 15005000, "total": 142594400, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.22", "off": 148697600, "on": 18370000, "total": 167067600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.23", "off": 0, "on": 15439000, "total": 15439000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.24", "off": 0, "on": 16481000, "total": 16481000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.25", "off": 0, "on": 12055000, "total": 12055000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.26", "off": 22179010, "on": 9834000, "total": 32013010, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.27", "off": 29078540, "on": 10081000, "total": 39159540, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.28", "off": 165140900, "on": 15686000, "total": 180826900, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "\ud328", "crowd": 24000, "note": "\uac1c\ub9c9"}, {"date": "2026.03.29", "off": 135153370, "on": 16098000, "total": 151251370, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.03.30", "off": 9235000, "on": 11975000, "total": 21210000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.03.31", "off": 103645700, "on": 11498000, "total": 115143700, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "-", "crowd": 21489, "note": ""}, {"date": "2026.04.01", "off": 103942750, "on": 29970000, "total": 133912750, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "\uc2b9", "crowd": 23120, "note": ""}, {"date": "2026.04.02", "off": 113634740, "on": 22887000, "total": 136521740, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "\uc2b9", "crowd": 23617, "note": ""}, {"date": "2026.04.03", "off": 10199530, "on": 14195000, "total": 24394530, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KT", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.04", "off": 33255760, "on": 14075000, "total": 47330760, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KT", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.05", "off": 35029540, "on": 15885000, "total": 50914540, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KT", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.06", "off": 6819200, "on": 16690000, "total": 23509200, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.04.07", "off": 10028700, "on": 25361000, "total": 35389700, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.08", "off": 11794060, "on": 15450500, "total": 27244560, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.09", "off": 9506700, "on": 12805000, "total": 22311700, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\ucde8\uc18c", "crowd": 0, "note": ""}, {"date": "2026.04.10", "off": 129194720, "on": 13532500, "total": 142727220, "home_away": "\ud648", "opponent": "NC", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.04.11", "off": 152645210, "on": 15521000, "total": 168166210, "home_away": "\ud648", "opponent": "NC", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.04.12", "off": 143364920, "on": 22469000, "total": 165833920, "home_away": "\ud648", "opponent": "NC", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.04.13", "off": 4433130, "on": 18342500, "total": 22775630, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.04.14", "off": 8914190, "on": 16649000, "total": 25563190, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.15", "off": 10469430, "on": 18710000, "total": 29179430, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.16", "off": 8395500, "on": 17655500, "total": 26051000, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.17", "off": 51224570, "on": 16833500, "total": 68058070, "home_away": "\ud648", "opponent": "LG", "result": "\ucde8\uc18c", "crowd": 0, "note": ""}, {"date": "2026.04.18", "off": 187092020, "on": 165063500, "total": 352155520, "home_away": "\ud648", "opponent": "LG", "result": "\uc2b9", "crowd": 24000, "note": "\ub9ac\ubbf8\ud2f0\ub4dc\uc2a4\ud504\ub9c1 \uc720\ub2c8\ud3fc \uac1c\uc2dc"}, {"date": "2026.04.19", "off": 192019410, "on": 46790500, "total": 238809910, "home_away": "\ud648", "opponent": "LG", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.04.20", "off": 11601830, "on": 23441000, "total": 35042830, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.04.21", "off": 118841770, "on": 28727000, "total": 147568770, "home_away": "\ud648", "opponent": "SSG", "result": "\ud328", "crowd": 23420, "note": ""}, {"date": "2026.04.22", "off": 106883830, "on": 16447000, "total": 123330830, "home_away": "\ud648", "opponent": "SSG", "result": "\ud328", "crowd": 23539, "note": ""}, {"date": "2026.04.23", "off": 101374110, "on": 13433000, "total": 114807110, "home_away": "\ud648", "opponent": "SSG", "result": "\ud328", "crowd": 23524, "note": ""}, {"date": "2026.04.24", "off": 6253200, "on": 6516000, "total": 12769200, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.25", "off": 23578930, "on": 3800000, "total": 27378930, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.26", "off": 18255300, "on": 4099500, "total": 22354800, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.27", "off": 3332100, "on": 5951500, "total": 9283600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.04.28", "off": 6069300, "on": 4314500, "total": 10383800, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub450\uc0b0", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.04.29", "off": 6469000, "on": 4219500, "total": 10688500, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub450\uc0b0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.04.30", "off": 7103830, "on": 4634000, "total": 11737830, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub450\uc0b0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.05.01", "off": 128762450, "on": 283739000, "total": 412501450, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 24000, "note": "\uc655\uc870 \uc720\ub2c8\ud3fc \uac1c\uc2dc"}, {"date": "2026.05.02", "off": 126494140, "on": 81810500, "total": 208304640, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.05.03", "off": 95486770, "on": 63302500, "total": 158789270, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.05.04", "off": 20681000, "on": 52965500, "total": 73646500, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.05.05", "off": 129497200, "on": 45165500, "total": 174662700, "home_away": "\ud648", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.05.06", "off": 61078910, "on": 38579000, "total": 99657910, "home_away": "\ud648", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.05.07", "off": 52819430, "on": 39575000, "total": 92394430, "home_away": "\ud648", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.05.08", "off": 12846430, "on": 40753500, "total": 53599930, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "NC", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.05.09", "off": 27384760, "on": 40936500, "total": 68321260, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "NC", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.05.10", "off": 22583000, "on": 98894000, "total": 121477000, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "NC", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.05.11", "off": 4171830, "on": 6678000, "total": 10849830, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.05.12", "off": 4439330, "on": 4482000, "total": 8921330, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "LG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.05.13", "off": 6931800, "on": 678642500, "total": 685574300, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "LG", "result": "\ud328", "crowd": 0, "note": "\ubc15\uc2b9\uaddc \uc720\ub2c8\ud3fc \ud310\ub9e4"}, {"date": "2026.05.14", "off": 12669400, "on": 49281500, "total": 61950900, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "LG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.05.15", "off": 98711390, "on": 34512500, "total": 133223890, "home_away": "\ud648", "opponent": "KIA", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.05.16", "off": 114207291, "on": 33051000, "total": 147258291, "home_away": "\ud648", "opponent": "KIA", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.05.17", "off": 125986620, "on": 35207000, "total": 161193620, "home_away": "\ud648", "opponent": "KIA", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.05.18", "off": 3363660, "on": 47409000, "total": 50772660, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.05.19", "off": 4795700, "on": 14407000, "total": 19202700, "home_away": "\ud648", "opponent": "KT", "result": "\uc2b9", "crowd": 12120, "note": ""}, {"date": "2026.05.20", "off": 2505900, "on": 8914500, "total": 11420400, "home_away": "\ud648", "opponent": "KT", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.05.21", "off": 2810400, "on": 35344500, "total": 38154900, "home_away": "\ud648", "opponent": "KT", "result": "\uc2b9", "crowd": 12120, "note": ""}, {"date": "2026.05.22", "off": 4170830, "on": 19191500, "total": 23362330, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub86f\ub370", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.05.23", "off": 25195730, "on": 10032000, "total": 35227730, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub86f\ub370", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.05.24", "off": 20569130, "on": 9530500, "total": 30099630, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub86f\ub370", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.05.25", "off": 19048000, "on": 9506600, "total": 28554600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.05.26", "off": 5090800, "on": 9298860, "total": 14389660, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "SSG", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.05.27", "off": 6139950, "on": 44229000, "total": 50368950, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "SSG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.05.28", "off": 8509800, "on": 14711500, "total": 23221300, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "SSG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.05.29", "off": 98887080, "on": 12820000, "total": 111707080, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.05.30", "off": 121836820, "on": 11490000, "total": 133326820, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.05.31", "off": 124574220, "on": 22486000, "total": 147060220, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.06.01", "off": 5109600, "on": 33022000, "total": 38131600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.06.02", "off": 83665970, "on": 93496500, "total": 177162470, "home_away": "\ud648", "opponent": "NC", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.06.03", "off": 126090590, "on": 121018000, "total": 247108590, "home_away": "\ud648", "opponent": "NC", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.06.04", "off": 88150420, "on": 5672000, "total": 93822420, "home_away": "\ud648", "opponent": "NC", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.06.05", "off": 3769130, "on": 4589500, "total": 8358630, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.06.06", "off": 17358860, "on": 3361000, "total": 20719860, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.06.07", "off": 19042860, "on": 4420500, "total": 23463360, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.06.08", "off": 4954400, "on": 4564000, "total": 9518400, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.06.09", "off": 6779830, "on": 5609000, "total": 12388830, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KT", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.06.10", "off": 9837300, "on": 3701000, "total": 13538300, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KT", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.06.11", "off": 11912500, "on": 3877500, "total": 15790000, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KT", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.06.12", "off": 382760790, "on": 78225000, "total": 460985790, "home_away": "\ud648", "opponent": "SSG", "result": "\ud328", "crowd": 24000, "note": "\ucf54\uc774\uc138\uc774\uc624 \ucf5c\ub77c\ubcf4 \uc0c1\ud488 \ud310\ub9e4"}, {"date": "2026.06.13", "off": 139933320, "on": 5319500, "total": 145252820, "home_away": "\ud648", "opponent": "SSG", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.06.14", "off": 130118690, "on": 3082000, "total": 133200690, "home_away": "\ud648", "opponent": "SSG", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.06.15", "off": 8275800, "on": 41991000, "total": 50266800, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.06.16", "off": 80544750, "on": 754587500, "total": 835132250, "home_away": "\ud648", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 22995, "note": "\ucf54\uc774\uc138\uc774\uc624 1\ucc28 \uc608\uc57d\ud310\ub9e4"}, {"date": "2026.06.17", "off": 83172920, "on": 22490500, "total": 105663420, "home_away": "\ud648", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 22915, "note": ""}, {"date": "2026.06.18", "off": 95044440, "on": 18933000, "total": 113977440, "home_away": "\ud648", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 23412, "note": ""}, {"date": "2026.06.19", "off": 6639830, "on": 698329000, "total": 704968830, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud55c\ud654", "result": "-", "crowd": 0, "note": "\ucf54\uc774\uc138\uc774\uc624 2\ucc28 \uc608\uc57d\ud310\ub9e4"}, {"date": "2026.06.20", "off": 18880600, "on": 39137000, "total": 58017600, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud55c\ud654", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.06.21", "off": 17689560, "on": 38376500, "total": 56066060, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.06.22", "off": 3953500, "on": 9531000, "total": 13484500, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.06.23", "off": 5964300, "on": 13070500, "total": 19034800, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "LG", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.06.24", "off": 5232690, "on": 9149000, "total": 14381690, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "LG", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.06.25", "off": 7388600, "on": 12885000, "total": 20273600, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "LG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.06.26", "off": 117219700, "on": 174255500, "total": 291475200, "home_away": "\ud648", "opponent": "KT", "result": "\uc2b9", "crowd": 24000, "note": "\uac15\ubbfc\ud638 \uae30\ub85d \uc720\ub2c8\ud3fc 1\ucc28 \uc608\uc57d\ud310\ub9e4"}, {"date": "2026.06.27", "off": 126120100, "on": 12882000, "total": 139002100, "home_away": "\ud648", "opponent": "KT", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.06.28", "off": 122683600, "on": 14164500, "total": 136848100, "home_away": "\ud648", "opponent": "KT", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.06.29", "off": 3461000, "on": 125105000, "total": 128566000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": "\uac15\ubbfc\ud638 \uae30\ub85d \uc720\ub2c8\ud3fc 2\ucc28 \uc608\ud310"}, {"date": "2026.06.30", "off": 4411000, "on": 30423000, "total": 34834000, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "NC", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.07.01", "off": 8656600, "on": 59715500, "total": 68372100, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "NC", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.07.02", "off": 5135900, "on": 17602000, "total": 22737900, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "NC", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.07.03", "off": 5569300, "on": 18018500, "total": 23587800, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "SSG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.07.04", "off": 19376600, "on": 13008000, "total": 32384600, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "SSG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.07.05", "off": 15982200, "on": 56511000, "total": 72493200, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "SSG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.07.06", "off": 8822200, "on": 172217500, "total": 181039700, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": "\uc591\ucc3d\uc12d \uae30\ub150 \uc720\ub2c8\ud3fc \uc608\ud310"}, {"date": "2026.07.07", "off": 85898140, "on": 58122000, "total": 144020140, "home_away": "\ud648", "opponent": "LG", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.07.08", "off": 85385340, "on": 26778500, "total": 112163840, "home_away": "\ud648", "opponent": "LG", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.07.09", "off": 66005700, "on": 42139000, "total": 108144700, "home_away": "\ud648", "opponent": "LG", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.07.10", "off": 6487500, "on": 13106000, "total": 19593500, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.07.11", "off": 20437800, "on": 12629500, "total": 33067300, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.07.12", "off": 17728300, "on": 10168000, "total": 27896300, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.07.13", "off": 3797500, "on": 11908500, "total": 15706000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.07.14", "off": 5752100, "on": 9642500, "total": 15394600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.07.15", "off": 5705900, "on": 9378000, "total": 15083900, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.07.16", "off": 280996600, "on": 660288500, "total": 941285100, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "\uc2b9", "crowd": 24000, "note": "\ub77c\uc774\uc5b8 \ucf5c\ub77c\ubcf4"}, {"date": "2026.07.17", "off": 108852900, "on": 72374000, "total": 181226900, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.07.18", "off": 142342100, "on": 39749500, "total": 182091600, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.07.19", "off": 116817700, "on": 65948000, "total": 182765700, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.07.20", "off": 5456100, "on": 61430000, "total": 66886100, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.07.21", "off": 7503100, "on": 22968000, "total": 30471100, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.07.22", "off": 21840100, "on": 166829500, "total": 188669600, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\ud328", "crowd": 0, "note": "\uc2e0\uaddc MD \ubc0f \ub9c8\ud0b9\ud0a4\ud2b8 \ucd9c\uc2dc"}, {"date": "2026.07.23", "off": 14850240, "on": 25915000, "total": 40765240, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.07.24", "off": 15713100, "on": 20769000, "total": 36482100, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub450\uc0b0", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.07.25", "off": 35331100, "on": 20922500, "total": 56253600, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub450\uc0b0", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.07.26", "off": 29153900, "on": 18795500, "total": 47949400, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub450\uc0b0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.07.27", "off": 16713400, "on": 10280000, "total": 26993400, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.07.28", "off": 135861540, "on": 13831500, "total": 149693040, "home_away": "\ud648", "opponent": "KIA", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.07.29", "off": 120887800, "on": 12386500, "total": 133274300, "home_away": "\ud648", "opponent": "KIA", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.07.30", "off": 120370600, "on": 7388500, "total": 127759100, "home_away": "\ud648", "opponent": "KIA", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.07.31", "off": 11349200, "on": 12565500, "total": 23914700, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub86f\ub370", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.08.01", "off": 26311900, "on": 9544500, "total": 35856400, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub86f\ub370", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.08.02", "off": 18564900, "on": 7049500, "total": 25614400, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub86f\ub370", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.08.03", "off": 59436500, "on": 169297500, "total": 228734000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.08.04", "off": 150301950, "on": 23012000, "total": 173313950, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.08.05", "off": 29953100, "on": 20435500, "total": 50388600, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.08.06", "off": 15369600, "on": 13087000, "total": 28456600, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.08.07", "off": 18883300, "on": 9526000, "total": 28409300, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.08.08", "off": 127914300, "on": 83790000, "total": 211704300, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.08.09", "off": 48640800, "on": 9739500, "total": 58380300, "home_away": "\ud648", "opponent": "\ub450\uc0b0", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.08.10", "off": 13233900, "on": 51197000, "total": 64430900, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.08.11", "off": 8292900, "on": 18339500, "total": 26632400, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.08.12", "off": 9575300, "on": 21559500, "total": 31134800, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.08.13", "off": 8690100, "on": 27014000, "total": 35704100, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "KIA", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.08.14", "off": 102039900, "on": 9073500, "total": 111113400, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.08.15", "off": 154487120, "on": 6538000, "total": 161025120, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.08.16", "off": 47441900, "on": 7395500, "total": 54837400, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.08.17", "off": 17328800, "on": 7204500, "total": 24533300, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.08.18", "off": 372851100, "on": 469337500, "total": 842188600, "home_away": "\ud648", "opponent": "SSG", "result": "\ud328", "crowd": 23184, "note": "\uc36c\ub7ec\ube0c \ucf5c\ub77c\ubcf4 \ucd9c\uc2dc"}, {"date": "2026.08.19", "off": 111990000, "on": 12761000, "total": 124751000, "home_away": "\ud648", "opponent": "SSG", "result": "\uc2b9", "crowd": 22784, "note": ""}, {"date": "2026.08.20", "off": 89357700, "on": 10522500, "total": 99880200, "home_away": "\ud648", "opponent": "SSG", "result": "\ud328", "crowd": 23238, "note": ""}, {"date": "2026.08.21", "off": 6355600, "on": 9427000, "total": 15782600, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "NC", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.08.22", "off": 20181400, "on": 8570000, "total": 28751400, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "NC", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.08.23", "off": 16215300, "on": 8712500, "total": 24927800, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "NC", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.08.24", "off": 2722400, "on": 10854000, "total": 13576400, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.08.25", "off": 4117000, "on": 16327000, "total": 20444000, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.08.26", "off": 7748000, "on": 39927000, "total": 47675000, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.08.27", "off": 21855800, "on": 98662000, "total": 120517800, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 0, "note": "\uc2e0\uaddc MD\ucd9c\uc2dc"}, {"date": "2026.08.28", "off": 125014300, "on": 25729500, "total": 150743800, "home_away": "\ud648", "opponent": "KT", "result": "-", "crowd": 0, "note": "\uace8\ub4e0\uae00\ub7ec\ube0c,\uc655\uc870"}, {"date": "2026.08.29", "off": 157185040, "on": 13846500, "total": 171031540, "home_away": "\ud648", "opponent": "KT", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.08.30", "off": 65490500, "on": 13284500, "total": 78775000, "home_away": "\ud648", "opponent": "KT", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.08.31", "off": 6923500, "on": 15872000, "total": 22795500, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.09.01", "off": 81385200, "on": 19045000, "total": 100430200, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.09.02", "off": 72165100, "on": 10703500, "total": 82868600, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.09.03", "off": 73367520, "on": 9956500, "total": 83324020, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.09.04", "off": 4084300, "on": 10985000, "total": 15069300, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "LG", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.09.05", "off": 14632100, "on": 8460500, "total": 23092600, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "LG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.09.06", "off": 17753300, "on": 12331000, "total": 30084300, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "LG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.09.07", "off": 5975000, "on": 10672000, "total": 16647000, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.09.08", "off": 80942100, "on": 10327500, "total": 91269600, "home_away": "\ud648", "opponent": "KIA", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.09.09", "off": 71442100, "on": 11718000, "total": 83160100, "home_away": "\ud648", "opponent": "KT", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.09.10", "off": 7976700, "on": 8379000, "total": 16355700, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.09.11", "off": 109965400, "on": 9358000, "total": 119323400, "home_away": "\ud648", "opponent": "\ud0a4\uc6c0", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.09.12", "off": 190238300, "on": 38796500, "total": 229034800, "home_away": "\ud648", "opponent": "LG", "result": "\ud328", "crowd": 24000, "note": "\ucf54\uc774\uc138\uc774\uc624 \ud0a4\ub9c1 \ubc0f \uc7ac\ubc1c\ub9e4"}, {"date": "2026.09.13", "off": 139640400, "on": 7094500, "total": 146734900, "home_away": "\ud648", "opponent": "LG", "result": "\ud328", "crowd": 24000, "note": ""}, {"date": "2026.09.14", "off": 7776900, "on": 207216000, "total": 214992900, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": "\uad6c\uc790\uc6b1 \uae30\ub150 \uc0c1\ud488 \uc608\ud310"}, {"date": "2026.09.15", "off": 86937600, "on": 46135000, "total": 133072600, "home_away": "\ud648", "opponent": "\ub86f\ub370", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.09.16", "off": 6941100, "on": 65587000, "total": 72528100, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub450\uc0b0", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.09.17", "off": 9978600, "on": 70184500, "total": 80163100, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.09.18", "off": 6927900, "on": 10269000, "total": 17196900, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.09.19", "off": 21889300, "on": 7416500, "total": 29305800, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub86f\ub370", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.09.20", "off": 12418600, "on": 7421500, "total": 19840100, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "\ub86f\ub370", "result": "\ud328", "crowd": 0, "note": ""}, {"date": "2026.09.21", "off": 2776700, "on": 6007000, "total": 8783700, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.09.22", "off": 95275500, "on": 4964500, "total": 100240000, "home_away": "\ud648", "opponent": "NC", "result": "\uc2b9", "crowd": 24000, "note": ""}, {"date": "2026.09.23", "off": 2334900, "on": 3780500, "total": 6115400, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.09.24", "off": 24332700, "on": 3931500, "total": 28264200, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "SSG", "result": "\uc2b9", "crowd": 0, "note": ""}, {"date": "2026.09.25", "off": 0, "on": 4346500, "total": 4346500, "home_away": "\uc5b4\uc6e8\uc774", "opponent": "SSG", "result": "-", "crowd": 0, "note": ""}, {"date": "2026.09.26", "off": 19972600, "on": 4041000, "total": 24013600, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.09.27", "off": 13235700, "on": 5064500, "total": 18300200, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.09.28", "off": 4990400, "on": 51822000, "total": 56812400, "home_away": "", "opponent": "", "result": "", "crowd": 0, "note": ""}, {"date": "2026.09.29", "off": 665266740, "on": 3461513500, "total": 4126780240, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 23750, "note": "\uc2dc\ub098\ubaa8\ub864 \ucf5c\ub77c\ubcf4 \ucd9c\uc2dc"}, {"date": "2026.09.30", "off": 157518600, "on": 455323000, "total": 612841600, "home_away": "\ud648", "opponent": "\ud55c\ud654", "result": "\uc2b9", "crowd": 23823, "note": ""}];
-const ROWS_PER_PAGE = 15;
 let currentMonth = 'all';
-let currentPage  = 1;
 
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     currentMonth = this.dataset.month;
-    currentPage  = 1;
     updateKPI(currentMonth);
-    renderTable();
   });
 });
-
-function getFilteredRows() {
-  const allRows = Array.from(document.querySelectorAll('#dataTable tbody tr'));
-  return currentMonth === 'all'
-    ? allRows
-    : allRows.filter(row => row.dataset.month === currentMonth);
-}
-
-function renderTable() {
-  const allRows     = Array.from(document.querySelectorAll('#dataTable tbody tr'));
-  const filtered    = getFilteredRows();
-  const totalPages  = Math.ceil(filtered.length / ROWS_PER_PAGE);
-  const start       = (currentPage - 1) * ROWS_PER_PAGE;
-  const pageRows    = filtered.slice(start, start + ROWS_PER_PAGE);
-
-  allRows.forEach(row => row.style.display = 'none');
-  pageRows.forEach(row => row.style.display = '');
-
-  renderPagination(totalPages);
-}
-
-function renderPagination(totalPages) {
-  const container = document.getElementById('pagination');
-  if (totalPages <= 1) { container.innerHTML = ''; return; }
-  let html = '';
-  for (let i = 1; i <= totalPages; i++) {
-    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-  }
-  container.innerHTML = html;
-}
-
-function goToPage(page) {
-  currentPage = page;
-  renderTable();
-  document.querySelector('.table-card:last-of-type').scrollIntoView({behavior:'smooth', block:'start'});
-}
 
 function updateKPI(month) {
   const filtered = month === 'all' ? allData : allData.filter(r => r.date.startsWith(month));
@@ -3143,23 +790,18 @@ function updateKPI(month) {
   document.getElementById('kpi-total').textContent = fmt(total);
 }
 
-// ── 엑셀 다운로드 (현재 필터 기준 전체 데이터) ──
+// ── 엑셀 다운로드 (화면은 최근 7일, 파일은 전체 기간 일별 실적) ──
 function downloadExcel() {
-  const filtered = getFilteredRows();
-  const headers  = ['날짜','홈/어웨이','상대팀','결과','관중수','점유율','OFF거래액','ON거래액','합계'];
-  const csvData  = [headers];
-  filtered.forEach(row => {
-    const cells = row.querySelectorAll('td');
-    csvData.push(Array.from(cells).map(td => td.textContent.trim()));
-  });
-  const ws = XLSX.utils.aoa_to_sheet(csvData);
+  const headers = ['날짜','홈/어웨이','상대팀','결과','관중수','점유율','OFF거래액','ON거래액','합계'];
+  const rows = allData.slice().reverse().map(r => [
+    r.date, r.home_away || '-', r.opponent || '-', r.result || '-', r.crowd || 0,
+    (r.crowd && r.home_away === '홈') ? (r.crowd / 24000 * 100).toFixed(1) + '%' : '-',
+    r.off, r.on, r.total]);
+  const ws = XLSX.utils.aoa_to_sheet([headers].concat(rows));
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '매출데이터');
-  XLSX.writeFile(wb, '삼성라이온즈_매출데이터.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, '일별실적');
+  XLSX.writeFile(wb, '삼성라이온즈_일별실적.xlsx');
 }
-
-// 초기 렌더링
-renderTable();
 
 const OFF = '#002D72', ON = '#C8102E', TOT = '#6c757d';
 const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
@@ -3196,14 +838,17 @@ function filterRows(rows, f, nameKey='name', barcodeKey='barcode') {
   });
 }
 
+const ROSTER_NAMES = new Set(["\uac15\ubbfc\uc131", "\uac15\ubbfc\ud638", "\uac15\uc900\uc11c", "\uad6c\uc790\uc6b1", "\uad8c\ud604\uc6b0", "\uae40\ub300\ud638", "\uae40\ub3c4\ud658", "\uae40\ub3d9\ud604", "\uae40\ubb34\uc2e0", "\uae40\ubc31\uc0b0", "\uae40\uc0c1\ubbfc", "\uae40\uc0c1\uc900", "\uae40\uc0c1\ud638", "\uae40\uc11c\uc900", "\uae40\uc131\uacbd", "\uae40\uc131\uc724", "\uae40\uc2dc\uc628", "\uae40\uc601\uc6c5", "\uae40\uc720\ud604", "\uae40\uc7ac\uc0c1", "\uae40\uc7ac\uc131", "\uae40\uc7ac\uc724", "\uae40\uc7ac\ud601", "\uae40\uc9c0\ucc2c", "\uae40\ud0dc\ud6c8", "\uae40\ud5cc\uace4", "\uae40\ud604\uc900", "\uae40\ud638\uc9c4", "\ub514\uc544\uc988", "\ub958\uc9c0\ud601", "\ubc15\uacc4\ubc94", "\ubc15\uad8c\ud6c4", "\ubc15\uc138\ud601", "\ubc15\uc2b9\uaddc", "\ubc15\uc2dc\uc6d0", "\ubc15\uc6a9\uc7ac", "\ubc15\uc7a5\ubbfc", "\ubc15\uc8fc\uc601", "\ubc15\uc8fc\ud601", "\ubc15\uc900\uc6a9", "\ubc15\uc9c4\uc6b0", "\ubc30\ucc2c\uc2b9", "\ubc31\uc815\ud604", "\uc0ac\ud1a0\uc2dc", "\uc11c\ud604\uc6d0", "\uc11d\uc608\ud5cc", "\uc2e0\uacbd\ubbfc", "\uc2e0\uc724\ud638", "\uc2e0\uc815\ud658", "\uc2ec\uc7ac\ud6c8", "\uc548\ubbfc\uc131", "\uc591\ub3c4\uadfc", "\uc591\uc6b0\ud604", "\uc591\ucc3d\uc12d", "\uc591\ud604", "\uc5b4\uc724\uc131", "\uc6b0\uc2b9\uc644", "\uc6d0\ud0dc\uc778", "\uc720\ubcd1\uc120", "\uc721\uc120\uc5fd", "\uc724\uc815\ube48", "\uc774\ubcd1\ud5cc", "\uc774\uc11c\uc900", "\uc774\uc131\uaddc", "\uc774\uc2b9\ubbfc", "\uc774\uc2b9\ud604", "\uc774\uc7ac\uc775", "\uc774\uc7ac\ud604", "\uc774\uc7ac\ud76c", "\uc774\uc9c4\uc6a9", "\uc774\ucc3d\uc6a9", "\uc774\ud55c\ubbfc", "\uc774\ud574\uc2b9", "\uc774\ud604\uc900", "\uc774\ud638\ubc94", "\uc774\ud638\uc131", "\uc784\uae30\uc601", "\uc784\uc8fc\ucc2c", "\uc7a5\uc2b9\ud604", "\uc7a5\ucc2c\ud76c", "\uc804\ubcd1\uc6b0", "\uc815\ubbfc\uc131", "\uc815\uc7ac\ud6c8", "\uc870\ubbfc\uc131", "\uc870\uc138\uc775", "\uc9c4\ud76c\uc131", "\ucc28\ub3d9\uc601", "\ucc28\uc2b9\uc900", "\ucc9c\uacb8", "\ucd5c\uc608\ud55c", "\ucd5c\uc6d0\ud0dc", "\ucd5c\uc9c0\uad11", "\ucd5c\ud558\ub298", "\ucd5c\ud615\uc6b0", "\ud398\ub371", "\ud55c\uc218\ub3d9", "\ud568\uc218\ud638", "\ud5c8\uc724\ub3d9", "\ud64d\ubb34\uc6d0", "\ud64d\uc2b9\uc6d0", "\ud64d\uc6d0\ud45c", "\ud64d\uc900\uc601", "\ud64d\ud604\ube48", "\ud669\ub3d9\uc7ac", "\ud669\uc815\ud604", "\ud6c4\ub77c\ub3c4"]);   // 공식 선수단 명단(주 1회 수집)
 const PLAYER_KEYWORDS = ['구자욱','오승환','최형우','박승규','디아즈','김영웅','원태인','강민호',
   '류지혁','이재현','전준우','김지찬','김성윤','김재윤','김태훈','김헌곤','매닝','미야지',
   '박세혁','배찬승','백정현','심재훈','양창섭','이성규','이승현','이호성','임기영','장찬희',
   '최원태','최지광','함수호','후라도'];
 
+// 상품명 속 선수명: 명단 이름까지 후보로, 긴 이름부터 (짧은 이름이 긴 이름 일부로 먼저 잡히지 않게)
+const PLAYER_NAME_CANDIDATES = [...new Set([...ROSTER_NAMES, ...PLAYER_KEYWORDS])].sort((a, b) => b.length - a.length);
 function extractPlayerFromName(name) {
   if (!name) return '';
-  for (const p of PLAYER_KEYWORDS) {
+  for (const p of PLAYER_NAME_CANDIDATES) {
     if (name.includes(p)) return p;
   }
   return '';
@@ -3614,7 +1259,13 @@ function priceBand(p) {
 const analysisKey = {
   category: productCategory,
   price: priceBand,
-  player: p => (isFree(p.player) ? '' : p.player) || '마킹 없음',
+  // 명단에 있는 이름만 선수로 - 이승현(57) 처럼 등번호가 붙은 표기도 이름으로 대조
+  player: p => {
+    const raw = isFree(p.player) ? '' : String(p.player).trim();
+    if (!raw) return '마킹 없음';
+    const base = raw.replace(/\(\d+\)$/, '').trim();
+    return (!ROSTER_NAMES.size || ROSTER_NAMES.has(base)) ? raw : '명단 외';
+  },
   // 90 / 90(S) / S(90) 처럼 표기만 다른 같은 치수는 숫자로 묶는다
   size: p => {
     if (isFree(p.size)) return 'FREE·없음';
@@ -3640,6 +1291,7 @@ function renderProductAnalysis() {
     const k = analysisKey[analysisDim](p);
     const a = m[k] || (m[k] = { key: k, oq: 0, nq: 0, oa: 0, na: 0 });
     a.oq += p.off_qty; a.nq += p.on_qty; a.oa += p.off_amount; a.na += p.on_amount;
+    if (k === '명단 외') { a.names = a.names || {}; a.names[p.player] = (a.names[p.player] || 0) + p.off_amount + p.on_amount; }
   });
   let rows = Object.values(m);
   const amt = r => r.oa + r.na;
@@ -3649,34 +1301,37 @@ function renderProductAnalysis() {
   } else if (analysisDim === 'size') {
     rows.sort((a, b) => { const x = sizeOrder(a.key), y = sizeOrder(b.key); return x[0] - y[0] || x[1] - y[1] || a.key.localeCompare(b.key); });
   } else {
-    const last = analysisDim === 'player' ? '마킹 없음' : '기타';
-    rows.sort((a, b) => (a.key === last) - (b.key === last) || amt(b) - amt(a));
+    const tail = analysisDim === 'player' ? ['명단 외', '마킹 없음'] : ['기타'];
+    rows.sort((a, b) => tail.indexOf(a.key) - tail.indexOf(b.key) || amt(b) - amt(a));
     if (analysisDim === 'player') {
-      const named = rows.filter(r => r.key !== '마킹 없음');
+      const named = rows.filter(r => !['명단 외', '마킹 없음'].includes(r.key));
       if (named.length > PLAYER_TOP_N) {
         const rest = named.slice(PLAYER_TOP_N).reduce((s, r) => ({ key: `기타 선수 ${named.length - PLAYER_TOP_N}명`, oq: s.oq + r.oq, nq: s.nq + r.nq, oa: s.oa + r.oa, na: s.na + r.na }), { oq: 0, nq: 0, oa: 0, na: 0 });
-        rows = named.slice(0, PLAYER_TOP_N).concat([rest], rows.filter(r => r.key === '마킹 없음'));
+        rows = named.slice(0, PLAYER_TOP_N).concat([rest], rows.filter(r => ['명단 외', '마킹 없음'].includes(r.key)));
       }
     }
   }
   const tot = rows.reduce((s, r) => ({ oq: s.oq + r.oq, nq: s.nq + r.nq, oa: s.oa + r.oa, na: s.na + r.na }), { oq: 0, nq: 0, oa: 0, na: 0 });
-  const totAmt = tot.oa + tot.na || 1;
+  const totQty = tot.oq + tot.nq || 1, totAmt = tot.oa + tot.na || 1;
   const f = n => n ? n.toLocaleString('ko-KR') : '-';
+  const share = pct => `<div class="a-cell"><div class="a-track"><div style="width:${Math.max(pct, 0).toFixed(1)}%;background:#5b7bb5"></div></div><span>${pct.toFixed(1)}%</span></div>`;
+  const split = (off, on) => {
+    const t = off + on;
+    if (!t) return '-';
+    const o = off / t * 100;
+    return `<div class="a-cell"><div class="a-track"><div style="width:${o.toFixed(1)}%;background:#002D72"></div><div style="width:${(100 - o).toFixed(1)}%;background:#C8102E"></div></div><span><b style="color:#002D72">${o.toFixed(0)}</b>·<b style="color:#C8102E">${(100 - o).toFixed(0)}</b></span></div>`;
+  };
+  const cells = r => `
+      <td class="num sep">${f(r.oq)}</td><td class="num">${f(r.nq)}</td><td class="num bold">${f(r.oq + r.nq)}</td>
+      <td>${share((r.oq + r.nq) / totQty * 100)}</td><td>${split(r.oq, r.nq)}</td>
+      <td class="num sep">${f(r.oa)}</td><td class="num">${f(r.na)}</td><td class="num bold">${f(r.oa + r.na)}</td>
+      <td>${share((r.oa + r.na) / totAmt * 100)}</td><td>${split(r.oa, r.na)}</td>`;
   let html = '';
   rows.forEach(r => {
-    const pct = amt(r) / totAmt * 100;
-    html += `<tr>
-      <td>${aEsc(r.key)}</td>
-      <td class="num">${f(r.oq)}</td><td class="num">${f(r.nq)}</td><td class="num bold">${f(r.oq + r.nq)}</td>
-      <td class="num">${f(r.oa)}</td><td class="num">${f(r.na)}</td><td class="num bold">${f(amt(r))}</td>
-      <td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;background:#eef2fb;border-radius:3px;height:8px"><div style="width:${Math.max(pct, 0).toFixed(1)}%;background:#002D72;height:8px;border-radius:3px"></div></div><span style="font-size:11px;color:#666;min-width:38px;text-align:right">${pct.toFixed(1)}%</span></div></td>
-    </tr>`;
+    const tip = r.names ? ` title="${aEsc('포함: ' + Object.entries(r.names).sort((a, b) => b[1] - a[1]).slice(0, 15).map(x => x[0]).join(', '))}"` : '';
+    html += `<tr><td${tip}>${aEsc(r.key)}${r.names ? ' <span style="color:#aaa;font-size:11px">ⓘ</span>' : ''}</td>${cells(r)}</tr>`;
   });
-  html += `<tr class="product-total-row">
-    <td>합계 (${rows.length}개 구분)</td>
-    <td class="num">${f(tot.oq)}</td><td class="num">${f(tot.nq)}</td><td class="num bold">${f(tot.oq + tot.nq)}</td>
-    <td class="num">${f(tot.oa)}</td><td class="num">${f(tot.na)}</td><td class="num bold">${f(tot.oa + tot.na)}</td><td></td>
-  </tr>`;
+  html += `<tr class="product-total-row"><td>합계 (${rows.length}개 구분)</td>${cells(tot)}</tr>`;
   tbody.innerHTML = html;
   document.getElementById('analysisDimHead').textContent = ANALYSIS_DIMS[analysisDim];
 }
@@ -3939,32 +1594,71 @@ const barSideOpts = () => ({
   layout: { padding: { top: 16 } }
 });
 
-// ── 홈/어웨이 월별 합산 막대 ──
-new Chart(document.getElementById('haChart'), {
-  type: 'bar',
-  plugins: [topLabelPlugin],
-  data: {
-    labels: ["3\uc6d4", "4\uc6d4", "5\uc6d4", "6\uc6d4", "7\uc6d4", "8\uc6d4", "9\uc6d4"],
-    datasets: [
-      { label: '홈',    data: [447221970, 1723833980, 2048858321, 2879631290, 2079658720, 2344999110, 5909080060], backgroundColor: alpha(OFF, .85) },
-      { label: '어웨이', data: [0, 361380770, 1176514320, 1001835560, 644081340, 413040700, 239727800], backgroundColor: alpha(ON,  .75) },
-    ]
+// 점 위에 값 표기 - 같은 달 두 값 중 작은 쪽은 점 아래에 적어 겹치지 않게 한다
+const pointLabelPlugin = {
+  id: 'pointLabel',
+  afterDatasetsDraw(chart) {
+    const ctx = chart.ctx, sets = chart.data.datasets;
+    chart.data.labels.forEach((_, i) => {
+      const vals = sets.map((ds, di) => chart.getDatasetMeta(di).hidden ? null : ds.data[i]);
+      sets.forEach((ds, di) => {
+        const v = vals[di];
+        if (!v) return;
+        const pt = chart.getDatasetMeta(di).data[i];
+        const below = vals.some((o, oi) => oi !== di && o != null && o > v);
+        const y = below ? pt.y + 7 : pt.y - 7;
+        ctx.save();
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = below ? 'top' : 'bottom';
+        ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.lineJoin = 'round';
+        ctx.strokeText(eok1(v), pt.x, y);
+        ctx.fillStyle = ds.borderColor;
+        ctx.fillText(eok1(v), pt.x, y);
+        ctx.restore();
+      });
+    });
+  }
+};
+
+const lineSideOpts = () => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  layout: { padding: { top: 24, bottom: 6, left: 18, right: 18 } },
+  plugins: {
+    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+    tooltip: { callbacks: { label: c => `${c.dataset.label}: ${eok1(c.raw)} (${Number(c.raw).toLocaleString('ko-KR')}원)` } },
   },
-  options: barSideOpts(),
+  scales: {
+    y: { display: false, beginAtZero: true, grace: '15%' },
+    x: { grid: { display: false }, ticks: { font: { size: 12 } } },
+  },
+});
+const lineSet = (label, data, color) => ({
+  label, data, borderColor: color, backgroundColor: color,
+  borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, fill: false,
 });
 
-// ── 결과별 월별 합산 막대 ──
-new Chart(document.getElementById('resultChart'), {
-  type: 'bar',
-  plugins: [topLabelPlugin],
+// ── 홈/어웨이 월별 합산 ──
+new Chart(document.getElementById('haChart'), {
+  type: 'line',
+  plugins: [pointLabelPlugin],
   data: {
     labels: ["3\uc6d4", "4\uc6d4", "5\uc6d4", "6\uc6d4", "7\uc6d4", "8\uc6d4", "9\uc6d4"],
-    datasets: [
-      { label: '승', data: [0, 1297609770, 1731004501, 2225398010, 1864324820, 825497160, 5465464240],  backgroundColor: 'rgba(46,125,50,.8)' },
-      { label: '패', data: [332078270, 787604980, 1468558080, 951100010, 678188340, 1214546950, 678997120], backgroundColor: 'rgba(198,40,40,.7)' },
-    ]
+    datasets: [lineSet('홈', [447221970, 1723833980, 2048858321, 2879631290, 2079658720, 2344999110, 5909080060], OFF), lineSet('어웨이', [0, 361380770, 1176514320, 1001835560, 644081340, 413040700, 239727800], ON)],
   },
-  options: barSideOpts(),
+  options: lineSideOpts(),
+});
+
+// ── 결과별 월별 합산 ──
+new Chart(document.getElementById('resultChart'), {
+  type: 'line',
+  plugins: [pointLabelPlugin],
+  data: {
+    labels: ["3\uc6d4", "4\uc6d4", "5\uc6d4", "6\uc6d4", "7\uc6d4", "8\uc6d4", "9\uc6d4"],
+    datasets: [lineSet('승', [0, 1297609770, 1731004501, 2225398010, 1864324820, 825497160, 5465464240], 'rgb(46,125,50)'), lineSet('패', [332078270, 787604980, 1468558080, 951100010, 678188340, 1214546950, 678997120], 'rgb(198,40,40)')],
+  },
+  options: lineSideOpts(),
 });
 
 // ── 특이사항 입력 모달 ──
