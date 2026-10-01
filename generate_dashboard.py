@@ -429,14 +429,14 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 
     # 테이블 행
     table_rows = ""
-    for r in list(reversed(data))[:7]:   # 일별 실적은 최근 7일만
+    for i, r in enumerate(reversed(data)):   # 전 기간을 그리고 화면에서 거른다 (전체=최근 7일)
         result_cls   = {"승": "win", "패": "lose", "무": "draw", "취소": "cancel"}.get(r["result"], "")
         result_txt   = r["result"] or "-"
         crowd        = r.get("crowd", 0)
         occupancy    = f"{crowd / STADIUM_CAPACITY * 100:.1f}%" if crowd and r["home_away"] == "홈" else "-"
         crowd_txt    = fmt(crowd) if crowd else "-"
         table_rows += f"""
-        <tr data-month="{_text(r['date'][:7])}">
+        <tr data-month="{_text(r['date'][:7])}"{' style="display:none"' if i >= 7 else ''}>
           <td>{_text(r["date"])}</td>
           <td>{_text(r["home_away"] or "-")}</td>
           <td>{_text(r["opponent"] or "-")}</td>
@@ -487,9 +487,9 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   .header .updated {{ font-size: 12px; opacity: 0.8; }}
 
   /* KPI */
-  .kpi-filter {{ display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 20px 32px 0; }}
+  .kpi-filter {{ display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }}
   .kpi-filter-label {{ font-size: 12px; color: #888; font-weight: 600; margin-right: 4px; }}
-  .kpi-row {{ display: flex; gap: 16px; padding: 12px 32px 0; flex-wrap: wrap; }}
+  .kpi-row {{ display: flex; gap: 16px; padding: 24px 32px 0; flex-wrap: wrap; }}
   .kpi {{
     flex: 1; min-width: 140px; background: white;
     border-radius: 12px; padding: 20px 24px;
@@ -672,10 +672,6 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   <span class="updated">최종 업데이트: {updated_at}</span>
 </div>
 
-<div class="kpi-filter">
-  <span class="kpi-filter-label">요약 기간</span>
-  {filter_btns_html}
-</div>
 <div class="kpi-row">
   <div class="kpi wide">
     <div class="label">OFF 거래액 (누계)</div>
@@ -776,8 +772,11 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 <div class="table-section">
   <div class="table-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin-bottom:0">일별 실적 <span style="font-size:12px;color:#999;font-weight:500;margin-left:6px">최근 7일</span></h3>
+      <h3 style="margin-bottom:0">일별 실적 <span id="dailyRangeLabel" style="font-size:12px;color:#999;font-weight:500;margin-left:6px">최근 7일</span></h3>
       <button id="excelDownloadBtn" onclick="downloadExcel()">📥 전체 기간 엑셀 다운로드</button>
+    </div>
+    <div class="kpi-filter">
+      {filter_btns_html}
     </div>
     <table id="dataTable">
       <thead>
@@ -796,6 +795,47 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 </div>
 
 <div class="product-section">
+  <div class="table-card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div>
+        <h3 style="margin-bottom:4px">상품 실적 분석 (온/오프)</h3>
+        <span style="font-size:11px;color:#aaa">아래 상품별 누적 판매 실적의 조회 조건(기간·상품명·바코드) 기준 · 카테고리는 상품명 키워드로 분류</span>
+      </div>
+      <div style="display:flex;gap:4px" id="analysisTabs">
+        <button class="trend-btn active" data-dim="category" onclick="setAnalysisDim('category')">카테고리별</button>
+        <button class="trend-btn" data-dim="price" onclick="setAnalysisDim('price')">판매단가별</button>
+        <button class="trend-btn" data-dim="player" onclick="setAnalysisDim('player')">선수별</button>
+        <button class="trend-btn" data-dim="size" onclick="setAnalysisDim('size')">사이즈별</button>
+      </div>
+    </div>
+    <style>
+      .a-table th, .a-table td {{ padding: 8px 8px; }}
+      .a-table .grp {{ text-align: center; border-bottom: 1px solid #e3e7ef; letter-spacing: 1px; }}
+      .a-table .sep {{ border-left: 2px solid #e3e7ef; }}
+      .a-table thead th {{ text-align: center !important; vertical-align: middle !important; }}
+      .a-cell {{ display: flex; align-items: center; justify-content: center; gap: 6px; }}
+      .a-track {{ flex: none; width: 56px; display: flex; height: 8px; background: #eef2fb; border-radius: 3px; overflow: hidden; }}
+      .a-track > div {{ height: 8px; }}
+      .a-cell span {{ font-size: 11px; color: #666; min-width: 36px; text-align: right; white-space: nowrap; }}
+    </style>
+    <table class="a-table" style="font-size:12px">
+      <thead>
+        <tr>
+          <th rowspan="2" id="analysisDimHead" style="vertical-align:bottom">카테고리</th>
+          <th colspan="5" class="grp sep">수량</th>
+          <th colspan="5" class="grp sep">거래액</th>
+        </tr>
+        <tr>
+          <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
+          <th>전체 대비</th><th><span style="color:#5d73a3">OFF</span>/<span style="color:#c4707a">ON</span> 비중</th>
+          <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
+          <th>전체 대비</th><th><span style="color:#5d73a3">OFF</span>/<span style="color:#c4707a">ON</span> 비중</th>
+        </tr>
+      </thead>
+      <tbody id="analysisTbody"></tbody>
+    </table>
+    <div class="pagination" id="analysisPagination"></div>
+  </div>
   <div class="table-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div>
@@ -843,47 +883,6 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       <tbody id="productTbody"></tbody>
     </table>
     <div class="pagination" id="productPagination"></div>
-  </div>
-  <div class="table-card" style="margin-top:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-      <div>
-        <h3 style="margin-bottom:4px">상품 실적 분석 (온/오프)</h3>
-        <span style="font-size:11px;color:#aaa">위 상품별 누적 판매 실적과 같은 조회 조건 기준 · 카테고리는 상품명 키워드로 분류</span>
-      </div>
-      <div style="display:flex;gap:4px" id="analysisTabs">
-        <button class="trend-btn active" data-dim="category" onclick="setAnalysisDim('category')">카테고리별</button>
-        <button class="trend-btn" data-dim="price" onclick="setAnalysisDim('price')">판매단가별</button>
-        <button class="trend-btn" data-dim="player" onclick="setAnalysisDim('player')">선수별</button>
-        <button class="trend-btn" data-dim="size" onclick="setAnalysisDim('size')">사이즈별</button>
-      </div>
-    </div>
-    <style>
-      .a-table th, .a-table td {{ padding: 8px 8px; }}
-      .a-table .grp {{ text-align: center; border-bottom: 1px solid #e3e7ef; letter-spacing: 1px; }}
-      .a-table .sep {{ border-left: 2px solid #e3e7ef; }}
-      .a-table thead th {{ text-align: center !important; vertical-align: middle !important; }}
-      .a-cell {{ display: flex; align-items: center; justify-content: center; gap: 6px; }}
-      .a-track {{ flex: none; width: 56px; display: flex; height: 8px; background: #eef2fb; border-radius: 3px; overflow: hidden; }}
-      .a-track > div {{ height: 8px; }}
-      .a-cell span {{ font-size: 11px; color: #666; min-width: 36px; text-align: right; white-space: nowrap; }}
-    </style>
-    <table class="a-table" style="font-size:12px">
-      <thead>
-        <tr>
-          <th rowspan="2" id="analysisDimHead" style="vertical-align:bottom">카테고리</th>
-          <th colspan="5" class="grp sep">수량</th>
-          <th colspan="5" class="grp sep">거래액</th>
-        </tr>
-        <tr>
-          <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
-          <th>전체 대비</th><th><span style="color:#5d73a3">OFF</span>/<span style="color:#c4707a">ON</span> 비중</th>
-          <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
-          <th>전체 대비</th><th><span style="color:#5d73a3">OFF</span>/<span style="color:#c4707a">ON</span> 비중</th>
-        </tr>
-      </thead>
-      <tbody id="analysisTbody"></tbody>
-    </table>
-    <div class="pagination" id="analysisPagination"></div>
   </div>
 </div>
 
@@ -962,9 +961,20 @@ document.querySelectorAll('.filter-btn').forEach(btn => {{
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     currentMonth = this.dataset.month;
-    updateKPI(currentMonth);
+    filterDailyTable(currentMonth);
   }});
 }});
+
+function filterDailyTable(month) {{
+  let shown = 0;
+  document.querySelectorAll('#dataTable tbody tr').forEach(tr => {{
+    const ok = month === 'all' ? shown < 7 : tr.dataset.month === month;
+    tr.style.display = ok ? '' : 'none';
+    if (ok) shown++;
+  }});
+  document.getElementById('dailyRangeLabel').textContent =
+    month === 'all' ? '최근 7일' : `${{month.slice(2, 4)}}년 ${{Number(month.slice(5, 7))}}월 · ${{shown}}일`;
+}}
 
 function updateKPI(month) {{
   const filtered = month === 'all' ? allData : allData.filter(r => r.date.startsWith(month));

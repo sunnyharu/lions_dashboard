@@ -35,9 +35,9 @@
   .header .updated { font-size: 12px; opacity: 0.8; }
 
   /* KPI */
-  .kpi-filter { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 20px 32px 0; }
+  .kpi-filter { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
   .kpi-filter-label { font-size: 12px; color: #888; font-weight: 600; margin-right: 4px; }
-  .kpi-row { display: flex; gap: 16px; padding: 12px 32px 0; flex-wrap: wrap; }
+  .kpi-row { display: flex; gap: 16px; padding: 24px 32px 0; flex-wrap: wrap; }
   .kpi {
     flex: 1; min-width: 140px; background: white;
     border-radius: 12px; padding: 20px 24px;
@@ -217,22 +217,9 @@
 
 <div class="header">
   <h1>⚾ 삼성 라이온즈 매출 대시보드</h1>
-  <span class="updated">최종 업데이트: 2026.10.01 18:40</span>
+  <span class="updated">최종 업데이트: 2026.10.01 18:46</span>
 </div>
 
-<div class="kpi-filter">
-  <span class="kpi-filter-label">요약 기간</span>
-  <button class="filter-btn active" data-month="all">전체</button>
-<button class="filter-btn" data-month="2026.02">26년 2월</button>
-<button class="filter-btn" data-month="2026.03">26년 3월</button>
-<button class="filter-btn" data-month="2026.04">26년 4월</button>
-<button class="filter-btn" data-month="2026.05">26년 5월</button>
-<button class="filter-btn" data-month="2026.06">26년 6월</button>
-<button class="filter-btn" data-month="2026.07">26년 7월</button>
-<button class="filter-btn" data-month="2026.08">26년 8월</button>
-<button class="filter-btn" data-month="2026.09">26년 9월</button>
-
-</div>
 <div class="kpi-row">
   <div class="kpi wide">
     <div class="label">OFF 거래액 (누계)</div>
@@ -333,8 +320,20 @@
 <div class="table-section">
   <div class="table-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin-bottom:0">일별 실적 <span style="font-size:12px;color:#999;font-weight:500;margin-left:6px">최근 7일</span></h3>
+      <h3 style="margin-bottom:0">일별 실적 <span id="dailyRangeLabel" style="font-size:12px;color:#999;font-weight:500;margin-left:6px">최근 7일</span></h3>
       <button id="excelDownloadBtn" onclick="downloadExcel()">📥 전체 기간 엑셀 다운로드</button>
+    </div>
+    <div class="kpi-filter">
+      <button class="filter-btn active" data-month="all">전체</button>
+<button class="filter-btn" data-month="2026.02">26년 2월</button>
+<button class="filter-btn" data-month="2026.03">26년 3월</button>
+<button class="filter-btn" data-month="2026.04">26년 4월</button>
+<button class="filter-btn" data-month="2026.05">26년 5월</button>
+<button class="filter-btn" data-month="2026.06">26년 6월</button>
+<button class="filter-btn" data-month="2026.07">26년 7월</button>
+<button class="filter-btn" data-month="2026.08">26년 8월</button>
+<button class="filter-btn" data-month="2026.09">26년 9월</button>
+
     </div>
     <table id="dataTable">
       <thead>
@@ -424,12 +423,2385 @@
           <td class="num">24,332,700</td>
           <td class="num">3,931,500</td>
           <td class="num bold">28,264,200</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.23</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">2,334,900</td>
+          <td class="num">3,780,500</td>
+          <td class="num bold">6,115,400</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.22</td>
+          <td>홈</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">95,275,500</td>
+          <td class="num">4,964,500</td>
+          <td class="num bold">100,240,000</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.21</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">2,776,700</td>
+          <td class="num">6,007,000</td>
+          <td class="num bold">8,783,700</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.20</td>
+          <td>어웨이</td>
+          <td>롯데</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">12,418,600</td>
+          <td class="num">7,421,500</td>
+          <td class="num bold">19,840,100</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.19</td>
+          <td>어웨이</td>
+          <td>롯데</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">21,889,300</td>
+          <td class="num">7,416,500</td>
+          <td class="num bold">29,305,800</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.18</td>
+          <td>어웨이</td>
+          <td>한화</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,927,900</td>
+          <td class="num">10,269,000</td>
+          <td class="num bold">17,196,900</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.17</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">9,978,600</td>
+          <td class="num">70,184,500</td>
+          <td class="num bold">80,163,100</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.16</td>
+          <td>어웨이</td>
+          <td>두산</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,941,100</td>
+          <td class="num">65,587,000</td>
+          <td class="num bold">72,528,100</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.15</td>
+          <td>홈</td>
+          <td>롯데</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">86,937,600</td>
+          <td class="num">46,135,000</td>
+          <td class="num bold">133,072,600</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.14</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">7,776,900</td>
+          <td class="num">207,216,000</td>
+          <td class="num bold">214,992,900</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.13</td>
+          <td>홈</td>
+          <td>LG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">139,640,400</td>
+          <td class="num">7,094,500</td>
+          <td class="num bold">146,734,900</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.12</td>
+          <td>홈</td>
+          <td>LG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">190,238,300</td>
+          <td class="num">38,796,500</td>
+          <td class="num bold">229,034,800</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.11</td>
+          <td>홈</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">109,965,400</td>
+          <td class="num">9,358,000</td>
+          <td class="num bold">119,323,400</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.10</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">7,976,700</td>
+          <td class="num">8,379,000</td>
+          <td class="num bold">16,355,700</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.09</td>
+          <td>홈</td>
+          <td>KT</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">71,442,100</td>
+          <td class="num">11,718,000</td>
+          <td class="num bold">83,160,100</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.08</td>
+          <td>홈</td>
+          <td>KIA</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">80,942,100</td>
+          <td class="num">10,327,500</td>
+          <td class="num bold">91,269,600</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.07</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,975,000</td>
+          <td class="num">10,672,000</td>
+          <td class="num bold">16,647,000</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.06</td>
+          <td>어웨이</td>
+          <td>LG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">17,753,300</td>
+          <td class="num">12,331,000</td>
+          <td class="num bold">30,084,300</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.05</td>
+          <td>어웨이</td>
+          <td>LG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">14,632,100</td>
+          <td class="num">8,460,500</td>
+          <td class="num bold">23,092,600</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.04</td>
+          <td>어웨이</td>
+          <td>LG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,084,300</td>
+          <td class="num">10,985,000</td>
+          <td class="num bold">15,069,300</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.03</td>
+          <td>홈</td>
+          <td>롯데</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">73,367,520</td>
+          <td class="num">9,956,500</td>
+          <td class="num bold">83,324,020</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.02</td>
+          <td>홈</td>
+          <td>롯데</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">72,165,100</td>
+          <td class="num">10,703,500</td>
+          <td class="num bold">82,868,600</td>
+        </tr>
+        <tr data-month="2026.09" style="display:none">
+          <td>2026.09.01</td>
+          <td>홈</td>
+          <td>롯데</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">81,385,200</td>
+          <td class="num">19,045,000</td>
+          <td class="num bold">100,430,200</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.31</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,923,500</td>
+          <td class="num">15,872,000</td>
+          <td class="num bold">22,795,500</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.30</td>
+          <td>홈</td>
+          <td>KT</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">65,490,500</td>
+          <td class="num">13,284,500</td>
+          <td class="num bold">78,775,000</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.29</td>
+          <td>홈</td>
+          <td>KT</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">157,185,040</td>
+          <td class="num">13,846,500</td>
+          <td class="num bold">171,031,540</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.28</td>
+          <td>홈</td>
+          <td>KT</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">125,014,300</td>
+          <td class="num">25,729,500</td>
+          <td class="num bold">150,743,800</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.27</td>
+          <td>어웨이</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">21,855,800</td>
+          <td class="num">98,662,000</td>
+          <td class="num bold">120,517,800</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.26</td>
+          <td>어웨이</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">7,748,000</td>
+          <td class="num">39,927,000</td>
+          <td class="num bold">47,675,000</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.25</td>
+          <td>어웨이</td>
+          <td>키움</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,117,000</td>
+          <td class="num">16,327,000</td>
+          <td class="num bold">20,444,000</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.24</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">2,722,400</td>
+          <td class="num">10,854,000</td>
+          <td class="num bold">13,576,400</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.23</td>
+          <td>어웨이</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">16,215,300</td>
+          <td class="num">8,712,500</td>
+          <td class="num bold">24,927,800</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.22</td>
+          <td>어웨이</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">20,181,400</td>
+          <td class="num">8,570,000</td>
+          <td class="num bold">28,751,400</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.21</td>
+          <td>어웨이</td>
+          <td>NC</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,355,600</td>
+          <td class="num">9,427,000</td>
+          <td class="num bold">15,782,600</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.20</td>
+          <td>홈</td>
+          <td>SSG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">23,238</td>
+          <td class="num">96.8%</td>
+          <td class="num">89,357,700</td>
+          <td class="num">10,522,500</td>
+          <td class="num bold">99,880,200</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.19</td>
+          <td>홈</td>
+          <td>SSG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">22,784</td>
+          <td class="num">94.9%</td>
+          <td class="num">111,990,000</td>
+          <td class="num">12,761,000</td>
+          <td class="num bold">124,751,000</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.18</td>
+          <td>홈</td>
+          <td>SSG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">23,184</td>
+          <td class="num">96.6%</td>
+          <td class="num">372,851,100</td>
+          <td class="num">469,337,500</td>
+          <td class="num bold">842,188,600</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.17</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">17,328,800</td>
+          <td class="num">7,204,500</td>
+          <td class="num bold">24,533,300</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.16</td>
+          <td>홈</td>
+          <td>한화</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">47,441,900</td>
+          <td class="num">7,395,500</td>
+          <td class="num bold">54,837,400</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.15</td>
+          <td>홈</td>
+          <td>한화</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">154,487,120</td>
+          <td class="num">6,538,000</td>
+          <td class="num bold">161,025,120</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.14</td>
+          <td>홈</td>
+          <td>한화</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">102,039,900</td>
+          <td class="num">9,073,500</td>
+          <td class="num bold">111,113,400</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.13</td>
+          <td>어웨이</td>
+          <td>KIA</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">8,690,100</td>
+          <td class="num">27,014,000</td>
+          <td class="num bold">35,704,100</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.12</td>
+          <td>어웨이</td>
+          <td>KIA</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">9,575,300</td>
+          <td class="num">21,559,500</td>
+          <td class="num bold">31,134,800</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.11</td>
+          <td>어웨이</td>
+          <td>KIA</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">8,292,900</td>
+          <td class="num">18,339,500</td>
+          <td class="num bold">26,632,400</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.10</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">13,233,900</td>
+          <td class="num">51,197,000</td>
+          <td class="num bold">64,430,900</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.09</td>
+          <td>홈</td>
+          <td>두산</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">48,640,800</td>
+          <td class="num">9,739,500</td>
+          <td class="num bold">58,380,300</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.08</td>
+          <td>홈</td>
+          <td>두산</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">127,914,300</td>
+          <td class="num">83,790,000</td>
+          <td class="num bold">211,704,300</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.07</td>
+          <td>홈</td>
+          <td>두산</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">18,883,300</td>
+          <td class="num">9,526,000</td>
+          <td class="num bold">28,409,300</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.06</td>
+          <td>홈</td>
+          <td>한화</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">15,369,600</td>
+          <td class="num">13,087,000</td>
+          <td class="num bold">28,456,600</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.05</td>
+          <td>홈</td>
+          <td>한화</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">29,953,100</td>
+          <td class="num">20,435,500</td>
+          <td class="num bold">50,388,600</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.04</td>
+          <td>홈</td>
+          <td>한화</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">150,301,950</td>
+          <td class="num">23,012,000</td>
+          <td class="num bold">173,313,950</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.03</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">59,436,500</td>
+          <td class="num">169,297,500</td>
+          <td class="num bold">228,734,000</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.02</td>
+          <td>어웨이</td>
+          <td>롯데</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">18,564,900</td>
+          <td class="num">7,049,500</td>
+          <td class="num bold">25,614,400</td>
+        </tr>
+        <tr data-month="2026.08" style="display:none">
+          <td>2026.08.01</td>
+          <td>어웨이</td>
+          <td>롯데</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">26,311,900</td>
+          <td class="num">9,544,500</td>
+          <td class="num bold">35,856,400</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.31</td>
+          <td>어웨이</td>
+          <td>롯데</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">11,349,200</td>
+          <td class="num">12,565,500</td>
+          <td class="num bold">23,914,700</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.30</td>
+          <td>홈</td>
+          <td>KIA</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">120,370,600</td>
+          <td class="num">7,388,500</td>
+          <td class="num bold">127,759,100</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.29</td>
+          <td>홈</td>
+          <td>KIA</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">120,887,800</td>
+          <td class="num">12,386,500</td>
+          <td class="num bold">133,274,300</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.28</td>
+          <td>홈</td>
+          <td>KIA</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">135,861,540</td>
+          <td class="num">13,831,500</td>
+          <td class="num bold">149,693,040</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.27</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">16,713,400</td>
+          <td class="num">10,280,000</td>
+          <td class="num bold">26,993,400</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.26</td>
+          <td>어웨이</td>
+          <td>두산</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">29,153,900</td>
+          <td class="num">18,795,500</td>
+          <td class="num bold">47,949,400</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.25</td>
+          <td>어웨이</td>
+          <td>두산</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">35,331,100</td>
+          <td class="num">20,922,500</td>
+          <td class="num bold">56,253,600</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.24</td>
+          <td>어웨이</td>
+          <td>두산</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">15,713,100</td>
+          <td class="num">20,769,000</td>
+          <td class="num bold">36,482,100</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.23</td>
+          <td>어웨이</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">14,850,240</td>
+          <td class="num">25,915,000</td>
+          <td class="num bold">40,765,240</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.22</td>
+          <td>어웨이</td>
+          <td>키움</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">21,840,100</td>
+          <td class="num">166,829,500</td>
+          <td class="num bold">188,669,600</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.21</td>
+          <td>어웨이</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">7,503,100</td>
+          <td class="num">22,968,000</td>
+          <td class="num bold">30,471,100</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.20</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,456,100</td>
+          <td class="num">61,430,000</td>
+          <td class="num bold">66,886,100</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.19</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">116,817,700</td>
+          <td class="num">65,948,000</td>
+          <td class="num bold">182,765,700</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.18</td>
+          <td>홈</td>
+          <td>롯데</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">142,342,100</td>
+          <td class="num">39,749,500</td>
+          <td class="num bold">182,091,600</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.17</td>
+          <td>홈</td>
+          <td>롯데</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">108,852,900</td>
+          <td class="num">72,374,000</td>
+          <td class="num bold">181,226,900</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.16</td>
+          <td>홈</td>
+          <td>롯데</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">280,996,600</td>
+          <td class="num">660,288,500</td>
+          <td class="num bold">941,285,100</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.15</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,705,900</td>
+          <td class="num">9,378,000</td>
+          <td class="num bold">15,083,900</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.14</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,752,100</td>
+          <td class="num">9,642,500</td>
+          <td class="num bold">15,394,600</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.13</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">3,797,500</td>
+          <td class="num">11,908,500</td>
+          <td class="num bold">15,706,000</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.12</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">17,728,300</td>
+          <td class="num">10,168,000</td>
+          <td class="num bold">27,896,300</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.11</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">20,437,800</td>
+          <td class="num">12,629,500</td>
+          <td class="num bold">33,067,300</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.10</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,487,500</td>
+          <td class="num">13,106,000</td>
+          <td class="num bold">19,593,500</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.09</td>
+          <td>홈</td>
+          <td>LG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">66,005,700</td>
+          <td class="num">42,139,000</td>
+          <td class="num bold">108,144,700</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.08</td>
+          <td>홈</td>
+          <td>LG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">85,385,340</td>
+          <td class="num">26,778,500</td>
+          <td class="num bold">112,163,840</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.07</td>
+          <td>홈</td>
+          <td>LG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">85,898,140</td>
+          <td class="num">58,122,000</td>
+          <td class="num bold">144,020,140</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.06</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">8,822,200</td>
+          <td class="num">172,217,500</td>
+          <td class="num bold">181,039,700</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.05</td>
+          <td>어웨이</td>
+          <td>SSG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">15,982,200</td>
+          <td class="num">56,511,000</td>
+          <td class="num bold">72,493,200</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.04</td>
+          <td>어웨이</td>
+          <td>SSG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">19,376,600</td>
+          <td class="num">13,008,000</td>
+          <td class="num bold">32,384,600</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.03</td>
+          <td>어웨이</td>
+          <td>SSG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,569,300</td>
+          <td class="num">18,018,500</td>
+          <td class="num bold">23,587,800</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.02</td>
+          <td>어웨이</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,135,900</td>
+          <td class="num">17,602,000</td>
+          <td class="num bold">22,737,900</td>
+        </tr>
+        <tr data-month="2026.07" style="display:none">
+          <td>2026.07.01</td>
+          <td>어웨이</td>
+          <td>NC</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">8,656,600</td>
+          <td class="num">59,715,500</td>
+          <td class="num bold">68,372,100</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.30</td>
+          <td>어웨이</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,411,000</td>
+          <td class="num">30,423,000</td>
+          <td class="num bold">34,834,000</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.29</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">3,461,000</td>
+          <td class="num">125,105,000</td>
+          <td class="num bold">128,566,000</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.28</td>
+          <td>홈</td>
+          <td>KT</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">122,683,600</td>
+          <td class="num">14,164,500</td>
+          <td class="num bold">136,848,100</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.27</td>
+          <td>홈</td>
+          <td>KT</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">126,120,100</td>
+          <td class="num">12,882,000</td>
+          <td class="num bold">139,002,100</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.26</td>
+          <td>홈</td>
+          <td>KT</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">117,219,700</td>
+          <td class="num">174,255,500</td>
+          <td class="num bold">291,475,200</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.25</td>
+          <td>어웨이</td>
+          <td>LG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">7,388,600</td>
+          <td class="num">12,885,000</td>
+          <td class="num bold">20,273,600</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.24</td>
+          <td>어웨이</td>
+          <td>LG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,232,690</td>
+          <td class="num">9,149,000</td>
+          <td class="num bold">14,381,690</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.23</td>
+          <td>어웨이</td>
+          <td>LG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,964,300</td>
+          <td class="num">13,070,500</td>
+          <td class="num bold">19,034,800</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.22</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">3,953,500</td>
+          <td class="num">9,531,000</td>
+          <td class="num bold">13,484,500</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.21</td>
+          <td>어웨이</td>
+          <td>한화</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">17,689,560</td>
+          <td class="num">38,376,500</td>
+          <td class="num bold">56,066,060</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.20</td>
+          <td>어웨이</td>
+          <td>한화</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">18,880,600</td>
+          <td class="num">39,137,000</td>
+          <td class="num bold">58,017,600</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.19</td>
+          <td>어웨이</td>
+          <td>한화</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,639,830</td>
+          <td class="num">698,329,000</td>
+          <td class="num bold">704,968,830</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.18</td>
+          <td>홈</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">23,412</td>
+          <td class="num">97.5%</td>
+          <td class="num">95,044,440</td>
+          <td class="num">18,933,000</td>
+          <td class="num bold">113,977,440</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.17</td>
+          <td>홈</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">22,915</td>
+          <td class="num">95.5%</td>
+          <td class="num">83,172,920</td>
+          <td class="num">22,490,500</td>
+          <td class="num bold">105,663,420</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.16</td>
+          <td>홈</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">22,995</td>
+          <td class="num">95.8%</td>
+          <td class="num">80,544,750</td>
+          <td class="num">754,587,500</td>
+          <td class="num bold">835,132,250</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.15</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">8,275,800</td>
+          <td class="num">41,991,000</td>
+          <td class="num bold">50,266,800</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.14</td>
+          <td>홈</td>
+          <td>SSG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">130,118,690</td>
+          <td class="num">3,082,000</td>
+          <td class="num bold">133,200,690</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.13</td>
+          <td>홈</td>
+          <td>SSG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">139,933,320</td>
+          <td class="num">5,319,500</td>
+          <td class="num bold">145,252,820</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.12</td>
+          <td>홈</td>
+          <td>SSG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">382,760,790</td>
+          <td class="num">78,225,000</td>
+          <td class="num bold">460,985,790</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.11</td>
+          <td>어웨이</td>
+          <td>KT</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">11,912,500</td>
+          <td class="num">3,877,500</td>
+          <td class="num bold">15,790,000</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.10</td>
+          <td>어웨이</td>
+          <td>KT</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">9,837,300</td>
+          <td class="num">3,701,000</td>
+          <td class="num bold">13,538,300</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.09</td>
+          <td>어웨이</td>
+          <td>KT</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,779,830</td>
+          <td class="num">5,609,000</td>
+          <td class="num bold">12,388,830</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.08</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,954,400</td>
+          <td class="num">4,564,000</td>
+          <td class="num bold">9,518,400</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.07</td>
+          <td>어웨이</td>
+          <td>KIA</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">19,042,860</td>
+          <td class="num">4,420,500</td>
+          <td class="num bold">23,463,360</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.06</td>
+          <td>어웨이</td>
+          <td>KIA</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">17,358,860</td>
+          <td class="num">3,361,000</td>
+          <td class="num bold">20,719,860</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.05</td>
+          <td>어웨이</td>
+          <td>KIA</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">3,769,130</td>
+          <td class="num">4,589,500</td>
+          <td class="num bold">8,358,630</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.04</td>
+          <td>홈</td>
+          <td>NC</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">88,150,420</td>
+          <td class="num">5,672,000</td>
+          <td class="num bold">93,822,420</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.03</td>
+          <td>홈</td>
+          <td>NC</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">126,090,590</td>
+          <td class="num">121,018,000</td>
+          <td class="num bold">247,108,590</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.02</td>
+          <td>홈</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">83,665,970</td>
+          <td class="num">93,496,500</td>
+          <td class="num bold">177,162,470</td>
+        </tr>
+        <tr data-month="2026.06" style="display:none">
+          <td>2026.06.01</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,109,600</td>
+          <td class="num">33,022,000</td>
+          <td class="num bold">38,131,600</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.31</td>
+          <td>홈</td>
+          <td>두산</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">124,574,220</td>
+          <td class="num">22,486,000</td>
+          <td class="num bold">147,060,220</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.30</td>
+          <td>홈</td>
+          <td>두산</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">121,836,820</td>
+          <td class="num">11,490,000</td>
+          <td class="num bold">133,326,820</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.29</td>
+          <td>홈</td>
+          <td>두산</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">98,887,080</td>
+          <td class="num">12,820,000</td>
+          <td class="num bold">111,707,080</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.28</td>
+          <td>어웨이</td>
+          <td>SSG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">8,509,800</td>
+          <td class="num">14,711,500</td>
+          <td class="num bold">23,221,300</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.27</td>
+          <td>어웨이</td>
+          <td>SSG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,139,950</td>
+          <td class="num">44,229,000</td>
+          <td class="num bold">50,368,950</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.26</td>
+          <td>어웨이</td>
+          <td>SSG</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,090,800</td>
+          <td class="num">9,298,860</td>
+          <td class="num bold">14,389,660</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.25</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">19,048,000</td>
+          <td class="num">9,506,600</td>
+          <td class="num bold">28,554,600</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.24</td>
+          <td>어웨이</td>
+          <td>롯데</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">20,569,130</td>
+          <td class="num">9,530,500</td>
+          <td class="num bold">30,099,630</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.23</td>
+          <td>어웨이</td>
+          <td>롯데</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">25,195,730</td>
+          <td class="num">10,032,000</td>
+          <td class="num bold">35,227,730</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.22</td>
+          <td>어웨이</td>
+          <td>롯데</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,170,830</td>
+          <td class="num">19,191,500</td>
+          <td class="num bold">23,362,330</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.21</td>
+          <td>홈</td>
+          <td>KT</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">12,120</td>
+          <td class="num">50.5%</td>
+          <td class="num">2,810,400</td>
+          <td class="num">35,344,500</td>
+          <td class="num bold">38,154,900</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.20</td>
+          <td>홈</td>
+          <td>KT</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">2,505,900</td>
+          <td class="num">8,914,500</td>
+          <td class="num bold">11,420,400</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.19</td>
+          <td>홈</td>
+          <td>KT</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">12,120</td>
+          <td class="num">50.5%</td>
+          <td class="num">4,795,700</td>
+          <td class="num">14,407,000</td>
+          <td class="num bold">19,202,700</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.18</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">3,363,660</td>
+          <td class="num">47,409,000</td>
+          <td class="num bold">50,772,660</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.17</td>
+          <td>홈</td>
+          <td>KIA</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">125,986,620</td>
+          <td class="num">35,207,000</td>
+          <td class="num bold">161,193,620</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.16</td>
+          <td>홈</td>
+          <td>KIA</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">114,207,291</td>
+          <td class="num">33,051,000</td>
+          <td class="num bold">147,258,291</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.15</td>
+          <td>홈</td>
+          <td>KIA</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">98,711,390</td>
+          <td class="num">34,512,500</td>
+          <td class="num bold">133,223,890</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.14</td>
+          <td>어웨이</td>
+          <td>LG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">12,669,400</td>
+          <td class="num">49,281,500</td>
+          <td class="num bold">61,950,900</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.13</td>
+          <td>어웨이</td>
+          <td>LG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,931,800</td>
+          <td class="num">678,642,500</td>
+          <td class="num bold">685,574,300</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.12</td>
+          <td>어웨이</td>
+          <td>LG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,439,330</td>
+          <td class="num">4,482,000</td>
+          <td class="num bold">8,921,330</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.11</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,171,830</td>
+          <td class="num">6,678,000</td>
+          <td class="num bold">10,849,830</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.10</td>
+          <td>어웨이</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">22,583,000</td>
+          <td class="num">98,894,000</td>
+          <td class="num bold">121,477,000</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.09</td>
+          <td>어웨이</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">27,384,760</td>
+          <td class="num">40,936,500</td>
+          <td class="num bold">68,321,260</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.08</td>
+          <td>어웨이</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">12,846,430</td>
+          <td class="num">40,753,500</td>
+          <td class="num bold">53,599,930</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.07</td>
+          <td>홈</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">52,819,430</td>
+          <td class="num">39,575,000</td>
+          <td class="num bold">92,394,430</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.06</td>
+          <td>홈</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">61,078,910</td>
+          <td class="num">38,579,000</td>
+          <td class="num bold">99,657,910</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.05</td>
+          <td>홈</td>
+          <td>키움</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">129,497,200</td>
+          <td class="num">45,165,500</td>
+          <td class="num bold">174,662,700</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.04</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">20,681,000</td>
+          <td class="num">52,965,500</td>
+          <td class="num bold">73,646,500</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.03</td>
+          <td>홈</td>
+          <td>한화</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">95,486,770</td>
+          <td class="num">63,302,500</td>
+          <td class="num bold">158,789,270</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.02</td>
+          <td>홈</td>
+          <td>한화</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">126,494,140</td>
+          <td class="num">81,810,500</td>
+          <td class="num bold">208,304,640</td>
+        </tr>
+        <tr data-month="2026.05" style="display:none">
+          <td>2026.05.01</td>
+          <td>홈</td>
+          <td>한화</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">128,762,450</td>
+          <td class="num">283,739,000</td>
+          <td class="num bold">412,501,450</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.30</td>
+          <td>어웨이</td>
+          <td>두산</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">7,103,830</td>
+          <td class="num">4,634,000</td>
+          <td class="num bold">11,737,830</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.29</td>
+          <td>어웨이</td>
+          <td>두산</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,469,000</td>
+          <td class="num">4,219,500</td>
+          <td class="num bold">10,688,500</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.28</td>
+          <td>어웨이</td>
+          <td>두산</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,069,300</td>
+          <td class="num">4,314,500</td>
+          <td class="num bold">10,383,800</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.27</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">3,332,100</td>
+          <td class="num">5,951,500</td>
+          <td class="num bold">9,283,600</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.26</td>
+          <td>어웨이</td>
+          <td>키움</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">18,255,300</td>
+          <td class="num">4,099,500</td>
+          <td class="num bold">22,354,800</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.25</td>
+          <td>어웨이</td>
+          <td>키움</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">23,578,930</td>
+          <td class="num">3,800,000</td>
+          <td class="num bold">27,378,930</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.24</td>
+          <td>어웨이</td>
+          <td>키움</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,253,200</td>
+          <td class="num">6,516,000</td>
+          <td class="num bold">12,769,200</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.23</td>
+          <td>홈</td>
+          <td>SSG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">23,524</td>
+          <td class="num">98.0%</td>
+          <td class="num">101,374,110</td>
+          <td class="num">13,433,000</td>
+          <td class="num bold">114,807,110</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.22</td>
+          <td>홈</td>
+          <td>SSG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">23,539</td>
+          <td class="num">98.1%</td>
+          <td class="num">106,883,830</td>
+          <td class="num">16,447,000</td>
+          <td class="num bold">123,330,830</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.21</td>
+          <td>홈</td>
+          <td>SSG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">23,420</td>
+          <td class="num">97.6%</td>
+          <td class="num">118,841,770</td>
+          <td class="num">28,727,000</td>
+          <td class="num bold">147,568,770</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.20</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">11,601,830</td>
+          <td class="num">23,441,000</td>
+          <td class="num bold">35,042,830</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.19</td>
+          <td>홈</td>
+          <td>LG</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">192,019,410</td>
+          <td class="num">46,790,500</td>
+          <td class="num bold">238,809,910</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.18</td>
+          <td>홈</td>
+          <td>LG</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">187,092,020</td>
+          <td class="num">165,063,500</td>
+          <td class="num bold">352,155,520</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.17</td>
+          <td>홈</td>
+          <td>LG</td>
+          <td><span class="badge cancel">취소</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">51,224,570</td>
+          <td class="num">16,833,500</td>
+          <td class="num bold">68,058,070</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.16</td>
+          <td>어웨이</td>
+          <td>한화</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">8,395,500</td>
+          <td class="num">17,655,500</td>
+          <td class="num bold">26,051,000</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.15</td>
+          <td>어웨이</td>
+          <td>한화</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">10,469,430</td>
+          <td class="num">18,710,000</td>
+          <td class="num bold">29,179,430</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.14</td>
+          <td>어웨이</td>
+          <td>한화</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">8,914,190</td>
+          <td class="num">16,649,000</td>
+          <td class="num bold">25,563,190</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.13</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,433,130</td>
+          <td class="num">18,342,500</td>
+          <td class="num bold">22,775,630</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.12</td>
+          <td>홈</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">143,364,920</td>
+          <td class="num">22,469,000</td>
+          <td class="num bold">165,833,920</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.11</td>
+          <td>홈</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">152,645,210</td>
+          <td class="num">15,521,000</td>
+          <td class="num bold">168,166,210</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.10</td>
+          <td>홈</td>
+          <td>NC</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">129,194,720</td>
+          <td class="num">13,532,500</td>
+          <td class="num bold">142,727,220</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.09</td>
+          <td>어웨이</td>
+          <td>KIA</td>
+          <td><span class="badge cancel">취소</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">9,506,700</td>
+          <td class="num">12,805,000</td>
+          <td class="num bold">22,311,700</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.08</td>
+          <td>어웨이</td>
+          <td>KIA</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">11,794,060</td>
+          <td class="num">15,450,500</td>
+          <td class="num bold">27,244,560</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.07</td>
+          <td>어웨이</td>
+          <td>KIA</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">10,028,700</td>
+          <td class="num">25,361,000</td>
+          <td class="num bold">35,389,700</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.06</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">6,819,200</td>
+          <td class="num">16,690,000</td>
+          <td class="num bold">23,509,200</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.05</td>
+          <td>어웨이</td>
+          <td>KT</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">35,029,540</td>
+          <td class="num">15,885,000</td>
+          <td class="num bold">50,914,540</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.04</td>
+          <td>어웨이</td>
+          <td>KT</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">33,255,760</td>
+          <td class="num">14,075,000</td>
+          <td class="num bold">47,330,760</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.03</td>
+          <td>어웨이</td>
+          <td>KT</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">10,199,530</td>
+          <td class="num">14,195,000</td>
+          <td class="num bold">24,394,530</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.02</td>
+          <td>홈</td>
+          <td>두산</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">23,617</td>
+          <td class="num">98.4%</td>
+          <td class="num">113,634,740</td>
+          <td class="num">22,887,000</td>
+          <td class="num bold">136,521,740</td>
+        </tr>
+        <tr data-month="2026.04" style="display:none">
+          <td>2026.04.01</td>
+          <td>홈</td>
+          <td>두산</td>
+          <td><span class="badge win">승</span></td>
+          <td class="num">23,120</td>
+          <td class="num">96.3%</td>
+          <td class="num">103,942,750</td>
+          <td class="num">29,970,000</td>
+          <td class="num bold">133,912,750</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.31</td>
+          <td>홈</td>
+          <td>두산</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">21,489</td>
+          <td class="num">89.5%</td>
+          <td class="num">103,645,700</td>
+          <td class="num">11,498,000</td>
+          <td class="num bold">115,143,700</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.30</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">9,235,000</td>
+          <td class="num">11,975,000</td>
+          <td class="num bold">21,210,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.29</td>
+          <td>홈</td>
+          <td>롯데</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">135,153,370</td>
+          <td class="num">16,098,000</td>
+          <td class="num bold">151,251,370</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.28</td>
+          <td>홈</td>
+          <td>롯데</td>
+          <td><span class="badge lose">패</span></td>
+          <td class="num">24,000</td>
+          <td class="num">100.0%</td>
+          <td class="num">165,140,900</td>
+          <td class="num">15,686,000</td>
+          <td class="num bold">180,826,900</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.27</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">29,078,540</td>
+          <td class="num">10,081,000</td>
+          <td class="num bold">39,159,540</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.26</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">22,179,010</td>
+          <td class="num">9,834,000</td>
+          <td class="num bold">32,013,010</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.25</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">12,055,000</td>
+          <td class="num bold">12,055,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.24</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">16,481,000</td>
+          <td class="num bold">16,481,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.23</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">15,439,000</td>
+          <td class="num bold">15,439,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.22</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">148,697,600</td>
+          <td class="num">18,370,000</td>
+          <td class="num bold">167,067,600</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.21</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">127,589,400</td>
+          <td class="num">15,005,000</td>
+          <td class="num bold">142,594,400</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.20</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">18,814,700</td>
+          <td class="num">8,255,000</td>
+          <td class="num bold">27,069,700</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.19</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">13,884,720</td>
+          <td class="num">8,300,000</td>
+          <td class="num bold">22,184,720</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.18</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">9,678,500</td>
+          <td class="num">11,560,000</td>
+          <td class="num bold">21,238,500</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.17</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">13,318,600</td>
+          <td class="num">20,325,000</td>
+          <td class="num bold">33,643,600</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.16</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">14,556,100</td>
+          <td class="num">54,443,000</td>
+          <td class="num bold">68,999,100</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.15</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,481,000</td>
+          <td class="num bold">5,481,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.14</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,937,000</td>
+          <td class="num bold">4,937,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.13</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,415,000</td>
+          <td class="num bold">5,415,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.12</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">7,065,000</td>
+          <td class="num bold">7,065,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.11</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,256,000</td>
+          <td class="num bold">4,256,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.10</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">5,066,000</td>
+          <td class="num bold">5,066,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.09</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">3,753,000</td>
+          <td class="num bold">3,753,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.08</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,605,000</td>
+          <td class="num bold">4,605,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.07</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">4,831,000</td>
+          <td class="num bold">4,831,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.06</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">27,715,000</td>
+          <td class="num bold">27,715,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.05</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">179,083,000</td>
+          <td class="num bold">179,083,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.04</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">68,350,000</td>
+          <td class="num bold">68,350,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.03</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">53,643,000</td>
+          <td class="num bold">53,643,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.02</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">49,605,000</td>
+          <td class="num bold">49,605,000</td>
+        </tr>
+        <tr data-month="2026.03" style="display:none">
+          <td>2026.03.01</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">71,340,000</td>
+          <td class="num bold">71,340,000</td>
+        </tr>
+        <tr data-month="2026.02" style="display:none">
+          <td>2026.02.28</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">50,482,000</td>
+          <td class="num bold">50,482,000</td>
+        </tr>
+        <tr data-month="2026.02" style="display:none">
+          <td>2026.02.27</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">94,807,000</td>
+          <td class="num bold">94,807,000</td>
+        </tr>
+        <tr data-month="2026.02" style="display:none">
+          <td>2026.02.26</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">57,396,000</td>
+          <td class="num bold">57,396,000</td>
+        </tr>
+        <tr data-month="2026.02" style="display:none">
+          <td>2026.02.25</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">136,568,000</td>
+          <td class="num bold">136,568,000</td>
+        </tr>
+        <tr data-month="2026.02" style="display:none">
+          <td>2026.02.24</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="badge ">-</span></td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">-</td>
+          <td class="num">1,768,326,000</td>
+          <td class="num bold">1,768,326,000</td>
         </tr></tbody>
     </table>
   </div>
 </div>
 
 <div class="product-section">
+  <div class="table-card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div>
+        <h3 style="margin-bottom:4px">상품 실적 분석 (온/오프)</h3>
+        <span style="font-size:11px;color:#aaa">아래 상품별 누적 판매 실적의 조회 조건(기간·상품명·바코드) 기준 · 카테고리는 상품명 키워드로 분류</span>
+      </div>
+      <div style="display:flex;gap:4px" id="analysisTabs">
+        <button class="trend-btn active" data-dim="category" onclick="setAnalysisDim('category')">카테고리별</button>
+        <button class="trend-btn" data-dim="price" onclick="setAnalysisDim('price')">판매단가별</button>
+        <button class="trend-btn" data-dim="player" onclick="setAnalysisDim('player')">선수별</button>
+        <button class="trend-btn" data-dim="size" onclick="setAnalysisDim('size')">사이즈별</button>
+      </div>
+    </div>
+    <style>
+      .a-table th, .a-table td { padding: 8px 8px; }
+      .a-table .grp { text-align: center; border-bottom: 1px solid #e3e7ef; letter-spacing: 1px; }
+      .a-table .sep { border-left: 2px solid #e3e7ef; }
+      .a-table thead th { text-align: center !important; vertical-align: middle !important; }
+      .a-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
+      .a-track { flex: none; width: 56px; display: flex; height: 8px; background: #eef2fb; border-radius: 3px; overflow: hidden; }
+      .a-track > div { height: 8px; }
+      .a-cell span { font-size: 11px; color: #666; min-width: 36px; text-align: right; white-space: nowrap; }
+    </style>
+    <table class="a-table" style="font-size:12px">
+      <thead>
+        <tr>
+          <th rowspan="2" id="analysisDimHead" style="vertical-align:bottom">카테고리</th>
+          <th colspan="5" class="grp sep">수량</th>
+          <th colspan="5" class="grp sep">거래액</th>
+        </tr>
+        <tr>
+          <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
+          <th>전체 대비</th><th><span style="color:#5d73a3">OFF</span>/<span style="color:#c4707a">ON</span> 비중</th>
+          <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
+          <th>전체 대비</th><th><span style="color:#5d73a3">OFF</span>/<span style="color:#c4707a">ON</span> 비중</th>
+        </tr>
+      </thead>
+      <tbody id="analysisTbody"></tbody>
+    </table>
+    <div class="pagination" id="analysisPagination"></div>
+  </div>
   <div class="table-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div>
@@ -477,47 +2849,6 @@
       <tbody id="productTbody"></tbody>
     </table>
     <div class="pagination" id="productPagination"></div>
-  </div>
-  <div class="table-card" style="margin-top:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-      <div>
-        <h3 style="margin-bottom:4px">상품 실적 분석 (온/오프)</h3>
-        <span style="font-size:11px;color:#aaa">위 상품별 누적 판매 실적과 같은 조회 조건 기준 · 카테고리는 상품명 키워드로 분류</span>
-      </div>
-      <div style="display:flex;gap:4px" id="analysisTabs">
-        <button class="trend-btn active" data-dim="category" onclick="setAnalysisDim('category')">카테고리별</button>
-        <button class="trend-btn" data-dim="price" onclick="setAnalysisDim('price')">판매단가별</button>
-        <button class="trend-btn" data-dim="player" onclick="setAnalysisDim('player')">선수별</button>
-        <button class="trend-btn" data-dim="size" onclick="setAnalysisDim('size')">사이즈별</button>
-      </div>
-    </div>
-    <style>
-      .a-table th, .a-table td { padding: 8px 8px; }
-      .a-table .grp { text-align: center; border-bottom: 1px solid #e3e7ef; letter-spacing: 1px; }
-      .a-table .sep { border-left: 2px solid #e3e7ef; }
-      .a-table thead th { text-align: center !important; vertical-align: middle !important; }
-      .a-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
-      .a-track { flex: none; width: 56px; display: flex; height: 8px; background: #eef2fb; border-radius: 3px; overflow: hidden; }
-      .a-track > div { height: 8px; }
-      .a-cell span { font-size: 11px; color: #666; min-width: 36px; text-align: right; white-space: nowrap; }
-    </style>
-    <table class="a-table" style="font-size:12px">
-      <thead>
-        <tr>
-          <th rowspan="2" id="analysisDimHead" style="vertical-align:bottom">카테고리</th>
-          <th colspan="5" class="grp sep">수량</th>
-          <th colspan="5" class="grp sep">거래액</th>
-        </tr>
-        <tr>
-          <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
-          <th>전체 대비</th><th><span style="color:#5d73a3">OFF</span>/<span style="color:#c4707a">ON</span> 비중</th>
-          <th class="sep" style="text-align:right">OFF</th><th style="text-align:right">ON</th><th style="text-align:right">합계</th>
-          <th>전체 대비</th><th><span style="color:#5d73a3">OFF</span>/<span style="color:#c4707a">ON</span> 비중</th>
-        </tr>
-      </thead>
-      <tbody id="analysisTbody"></tbody>
-    </table>
-    <div class="pagination" id="analysisPagination"></div>
   </div>
 </div>
 
@@ -724,9 +3055,20 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     currentMonth = this.dataset.month;
-    updateKPI(currentMonth);
+    filterDailyTable(currentMonth);
   });
 });
+
+function filterDailyTable(month) {
+  let shown = 0;
+  document.querySelectorAll('#dataTable tbody tr').forEach(tr => {
+    const ok = month === 'all' ? shown < 7 : tr.dataset.month === month;
+    tr.style.display = ok ? '' : 'none';
+    if (ok) shown++;
+  });
+  document.getElementById('dailyRangeLabel').textContent =
+    month === 'all' ? '최근 7일' : `${month.slice(2, 4)}년 ${Number(month.slice(5, 7))}월 · ${shown}일`;
+}
 
 function updateKPI(month) {
   const filtered = month === 'all' ? allData : allData.filter(r => r.date.startsWith(month));
