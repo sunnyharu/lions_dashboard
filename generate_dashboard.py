@@ -281,7 +281,7 @@ CATEGORY_RULES = [   # (카테고리, 상품명 키워드) - 위에서부터 첫
 ]
 
 
-def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_products_on: list, apps_script_url: str = "", roster: list = None) -> str:
+def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_products_on: list, apps_script_url: str = "", roster: list = None, online_daily_url: str = "") -> str:
     game_days = [r for r in data if r["result"] and r["result"] != "취소"]
 
     def avg(lst): return int(sum(lst) / len(lst)) if lst else 0
@@ -358,10 +358,12 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
     unique_months = sorted(monthly_summary.keys())
 
     # 월별 필터 버튼 HTML
-    filter_btns_html = '<button class="filter-btn active" data-month="all">전체</button>\n'
+    latest_month = unique_months[-1] if unique_months else ""
+    filter_btns_html = ""
     for m in unique_months:
         label = f"{m[2:4]}년 {int(m[5:7])}월"
-        filter_btns_html += f'<button class="filter-btn" data-month="{m}">{label}</button>\n'
+        active = " active" if m == latest_month else ""
+        filter_btns_html += f'<button class="filter-btn{active}" data-month="{m}">{label}</button>\n'
 
     # 월별 요약 테이블 행 HTML
     summary_rows_html = ""
@@ -429,14 +431,14 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 
     # 테이블 행
     table_rows = ""
-    for i, r in enumerate(reversed(data)):   # 전 기간을 그리고 화면에서 거른다 (전체=최근 7일)
+    for r in data:   # 전 기간을 1일부터 그리고 화면에서 달별로 거른다 (기본=최근 달)
         result_cls   = {"승": "win", "패": "lose", "무": "draw", "취소": "cancel"}.get(r["result"], "")
         result_txt   = r["result"] or "-"
         crowd        = r.get("crowd", 0)
         occupancy    = f"{crowd / STADIUM_CAPACITY * 100:.1f}%" if crowd and r["home_away"] == "홈" else "-"
         crowd_txt    = fmt(crowd) if crowd else "-"
         table_rows += f"""
-        <tr data-month="{_text(r['date'][:7])}"{' style="display:none"' if i >= 7 else ''}>
+        <tr data-month="{_text(r['date'][:7])}"{'' if r['date'][:7] == latest_month else ' style="display:none"'}>
           <td>{_text(r["date"])}</td>
           <td>{_text(r["home_away"] or "-")}</td>
           <td>{_text(r["opponent"] or "-")}</td>
@@ -578,6 +580,8 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   .filter-btn.active {{ background: #002D72; color: white; }}
   .filter-btn:hover:not(.active) {{ background: #e8edf5; }}
   .summary-total {{ background: #f0f4ff; font-weight: 700; }}
+  .daily-table th, .daily-table td {{ padding: 7px 10px; font-size: 12px; }}
+  .daily-card {{ max-width: 1080px; }}
   #excelDownloadBtn {{
     padding: 7px 16px; background: #217346; color: white; border: none;
     border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
@@ -770,15 +774,18 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 </div>
 
 <div class="table-section">
-  <div class="table-card">
+  <div class="table-card daily-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin-bottom:0">일별 실적 <span id="dailyRangeLabel" style="font-size:12px;color:#999;font-weight:500;margin-left:6px">최근 7일</span></h3>
-      <button id="excelDownloadBtn" onclick="downloadExcel()">📥 전체 기간 엑셀 다운로드</button>
+      <h3 style="margin-bottom:0">일별 실적 <span id="dailyRangeLabel" style="font-size:12px;color:#999;font-weight:500;margin-left:6px"></span></h3>
+      <div style="display:flex;gap:8px">
+        {'<button onclick="openOnlineModal()" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">✏️ ON 거래액 입력</button>' if online_daily_url else ''}
+        <button id="excelDownloadBtn" onclick="downloadExcel()">📥 전체 기간 엑셀 다운로드</button>
+      </div>
     </div>
     <div class="kpi-filter">
       {filter_btns_html}
     </div>
-    <table id="dataTable">
+    <table id="dataTable" class="daily-table">
       <thead>
         <tr>
           <th>날짜</th><th>홈/어웨이</th><th>상대팀</th><th>결과</th>
@@ -789,7 +796,8 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
           <th style="text-align:right">합계</th>
         </tr>
       </thead>
-      <tbody>{table_rows}</tbody>
+      <tbody id="dailyTotal"></tbody>
+      <tbody id="dailyRows">{table_rows}</tbody>
     </table>
   </div>
 </div>
@@ -956,7 +964,8 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 <script>
 // ── 월 버튼 → 일별 실적 표 ──
 const allData = {_jsdump(data)};
-let currentMonth = 'all';
+let currentMonth = {_jsdump(latest_month)};
+filterDailyTable(currentMonth);
 
 document.querySelectorAll('.filter-btn').forEach(btn => {{
   btn.addEventListener('click', function() {{
@@ -969,13 +978,25 @@ document.querySelectorAll('.filter-btn').forEach(btn => {{
 
 function filterDailyTable(month) {{
   let shown = 0;
-  document.querySelectorAll('#dataTable tbody tr').forEach(tr => {{
-    const ok = month === 'all' ? shown < 7 : tr.dataset.month === month;
+  document.querySelectorAll('#dailyRows tr').forEach(tr => {{
+    const ok = tr.dataset.month === month;
     tr.style.display = ok ? '' : 'none';
     if (ok) shown++;
   }});
-  document.getElementById('dailyRangeLabel').textContent =
-    month === 'all' ? '최근 7일' : `${{month.slice(2, 4)}}년 ${{Number(month.slice(5, 7))}}월 · ${{shown}}일`;
+  // 선택한 달의 누계를 표 맨 위에
+  const rows = allData.filter(r => r.date.startsWith(month));
+  const sum = k => rows.reduce((s, r) => s + (r[k] || 0), 0);
+  const home = rows.filter(r => r.home_away === '홈' && r.crowd);
+  const crowd = home.reduce((s, r) => s + r.crowd, 0);
+  const f = n => n ? n.toLocaleString('ko-KR') : '-';
+  const games = rows.filter(r => r.home_away).length;
+  const w = rows.filter(r => r.result === '승').length, l = rows.filter(r => r.result === '패').length;
+  document.getElementById('dailyTotal').innerHTML = `<tr class="summary-total">
+    <td>월 누계</td><td>${{games ? games + '경기' : '-'}}</td><td></td><td>${{games ? w + '승 ' + l + '패' : '-'}}</td>
+    <td class="num">${{f(crowd)}}</td>
+    <td class="num">${{home.length ? (crowd / home.length / {STADIUM_CAPACITY} * 100).toFixed(1) + '%' : '-'}}</td>
+    <td class="num">${{f(sum('off'))}}</td><td class="num">${{f(sum('on'))}}</td><td class="num bold">${{f(sum('off') + sum('on'))}}</td></tr>`;
+  document.getElementById('dailyRangeLabel').textContent = `${{month.slice(2, 4)}}년 ${{Number(month.slice(5, 7))}}월 · ${{shown}}일`;
 }}
 
 function updateKPI(month) {{
@@ -1955,7 +1976,73 @@ async function submitNote() {{
     btn.disabled = false;
   }}
 }}
+
+// ── 온라인(ON) 일별 거래액 수동 입력 - 맥 자동 입력(매일 09:30)이 못 돈 날 직접 넣는다 ──
+const ONLINE_DAILY_URL = {_jsdump(online_daily_url)};
+
+function openOnlineModal() {{
+  const d = new Date(Date.now() - 86400000);   // 기본은 어제
+  document.getElementById('onlineDate').value = `${{d.getFullYear()}}-${{String(d.getMonth()+1).padStart(2,'0')}}-${{String(d.getDate()).padStart(2,'0')}}`;
+  document.getElementById('onlineAmount').value = '';
+  document.getElementById('onlineStatus').textContent = '';
+  document.getElementById('onlineSubmitBtn').disabled = false;
+  document.getElementById('onlineModal').classList.add('open');
+}}
+
+function closeOnlineModal() {{
+  document.getElementById('onlineModal').classList.remove('open');
+}}
+
+window.addEventListener('DOMContentLoaded', () => document.getElementById('onlineModal')?.addEventListener('click', function(e) {{
+  if (e.target === this) closeOnlineModal();
+}}));
+
+async function submitOnline() {{
+  const date = document.getElementById('onlineDate').value.replace(/-/g, '.');
+  const amount = Number(document.getElementById('onlineAmount').value.replace(/[^0-9]/g, ''));
+  const key = document.getElementById('onlineKey').value.trim();
+  const status = document.getElementById('onlineStatus');
+  const btn = document.getElementById('onlineSubmitBtn');
+  if (!date || !amount || !key) {{ status.textContent = '날짜·금액·비밀번호를 모두 입력해주세요.'; return; }}
+  btn.disabled = true;
+  status.style.color = '#666';
+  status.textContent = '저장 중...';
+  try {{
+    const res = await fetch(ONLINE_DAILY_URL, {{
+      method: 'POST',
+      headers: {{ 'Content-Type': 'application/json' }},
+      body: JSON.stringify({{ key, date, amount }}),
+    }});
+    const r = await res.json();
+    if (!r.ok) throw new Error(r.error || '저장 실패');
+    status.style.color = '#2e7d32';
+    status.textContent = `✓ ${{date}} ON ${{amount.toLocaleString('ko-KR')}}원 저장. 잠시 후 새로고침됩니다.`;
+    setTimeout(() => location.reload(), 3000);
+  }} catch(e) {{
+    status.style.color = '#c62828';
+    status.textContent = '오류: ' + e.message;
+    btn.disabled = false;
+  }}
+}}
 </script>
+
+<!-- ON 거래액 입력 모달 -->
+<div class="modal-overlay" id="onlineModal">
+  <div class="modal">
+    <h3>✏️ 온라인(ON) 일별 거래액 입력</h3>
+    <label>날짜</label>
+    <input type="date" id="onlineDate">
+    <label>총결제거래액 (원)</label>
+    <input type="text" id="onlineAmount" inputmode="numeric" placeholder="예) 465284500 (Redash 17450 총결제거래액)">
+    <label>비밀번호</label>
+    <input type="password" id="onlineKey" placeholder="업로드 비밀번호와 같음">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeOnlineModal()">취소</button>
+      <button class="btn-submit" id="onlineSubmitBtn" onclick="submitOnline()">저장</button>
+    </div>
+    <div class="modal-status" id="onlineStatus"></div>
+  </div>
+</div>
 
 <!-- 특이사항 모달 -->
 <div class="modal-overlay" id="noteModal">
