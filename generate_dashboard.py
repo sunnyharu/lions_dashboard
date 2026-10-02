@@ -511,7 +511,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   /* 차트 */
   .charts-top {{ padding: 20px 32px 0; }}
   .charts-bottom {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 16px 32px 0; align-items: stretch; }}
-  .charts-bottom > .chart-card {{ min-height: 340px; }}
+  .charts-bottom > .chart-card {{ height: 340px; }}   /* 고정 높이 - 차트 영역(높이 %)이 카드 밖으로 넘쳐 아래 카드와 겹치지 않게 */
   .monthly-card {{ margin: 0; }}
   .monthly-card th, .monthly-card td {{ padding: 7px 8px; font-size: 12px; white-space: nowrap; }}
   @media (max-width: 1280px) {{ .charts-bottom {{ grid-template-columns: 1fr 1fr; }} .charts-bottom > .chart-card:first-child {{ grid-column: 1 / -1; }} }}
@@ -528,7 +528,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   }}
 
   /* 테이블 */
-  .table-section {{ padding: 0 32px 20px; }}
+  .table-section {{ padding: 16px 32px 20px; }}
   .table-card {{
     background: white; border-radius: 12px; padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07); overflow-x: auto;
@@ -581,7 +581,6 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
   .filter-btn:hover:not(.active) {{ background: #e8edf5; }}
   .summary-total {{ background: #f0f4ff; font-weight: 700; }}
   .daily-table th, .daily-table td {{ padding: 7px 10px; font-size: 12px; }}
-  .daily-card {{ max-width: 1080px; }}
   #excelDownloadBtn {{
     padding: 7px 16px; background: #217346; color: white; border: none;
     border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
