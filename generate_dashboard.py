@@ -182,6 +182,7 @@ def fetch_data():
                 continue
             raw_products_off.append({
                 "date": date, "barcode": barcode, "name": name,
+                "code": str(row.get("상품코드", "") or "").strip(),
                 "color": color, "size": size,
                 "price":  _int(row.get("판매단가",  0)),
                 "qty":    _int(row.get("판매수량",  0)),
@@ -207,6 +208,8 @@ def fetch_data():
             raw_products_on.append({
                 "date": date, "barcode": barcode, "name": name,
                 "size": size, "player": player,
+                "sku": str(row.get("skucode", "") or "").strip(),
+                "project": str(row.get("서브프로젝트", "") or "").strip(),
                 "price":  _int(row.get("판매단가",  0)),
                 "qty":    _int(row.get("판매수량",  0)),
                 "amount": _int(row.get("실판매금액", 0)),
@@ -281,7 +284,7 @@ CATEGORY_RULES = [   # (카테고리, 상품명 키워드) - 위에서부터 첫
 ]
 
 
-def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_products_on: list, apps_script_url: str = "", roster: list = None, online_daily_url: str = "") -> str:
+def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_products_on: list, apps_script_url: str = "", roster: list = None) -> str:
     game_days = [r for r in data if r["result"] and r["result"] != "취소"]
 
     def avg(lst): return int(sum(lst) / len(lst)) if lst else 0
@@ -775,11 +778,11 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
 <div class="table-section">
   <div class="table-card daily-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin-bottom:0">일별 실적 <span id="dailyRangeLabel" style="font-size:12px;color:#999;font-weight:500;margin-left:6px"></span></h3>
-      <div style="display:flex;gap:8px">
-        {'<button onclick="openOnlineModal()" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">✏️ ON 거래액 입력</button>' if online_daily_url else ''}
-        <button id="excelDownloadBtn" onclick="downloadExcel()">📥 전체 기간 엑셀 다운로드</button>
+      <div>
+        <h3 style="margin-bottom:2px">일별 실적 <span id="dailyRangeLabel" style="font-size:12px;color:#999;font-weight:500;margin-left:6px"></span></h3>
+        <span style="font-size:11px;color:#999">※ OFF = 플레이엠디 판매(반품 차감) · ON = 순결제(취소 차감)·<b>배송비 포함</b> (Redash 16900 일자 합계 = 16000 순결제)</span>
       </div>
+      <button id="excelDownloadBtn" onclick="downloadExcel()">📥 전체 기간 엑셀 다운로드</button>
     </div>
     <div class="kpi-filter">
       {filter_btns_html}
@@ -806,13 +809,15 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
       <div>
         <h3 style="margin-bottom:4px">상품 실적 분석 (온/오프)</h3>
-        <span style="font-size:11px;color:#aaa">아래 상품별 누적 판매 실적의 조회 조건(기간·상품명·바코드) 기준 · 카테고리는 상품명 키워드로 분류</span>
+        <span style="font-size:11px;color:#aaa">아래 상품별 누적 판매 실적의 조회 조건(기간·상품명·바코드) 기준 · 카테고리는 상품명 키워드로 분류 · ON 은 순결제·<b>배송비 제외</b></span>
+        <div class="on-gap-note" style="font-size:11px;color:#b26a00;margin-top:2px"></div>
       </div>
       <div style="display:flex;gap:4px" id="analysisTabs">
         <button class="trend-btn active" data-dim="category" onclick="setAnalysisDim('category')">카테고리별</button>
         <button class="trend-btn" data-dim="price" onclick="setAnalysisDim('price')">판매단가별</button>
         <button class="trend-btn" data-dim="player" onclick="setAnalysisDim('player')">선수별</button>
         <button class="trend-btn" data-dim="size" onclick="setAnalysisDim('size')">사이즈별</button>
+        <button class="trend-btn" data-dim="project" onclick="setAnalysisDim('project')">프로젝트별</button>
       </div>
     </div>
     <style>
@@ -850,7 +855,8 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       <div>
         <h3 style="margin-bottom:4px">상품별 누적 판매 실적 (온/오프 통합)</h3>
         <span id="productRangeLabel" style="font-size:11px;color:#aaa"></span>
-        <span style="font-size:11px;color:#bbb;margin-left:8px">※ 온라인 판매수량·금액은 순결제(취소 차감) 기준</span>
+        <span style="font-size:11px;color:#bbb;margin-left:8px">※ 온라인 판매수량·금액은 순결제(취소 차감)·<b>배송비 제외</b> 기준</span>
+        <div class="on-gap-note" style="font-size:11px;color:#b26a00;margin-top:2px"></div>
         <div style="margin-top:4px;display:flex;gap:12px;align-items:center">
           <span style="font-size:11px;color:#888">🏪 오프라인 최근 업데이트: <b style="color:#555">{off_last_date or '-'}</b></span>
           <span style="font-size:11px;color:#888">🌐 온라인 최근 업데이트: <b style="color:#555">{on_last_date or '-'}</b></span>
@@ -859,7 +865,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       </div>
       <div style="display:flex;gap:8px">
         <button id="productExcelBtn" onclick="downloadProductExcel()">📥 엑셀 다운로드</button>
-        <button onclick="window.open('https://melonredash.melon.com/queries/16900/source?p_%EC%A1%B0%ED%9A%8C%20%EA%B8%B0%EA%B0%84=2026-02-24--2026-06-16','_blank')" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">📊 온라인 실적 조회</button>
+        <button onclick="openRedashOnline()" title="Redash 16900 - 온라인 상품별 순결제 + 날짜별 배송비 (이 결과를 그대로 업로드)" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">📊 Redash 온라인 실적 (16900)</button>
         {'<button onclick="openUploadModal()" style="background:#C8102E;color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">📤 온라인 실적 업로드</button>' if apps_script_url else ''}
       </div>
     </div>
@@ -925,6 +931,7 @@ def build_html(data: list, news: list, digest: str, raw_products_off: list, raw_
       <h3 style="margin:0">온라인 실적 업로드</h3>
       <button onclick="closeUploadModal()" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">✕ 닫기</button>
     </div>
+    <p style="font-size:12px;color:#666;line-height:1.6;margin:0 0 14px">Redash <b>16900</b> 결과를 받은 파일(엑셀·CSV)을 그대로 올리면 <b>상품별 ON · 일별 ON(배송비 포함) · 프로젝트별</b>이 함께 갱신돼요. 파일에 있는 날짜는 모두 새 값으로 바뀌어요.</p>
     <div style="margin-bottom:14px">
       <label style="font-size:12px;color:#555;font-weight:600;display:block;margin-bottom:6px">엑셀 파일 선택</label>
       <input type="file" id="uploadFileInput" accept=".xlsx,.xls,.csv" style="font-size:13px;width:100%">
@@ -1099,23 +1106,42 @@ function extractColorFromName(name) {{
 
 const isFree = v => !v || v==='-' || v.trim().toLowerCase()==='free' || v.trim()==='공통';
 
+// 온라인 상품의 서브프로젝트를 바코드(마킹 접미사 _XX 제외)·상품코드(끝 -숫자 제외)로 찾을 수 있게 미리 모은다
+const projectKey = {{
+  bar: b => String(b || '').split('_')[0],
+  code: c => String(c || '').split('_')[0].replace(/-\\d+$/, ''),
+}};
+const PROJECT_BY = {{ bar: {{}}, code: {{}} }};
+function indexProjects(onRows) {{
+  onRows.forEach(r => {{
+    if (!r.project) return;
+    if (r.barcode) PROJECT_BY.bar[projectKey.bar(r.barcode)] = r.project;
+    if (r.sku) PROJECT_BY.code[projectKey.code(r.sku)] = r.project;
+  }});
+}}
+function findProject(r) {{
+  return r.project || PROJECT_BY.bar[projectKey.bar(r.barcode)] || (r.code && PROJECT_BY.code[projectKey.code(r.code)]) || '';
+}}
+
 function mergeProducts(offRows, onRows) {{
   const map = {{}};
 
+  // 바코드가 없는 상품도 합계에서 빠지지 않게 상품명을 대신 키로 쓴다
   offRows.forEach(r => {{
-    if (!r.barcode) return;
-    const k = r.barcode;
+    if (!r.barcode && !r.name) return;
+    const k = r.barcode || ('상품명:' + r.name);
     if (!map[k]) map[k] = {{
       barcode: k, off_name: r.name||'-', on_name: '-',
       color: r.color||'-', size: r.size||'-', player: extractPlayerFromName(r.name)||'-',
       price: r.price, off_qty: 0, off_amount: 0, on_qty: 0, on_amount: 0,
+      project: findProject(r),
     }};
     map[k].off_qty    += r.qty;
     map[k].off_amount += r.amount;
   }});
   onRows.forEach(r => {{
-    if (!r.barcode) return;
-    const k = r.barcode;
+    if (!r.barcode && !r.name) return;
+    const k = r.barcode || ('상품명:' + r.name);
     if (!map[k]) {{
       const nameColor  = extractColorFromName(r.name);
       const namePlayer = isFree(r.player) ? extractPlayerFromName(r.name) : r.player;
@@ -1123,8 +1149,10 @@ function mergeProducts(offRows, onRows) {{
         barcode: k, off_name: '-', on_name: r.name||'-',
         color: nameColor||'-', size: r.size||'-', player: namePlayer||'-',
         price: r.price, off_qty: 0, off_amount: 0, on_qty: 0, on_amount: 0,
+        project: findProject(r),
       }};
     }} else {{
+      if (!map[k].project) map[k].project = findProject(r);
       if (r.name) map[k].on_name = r.name;
       // OFF 사이즈가 free/공통이고 ON에 실제 사이즈 있으면 ON 우선
       if (isFree(map[k].size) && !isFree(r.size)) map[k].size = r.size;
@@ -1143,6 +1171,22 @@ function mergeProducts(offRows, onRows) {{
     .sort((a,b) => (b.off_amount+b.on_amount) - (a.off_amount+a.on_amount));
 }}
 
+function updateOnGapNote(f) {{
+  const els = document.querySelectorAll('.on-gap-note');
+  let msg = '';
+  if (f && (f.name || f.barcodes.length)) {{
+    msg = '※ 상품명·바코드로 거른 결과라 일별 실적 ON 합계와 직접 비교할 수 없어요.';
+  }} else {{
+    const s = f && f.start ? f.start.replace(/-/g, '.') : '', e = f && f.end ? f.end.replace(/-/g, '.') : '';
+    const inRange = d => (!s || d >= s) && (!e || d <= e);
+    const daily = allData.filter(r => inRange(r.date)).reduce((t, r) => t + (r.on || 0), 0);
+    const prod = rawOnData.filter(r => inRange(r.date.replace(/-/g, '.'))).reduce((t, r) => t + r.amount, 0);
+    const gap = daily - prod;
+    if (gap) msg = `※ 같은 기간 일별 실적 ON ${{daily.toLocaleString('ko-KR')}}원 = 상품 ON ${{prod.toLocaleString('ko-KR')}}원 + 차이 ${{gap.toLocaleString('ko-KR')}}원 (배송비)`;
+  }}
+  els.forEach(el => el.textContent = msg);
+}}
+
 function applyProductFilter() {{
   const f = getFilters();
   const filteredOff = filterRows(rawOffData, f);
@@ -1154,6 +1198,7 @@ function applyProductFilter() {{
   if (f.name)         label += (label?' / ':'') + '상품명: ' + f.name;
   if (f.barcodes.length) label += (label?' / ':'') + '바코드: ' + f.barcodes.join(', ');
   document.getElementById('productRangeLabel').textContent = label || '';
+  updateOnGapNote(f);
   renderProductTable();
 }}
 
@@ -1165,6 +1210,7 @@ function resetProductFilter() {{
   currentProductRows = mergeProducts(rawOffData, rawOnData);
   productPage = 1;
   document.getElementById('productRangeLabel').textContent = '전체 기간 합산';
+  updateOnGapNote(null);
   renderProductTable();
 }}
 
@@ -1338,6 +1384,12 @@ function handleOverlayClick(e) {{
 // ── 온라인 실적 업로드 ──
 const APPS_SCRIPT_URL = '{apps_script_url}';
 
+function openRedashOnline() {{
+  const y = new Date(Date.now() - 86400000);
+  const end = `${{y.getFullYear()}}-${{String(y.getMonth()+1).padStart(2,'0')}}-${{String(y.getDate()).padStart(2,'0')}}`;
+  window.open('https://melonredash.melon.com/queries/16900/source?p_' + encodeURIComponent('조회 기간') + '=2026-02-24--' + end, '_blank');
+}}
+
 function openUploadModal() {{
   document.getElementById('uploadModal').classList.add('open');
   document.getElementById('uploadStatus').textContent = '';
@@ -1361,7 +1413,8 @@ async function submitUpload() {{
   status.textContent = '⏳ 파일 파싱 중...';
   const file = fileInput.files[0];
   const ab = await file.arrayBuffer();
-  const wb = XLSX.read(ab, {{ type: 'array' }});
+  // cellDates: 엑셀 날짜 칸을 날짜로 받는다 (그대로 두면 46000 같은 일련번호가 된다)
+  const wb = XLSX.read(ab, {{ type: 'array', cellDates: true }});
   const ws = wb.Sheets[wb.SheetNames[0]];
   const raw = XLSX.utils.sheet_to_json(ws, {{ defval: '' }});
 
@@ -1379,19 +1432,28 @@ async function submitUpload() {{
     '판매가':   '판매단가', '판매단가': '판매단가',
     '결제상품수': '판매수량', '판매수량': '판매수량',
     '상품결제금액': '실판매금액', '실판매금액': '실판매금액',
+    '서브프로젝트': '서브프로젝트', '구분': '구분',
   }};
-  const HEADER = ['판매일자','상품ID','상품명','바코드','skucode','사이즈','선수명','판매단가','판매수량','실판매금액'];
+  const pad = n => String(n).padStart(2, '0');
+  const cell = (target, v) => {{
+    if (v instanceof Date) return `${{v.getFullYear()}}-${{pad(v.getMonth()+1)}}-${{pad(v.getDate())}}`;
+    // 바코드·상품ID 가 숫자로 읽히면 지수 표기(8.8E+12)나 소수점이 붙지 않게 정수 문자열로
+    if (typeof v === 'number' && ['바코드', '상품ID', 'skucode'].includes(target)) return Number.isInteger(v) ? String(v) : v.toFixed(0);
+    return String(v).trim();
+  }};
 
   const rows = raw.map(r => {{
     const mapped = {{}};
     Object.entries(r).forEach(([k, v]) => {{
-      const target = COL_MAP[k.trim()];
-      if (target) mapped[target] = String(v).trim();
+      const target = COL_MAP[k.replace(/^\\uFEFF/, '').trim()];   // CSV 앞 BOM 이 붙은 헤더도 인식
+      if (target) mapped[target] = cell(target, v);
     }});
     return mapped;
   }}).filter(r => r['판매일자']);
 
   if (!rows.length) {{ status.textContent = '❌ 판매일자 컬럼을 찾을 수 없습니다.'; return; }}
+  const missing = ['판매일자', '상품명', '판매수량', '실판매금액', '서브프로젝트', '구분'].filter(c => !(c in rows[0]));
+  if (missing.length) {{ status.textContent = '❌ Redash 16900 결과 파일이 아닌 것 같아요 - 없는 칸: ' + missing.join(', '); return; }}
 
   const dates = [...new Set(rows.map(r => r['판매일자']))];
   status.textContent = `⏳ ${{rows.length}}행 (${{dates.length}}일) 업로드 중...`;
@@ -1404,7 +1466,7 @@ async function submitUpload() {{
     const result = await resp.json();
     if (result.ok) {{
       status.style.color = '#1a7f37';
-      status.textContent = `✅ ${{result.inserted}}행 업로드 완료! 약 2~3분 후 대시보드가 자동으로 갱신됩니다.`;
+      status.textContent = `✅ 상품 ${{result.inserted}}행 · 일별 ON ${{result.daily_updated}}일 업로드 완료! 약 2~3분 후 대시보드가 자동으로 갱신됩니다.`;
       setTimeout(() => closeUploadModal(), 3000);
       setTimeout(() => location.reload(), 3 * 60 * 1000);
     }} else {{
@@ -1459,7 +1521,7 @@ const CATEGORY_RULES = {_jsdump(CATEGORY_RULES)};
 const PRICE_BANDS = [[1, 10000, '1만원 미만'], [10000, 30000, '1~3만원'], [30000, 50000, '3~5만원'],
                      [50000, 100000, '5~10만원'], [100000, 150000, '10~15만원'], [150000, Infinity, '15만원 이상']];
 const SIZE_LETTERS = ['2XS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
-const ANALYSIS_DIMS = {{ category: '카테고리', price: '판매단가', player: '선수', size: '사이즈' }};
+const ANALYSIS_DIMS = {{ category: '카테고리', price: '판매단가', player: '선수', size: '사이즈', project: '서브프로젝트' }};
 const ANALYSIS_PAGE_SIZE = 10;   // 선수별 목록 페이지당 행 수
 let analysisPage = 1;
 let analysisDim = 'category';
@@ -1486,6 +1548,8 @@ const analysisKey = {{
     const base = raw.replace(/\\(\\d+\\)$/, '').trim();
     return (!ROSTER_NAMES.size || ROSTER_NAMES.has(base)) ? raw : '선수 외';
   }},
+  // 서브프로젝트는 온라인 상품에만 있다 - 오프라인은 같은 상품(바코드·상품코드)으로 이어 붙이고, 없으면 미분류
+  project: p => p.project || '미분류',
   // 사이즈 묶음 - 숫자(가슴둘레) 표기와 영문 표기를 한 구간으로. 키즈는 따로
   size: p => {{
     if (isFree(p.size)) return 'FREE·없음';
@@ -1532,7 +1596,7 @@ function renderProductAnalysis(keepPage) {{
   }} else if (analysisDim === 'size') {{
     rows.sort((a, b) => sizeOrder(a.key)[0] - sizeOrder(b.key)[0]);
   }} else {{
-    const tail = analysisDim === 'player' ? ['선수 외'] : ['기타'];
+    const tail = analysisDim === 'player' ? ['선수 외'] : analysisDim === 'project' ? ['미분류'] : ['기타'];
     rows.sort((a, b) => tail.indexOf(a.key) - tail.indexOf(b.key) || amt(b) - amt(a));
   }}
   const tot = rows.reduce((s, r) => ({{ oq: s.oq + r.oq, nq: s.nq + r.nq, oa: s.oa + r.oa, na: s.na + r.na }}), {{ oq: 0, nq: 0, oa: 0, na: 0 }});
@@ -1550,14 +1614,14 @@ function renderProductAnalysis(keepPage) {{
       <td>${{share((r.oq + r.nq) / totQty * 100)}}</td><td>${{split(r.oq, r.nq)}}</td>
       <td class="num sep">${{f(r.oa)}}</td><td class="num">${{f(r.na)}}</td><td class="num bold">${{f(r.oa + r.na)}}</td>
       <td>${{share((r.oa + r.na) / totAmt * 100)}}</td><td>${{split(r.oa, r.na)}}</td>`;
-  const paged = analysisDim === 'player';
+  const paged = analysisDim === 'player' || analysisDim === 'project';
   const pages = paged ? Math.max(1, Math.ceil(rows.length / ANALYSIS_PAGE_SIZE)) : 1;
   analysisPage = Math.min(analysisPage, pages);
   const shown = paged ? rows.slice((analysisPage - 1) * ANALYSIS_PAGE_SIZE, analysisPage * ANALYSIS_PAGE_SIZE) : rows;
   let html = '';
   shown.forEach(r => {{
-    const tip = r.key === '선수 외' ? ` title="${{aEsc('선수 마킹이 없는 상품(일반 굿즈 등)과 선수명단에 없는 마킹' + (r.names ? ' - 포함: ' + Object.entries(r.names).sort((a, b) => b[1] - a[1]).slice(0, 15).map(x => x[0]).join(', ') : ''))}}"` : '';
-    html += `<tr><td${{tip}}>${{aEsc(r.key)}}${{r.key === '선수 외' ? ' <span style="color:#aaa;font-size:11px">ⓘ</span>' : ''}}</td>${{cells(r)}}</tr>`;
+    const tip = r.key === '미분류' ? ' title="서브프로젝트가 없는 상품 - 온라인에 같은 상품(바코드·상품코드)이 없는 매장 전용 상품"' : r.key === '선수 외' ? ` title="${{aEsc('선수 마킹이 없는 상품(일반 굿즈 등)과 선수명단에 없는 마킹' + (r.names ? ' - 포함: ' + Object.entries(r.names).sort((a, b) => b[1] - a[1]).slice(0, 15).map(x => x[0]).join(', ') : ''))}}"` : '';
+    html += `<tr><td${{tip}}>${{aEsc(r.key)}}${{r.key === '선수 외' || r.key === '미분류' ? ' <span style="color:#aaa;font-size:11px">ⓘ</span>' : ''}}</td>${{cells(r)}}</tr>`;
   }});
   html += `<tr class="product-total-row"><td>합계 (${{rows.length}}개 구분)</td>${{cells(tot)}}</tr>`;
   tbody.innerHTML = html;
@@ -1579,7 +1643,9 @@ function setAnalysisDim(dim) {{
 }}
 
 // 초기 렌더링: 전체
+indexProjects(rawOnData);
 currentProductRows = mergeProducts(rawOffData, rawOnData);
+updateOnGapNote(null);
 document.getElementById('productRangeLabel').textContent = '전체 기간 합산';
 renderProductTable();
 
@@ -1976,72 +2042,7 @@ async function submitNote() {{
   }}
 }}
 
-// ── 온라인(ON) 일별 거래액 수동 입력 - 맥 자동 입력(매일 09:30)이 못 돈 날 직접 넣는다 ──
-const ONLINE_DAILY_URL = {_jsdump(online_daily_url)};
-
-function openOnlineModal() {{
-  const d = new Date(Date.now() - 86400000);   // 기본은 어제
-  document.getElementById('onlineDate').value = `${{d.getFullYear()}}-${{String(d.getMonth()+1).padStart(2,'0')}}-${{String(d.getDate()).padStart(2,'0')}}`;
-  document.getElementById('onlineAmount').value = '';
-  document.getElementById('onlineStatus').textContent = '';
-  document.getElementById('onlineSubmitBtn').disabled = false;
-  document.getElementById('onlineModal').classList.add('open');
-}}
-
-function closeOnlineModal() {{
-  document.getElementById('onlineModal').classList.remove('open');
-}}
-
-window.addEventListener('DOMContentLoaded', () => document.getElementById('onlineModal')?.addEventListener('click', function(e) {{
-  if (e.target === this) closeOnlineModal();
-}}));
-
-async function submitOnline() {{
-  const date = document.getElementById('onlineDate').value.replace(/-/g, '.');
-  const amount = Number(document.getElementById('onlineAmount').value.replace(/[^0-9]/g, ''));
-  const key = document.getElementById('onlineKey').value.trim();
-  const status = document.getElementById('onlineStatus');
-  const btn = document.getElementById('onlineSubmitBtn');
-  if (!date || !amount || !key) {{ status.textContent = '날짜·금액·비밀번호를 모두 입력해주세요.'; return; }}
-  btn.disabled = true;
-  status.style.color = '#666';
-  status.textContent = '저장 중...';
-  try {{
-    const res = await fetch(ONLINE_DAILY_URL, {{
-      method: 'POST',
-      headers: {{ 'Content-Type': 'application/json' }},
-      body: JSON.stringify({{ key, date, amount }}),
-    }});
-    const r = await res.json();
-    if (!r.ok) throw new Error(r.error || '저장 실패');
-    status.style.color = '#2e7d32';
-    status.textContent = `✓ ${{date}} ON ${{amount.toLocaleString('ko-KR')}}원 저장. 잠시 후 새로고침됩니다.`;
-    setTimeout(() => location.reload(), 3000);
-  }} catch(e) {{
-    status.style.color = '#c62828';
-    status.textContent = '오류: ' + e.message;
-    btn.disabled = false;
-  }}
-}}
 </script>
-
-<!-- ON 거래액 입력 모달 -->
-<div class="modal-overlay" id="onlineModal">
-  <div class="modal">
-    <h3>✏️ 온라인(ON) 일별 거래액 입력</h3>
-    <label>날짜</label>
-    <input type="date" id="onlineDate">
-    <label>총결제거래액 (원)</label>
-    <input type="text" id="onlineAmount" inputmode="numeric" placeholder="예) 465284500 (Redash 17450 총결제거래액)">
-    <label>비밀번호</label>
-    <input type="password" id="onlineKey" placeholder="업로드 비밀번호와 같음">
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeOnlineModal()">취소</button>
-      <button class="btn-submit" id="onlineSubmitBtn" onclick="submitOnline()">저장</button>
-    </div>
-    <div class="modal-status" id="onlineStatus"></div>
-  </div>
-</div>
 
 <!-- 특이사항 모달 -->
 <div class="modal-overlay" id="noteModal">
